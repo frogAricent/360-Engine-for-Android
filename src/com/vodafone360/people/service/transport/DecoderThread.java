@@ -100,7 +100,7 @@ public class DecoderThread implements Runnable {
     /**
      * Start decoder thread
      */
-    protected void startThread() {
+    public void startThread() {
         mRunning = true;
         Thread decoderThread = new Thread(this);
         decoderThread.setName(THREAD_NAME);

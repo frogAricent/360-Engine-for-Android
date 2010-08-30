@@ -31,9 +31,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import com.vodafone360.people.datatypes.Album;
+import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Contact;
 import com.vodafone360.people.datatypes.ContactDetail;
+import com.vodafone360.people.datatypes.Content;
+import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.GroupItem;
+import com.vodafone360.people.datatypes.PrivacySetting;
 
 /**
  * Class which provides helper functions for assembling Vectors of data prior to
@@ -98,6 +103,101 @@ public class ApiUtils {
      * @return Vector of Hash-tables representing GroupItems list.
      */
     protected static Vector<Object> createVectorOfGroup(List<GroupItem> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHashtable());
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of Hash table items from a list of Comment. 
+     * This is supplied to Hessian encoder.
+     * 
+     * @param list List-array of Comment.
+     * @return Vector of Hash-tables representing list of comments.
+     */
+    protected static Vector<Object> createVectorOfComment(List<Comment> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHashtable());
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of Hash table items from a list of Long. 
+     * This is supplied to Hessian encoder.
+     * 
+     * @param list List-array of Long.
+     * @return Vector of Hash-tables representing list of long.
+     */
+    protected static Vector<Object> createVectorOfLong(List<Long> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i));
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of Hash table items from a list of EntityKey.
+     * This is supplied to Hessian encoder.
+     * 
+     * @param list List-array of Entitykey.
+     * @return Vector of Hash-tables representing Entitykey list.
+     */
+        
+    protected static Vector<Object> createVectorOfEntityKey(List<EntityKey> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHastable());
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of Hash table items from a list of Albums (each
+     * Album being represented by a Hash table). This is supplied to
+     * Hessian encoder.
+     * 
+     * @param list List-array of Album.
+     * @return Vector of Hash-tables representing Album list.
+     */
+    protected static Vector<Object> createVectorOfAlbum(List<Album> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHashtable());
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of Hash table items from a list of Contends (each
+     * Content being represented by a Hash table). This is supplied to
+     * Hessian encoder.
+     * 
+     * @param list List-array of Contents.
+     * @return Vector of Hash-tables representing Content list.
+     */
+    protected static Vector<Object> createVectorOfContent(List<Content> list) {
+        Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHashtable());
+        }
+        return vector;
+    }
+    
+    /**
+     * Create Vector of of Hash table items from a list of PrivacySetting (each
+     * PrivacySetting being represented by a Hash table). This is supplied to
+     * Hessian encoder.
+     * 
+     * @param list List-array of PrivacySetting.
+     * @return Vector of Hash-tables representing GroupItems list.
+     */
+        
+    protected static Vector<Object> createVectorOfPrivacySetting(List<PrivacySetting> list) {
         Vector<Object> vector = new Vector<Object>();
         for (int i = 0; i < list.size(); i++) {
             vector.add(list.get(i).createHashtable());

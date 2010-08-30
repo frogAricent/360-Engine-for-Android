@@ -35,13 +35,16 @@ import com.vodafone360.people.Settings;
 import com.vodafone360.people.SettingsManager;
 import com.vodafone360.people.engine.BaseEngine.IEngineEventCallback;
 import com.vodafone360.people.engine.activities.ActivitiesEngine;
+import com.vodafone360.people.engine.comments.CommentsEngine;
 import com.vodafone360.people.engine.contactsync.ContactSyncEngine;
 import com.vodafone360.people.engine.groups.GroupsEngine;
 import com.vodafone360.people.engine.content.ContentEngine;
 import com.vodafone360.people.engine.identities.IdentityEngine;
+import com.vodafone360.people.engine.location.LocationEngine;
 import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.engine.meprofile.SyncMeEngine;
 import com.vodafone360.people.engine.presence.PresenceEngine;
+import com.vodafone360.people.engine.share.ShareEngine;
 import com.vodafone360.people.engine.upgrade.UpgradeEngine;
 import com.vodafone360.people.service.RemoteService;
 import com.vodafone360.people.service.WorkerThread;
@@ -71,6 +74,10 @@ public class EngineManager {
         UPGRADE_ENGINE,
         CONTENT_ENGINE,
         SYNCME_ENGINE,
+        COMMENTS_ENGINE,
+        CONTENTS_ENGINE,
+        LOCATION_ENGINE,
+        SHARE_ENGINE,
         UNDEFINED
         // add ids as we progress
 
@@ -144,6 +151,21 @@ public class EngineManager {
      * @see ContentEngine
      */
     private ContentEngine mContentEngine;
+    
+    /**
+     * @see CommentsEngine
+     */
+    private CommentsEngine mCommentsEngine;
+    
+    /**
+     * @see LocationEngine
+     */
+    private LocationEngine mLocationEngine;
+    
+    /**
+     * @see ShareEngine
+     */
+    private ShareEngine mShareEngine;
 
     /**
      * Maximum time the run function for an engine is allowed to run before a
@@ -248,6 +270,7 @@ public class EngineManager {
         createActivitiesEngine();
         createPresenceEngine();
         createContentEngine();
+        createCommentsEngine();
     }
 
     /**
@@ -268,6 +291,8 @@ public class EngineManager {
         mContactSyncEngine = null;
         mGroupsEngine = null;
         mContentEngine = null;
+        mCommentsEngine = null;
+        mLocationEngine = null;
     }
 
     /**
@@ -402,6 +427,10 @@ public class EngineManager {
         assert mGroupsEngine != null;
         return mGroupsEngine;
     }
+    
+    /**
+     * Creates instance of GroupsEngine
+     */
 
     private synchronized void createGroupsEngine() {
         final MainApplication app = (MainApplication)mService.getApplication();
@@ -437,7 +466,71 @@ public class EngineManager {
         getLoginEngine().addListener(mPresenceEngine);
         addEngine(mPresenceEngine);
     }
+    
+    /**
+     * Fetch comments engine, starting it if necessary.
+     * 
+     * @return CommentsEngine object
+     */
+    public synchronized CommentsEngine getCommentsEngine() {
+        if (mCommentsEngine != null) {
+            return mCommentsEngine;
+        }
+        createCommentsEngine();
+        return mCommentsEngine;
+    }
+    
+    /**
+     * Create instance of CommentsEngine.
+     */
+    private synchronized void createCommentsEngine() {
+        mCommentsEngine = new CommentsEngine(mUiEventCallback);
+        addEngine(mCommentsEngine);
+    }
 
+    /**
+     * Fetch location engine, starting it if necessary.
+     * 
+     * @return LocationEngine object
+     */
+    public synchronized LocationEngine getLocationEngine() {
+        if (mLocationEngine != null) {
+            return mLocationEngine;
+        }
+        createLocationEngine();
+        return mLocationEngine;
+    }
+
+    /**
+     * Create instance of LocationEngine.
+     */
+    private synchronized void createLocationEngine() {
+    	mLocationEngine =new LocationEngine(mUiEventCallback);
+    	addEngine(mLocationEngine);
+    }
+    
+    /**
+     * Create instance of ShareEngine.
+     */
+    private synchronized void createShareEngine() {
+        final MainApplication app = (MainApplication)mService.getApplication();
+        mShareEngine = new ShareEngine(mUiEventCallback);
+        addEngine(mShareEngine);
+    }
+    
+    /**
+     * Fetch share engine, starting it if necessary.
+     * 
+     * @return a ShareEngine object
+     */
+    public synchronized ShareEngine getShareEngine() {
+        if (mShareEngine != null) {
+            return mShareEngine;
+        }
+        createShareEngine();
+        return mShareEngine;
+    } 
+    
     /**
      * Respond to incoming message received from Comms layer. If this message
      * has a valid engine id it is routed to that engine, otherwise The

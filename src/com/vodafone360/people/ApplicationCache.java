@@ -69,6 +69,11 @@ public class ApplicationCache {
 
     private static final String FALSE = "false";
 
+    private Long mFriendReqId = null;
+    
+    private Long mUserId = null;
+    
+    private Long mContactId = null;
     /**
      * Login details are stored in the preferences file so that they can be used
      * to pre-populate the edit fields if the user is interrupted in the middle
@@ -662,5 +667,26 @@ public class ApplicationCache {
      */
     public final long getCurrentContactFilter() {
         return mCurrentContactFilter;
+    }
+    
+    /**
+     * Setter Method - Temporary method
+     * @param reqId
+     * @param userId
+     * @param contId
+     */
+    public void setReqId(Long reqId, Long userId, Long contId){
+    	LogUtils.logD("Request id and User id set");
+    	mFriendReqId = reqId;
+    	mUserId = userId;
+    	mContactId = contId;
+    }
+    /**
+     * Getter for User Id
+     * @return
+     */
+    public Long getUserId(){
+    	LogUtils.logD("User id returned");
+    	return mUserId;
     }
 }

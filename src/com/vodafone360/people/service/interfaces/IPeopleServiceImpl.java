@@ -32,9 +32,15 @@ import java.util.List;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.MainApplication;
+import com.vodafone360.people.datatypes.Album;
+import com.vodafone360.people.datatypes.Comment;
+import com.vodafone360.people.datatypes.Content;
+import com.vodafone360.people.datatypes.EntityKey;
+import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
@@ -430,4 +436,253 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
         
     }
 
+    /***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#postComment(List)
+     */
+	 @Override
+	 public void postComment(List <Comment> commentsList){
+	    EngineManager.getInstance().getCommentsEngine().addUiPostCommentRequest(commentsList);
+	 }
+	   
+	 /***
+	 * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteComment(Bundle)
+	 */
+	 @Override
+	 public void deleteComment(Bundle data){
+	    EngineManager.getInstance().getCommentsEngine().addUiDeleteCommentRequest(data);
+	 }
+
+	/***
+	* @see com.vodafone360.people.service.interfaces.IPeopleService#deleteComment(Bundle)
+	*/
+	@Override
+	public void getComment(List<EntityKey> entitykeylist) {
+	    EngineManager.getInstance().getCommentsEngine().addUiGetCommentRequest(entitykeylist);
+		
+	}
+	
+	/***
+	* @see com.vodafone360.people.service.interfaces.IPeopleService#deleteComment(Bundle)
+	*/
+	@Override
+	public void updateComment(List<Comment> commentsList) {
+	    EngineManager.getInstance().getCommentsEngine().addUiUpdateCommentRequest(commentsList);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#addAlbum(List)
+     */
+    @Override
+	public void addAlbum(List<Album> albumList) {
+        EngineManager.getInstance().getContentEngine().addUiAddAlbumRequest(albumList);
+	}
+    
+    /***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteAlbum(List)
+     */
+    @Override
+	public void deleteAlbum(List<Long> albumList) {
+        EngineManager.getInstance().getContentEngine().addUiDeleteAlbumRequest(albumList);
+	}
+
+    /***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#getAlbum(List)
+     */
+	@Override
+	public void getAlbum(List<Long> albumList) {
+        EngineManager.getInstance().getContentEngine().addUiGetAlbumRequest(albumList);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#updateAlbum(List)
+     */
+	@Override
+	public void updateAlbum(List<Album> albumList) {
+		Log.d("IPeopleServiceImpl", "updateAlbum");
+        EngineManager.getInstance().getContentEngine().addUiUpdateAlbumRequest(albumList);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#addContentToAlbum(List)
+     */
+	@Override
+	public void addContentToAlbum(Bundle data) {
+		Log.d("IPeopleServiceImpl", "addContentToAlbum");
+        EngineManager.getInstance().getContentEngine().addUiAddContentToAlbumRequest(data);
+	}
+
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteContentFromAlbum(List)
+     */
+	@Override
+	public void deleteContentFromAlbum(Bundle data) {
+		Log.d("IPeopleServiceImpl", "deleteContentFromAlbum");
+        EngineManager.getInstance().getContentEngine().addUiDeleteContentFromAlbumRequest(data);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#publishAlbum(List)
+     */
+	@Override
+	public void publishAlbum(Bundle data) {
+		Log.d("IPeopleServiceImpl", "publishAlbum");
+        EngineManager.getInstance().getContentEngine().addUiPublishAlbumRequest(data);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#addContent(List)
+     */
+	@Override
+	public void addContent(List<Content> contentlist) {
+		Log.d("IPeopleServiceImpl", "uploadImage");
+	    EngineManager.getInstance().getContentEngine().addUiUploadContentRequest(contentlist);
+	}
+	  
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#getContent(Bundle)
+     */
+	@Override
+	public void getContent(Bundle data) {
+		Log.d("IPeopleServiceImpl", "getContent");
+        EngineManager.getInstance().getContentEngine().addUiGetContentRequest(data);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#publishContent(Bundle)
+     */
+	@Override
+	public void publishContent(Bundle data) {
+		Log.d("IPeopleServiceImpl", "publishContent");
+        EngineManager.getInstance().getContentEngine().addUiPublishContentRequest(data);
+	}
+
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteContent(List)
+     */
+	@Override
+	public void deleteContent(List<Long> contentList) {
+		Log.d("IPeopleServiceImpl", "deleteContent");
+        EngineManager.getInstance().getContentEngine().addUiDeleteContentRequest(contentList);
+	}
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#startLocationEngine(Bundle)
+     */
+	
+	  @Override
+	    public void startLocationEngine(Bundle b) {
+	    	LogUtils.logD("LocationEngine.startLocationEngine()");
+	    	EngineManager.getInstance().getLocationEngine().addUiGetMyLocation(b);
+	    }
+	  
+	  /***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#sendLocationNudge(Bundle)
+	     */
+	    @Override
+	    public void sendLocationNudge(Bundle b){
+	    	LogUtils.logD("LocationEngine.sendLocationNudge()");
+	    	EngineManager.getInstance().getLocationEngine().addUiSendLocationNudge(b);
+	    }
+	    
+	    /***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#addUserGroup()
+	     */
+	    @Override
+	    public void addUserGroup(String groupName) {
+	    	EngineManager.getInstance().getGroupsEngine().addUiAddUserDefinedGroup(groupName);
+	    }
+	    
+	    /***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteUserGroup()
+	     */
+	    @Override
+	    public void deleteUserGroup(String groupName) {
+	    	EngineManager.getInstance().getGroupsEngine().addUiDeleteUserDefinedGroup(groupName);
+	    }
+	    
+	    /***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#getGroupPrivacySetting()
+	     */
+	    @Override
+	    public void getGroupPrivacySetting(String groupName) {
+	    	EngineManager.getInstance().getGroupsEngine().addUiGetGroupPrivacySetting(groupName);
+	    }
+	    
+	    /***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#setGroupPrivacySetting()
+	     */
+	    @Override
+	    public void setGroupPrivacySetting(String groupName, int contentType, int status) {
+	    	EngineManager.getInstance().getGroupsEngine().addUiSetGroupPrivacySetting(groupName, contentType, status);
+	    }
+	    
+	    /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#shareAlbum()
+	     */
+	    
+	    public void shareAlbum(Long groupId, EntityKey entityId){
+	    	EngineManager.getInstance().getShareEngine().addUiShareAlbum(groupId, entityId);
+	    }
+	    
+	    /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#allowGroup()
+	     */
+	    public void allowGroup(Long groupId, EntityKey entityId){
+	    	EngineManager.getInstance().getShareEngine().addUiAllowGroup(groupId, entityId);
+	    }
+	    
+	    /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#albumSharedWith()
+	     */
+	    public void albumSharedWith(EntityKey entityId){
+	    	EngineManager.getInstance().getShareEngine().addUiSharedWith(entityId);
+	    }
+	    
+	    /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#denyAlbum()
+	     */
+	    public void denyAlbum(Long groupId, EntityKey entityId){
+	    	EngineManager.getInstance().getShareEngine().addUiDenyGroup(groupId, entityId);
+	    }
+
+	    /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#approveFriendRequest()
+	     */
+		@Override
+		public void approveFriendRequest(List<Long> requestIdList) {
+			EngineManager.getInstance().getContactSyncEngine().addUiApproveFriendReq(requestIdList);
+		}
+
+		 /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#getFriendRequest()
+	     */
+		@Override
+		public void getFriendRequest() {
+			EngineManager.getInstance().getContactSyncEngine().addUiGetFriendReq();
+		}
+
+		 /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#rejectFriendRequest()
+	     */
+		@Override
+		public void rejectFriendRequest(List<Long> requestIdList) {
+			EngineManager.getInstance().getContactSyncEngine().addUiRejectFriendReq(requestIdList);
+
+		}
+
+		 /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#removeFriendRequest()
+	     */
+		@Override
+		public void removeFriendRequest(List<Long> userIdList) {
+			EngineManager.getInstance().getContactSyncEngine().addUiRemoveFriend(userIdList);
+		}
+
+		 /**
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#sendFriendRequest()
+	     */
+		@Override
+		public void sendFriendRequest(Bundle data) {
+			EngineManager.getInstance().getContactSyncEngine().addUiSendFriendReq(data);
+		}
 }

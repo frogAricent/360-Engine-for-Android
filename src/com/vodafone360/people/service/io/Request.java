@@ -81,7 +81,38 @@ public class Request {
         PUSH_MSG,
         EXTERNAL_RPG_RESPONSE,
         GET_MY_IDENTITIES,
-        GET_AVAILABLE_IDENTITIES
+        GET_AVAILABLE_IDENTITIES,
+        POST_COMMENT,
+        DELETE_COMMENT,
+        GET_COMMENT,
+        UPDATE_COMMENT,
+        ADD_ALBUM,
+        DELETE_ALBUM,
+        GET_ALBUM,
+        UPDATE_ALBUM,
+        ADD_CONTENT_TO_ALBUM, 
+        DELETE_CONTENT_FROM_ALBUM,
+        PUBLISH_ALBUM,
+        UPLOAD_CONTENT,
+        UPLOAD_CONTENT_AND_PUBLISH,
+        GET_CONTENT,
+        PUBLISH_CONTENT, 
+        DELETE_CONTENT,
+        GET_GEOCODE_ADDRESS,
+        SEND_LOCATION_NUDGE,
+        GET_GROUP_PRIVACY,
+        SET_GROUP_PRIVACY,
+        ADD_GROUP,
+        DELETE_GROUP,
+        SHARE_ALBUM,
+        GET_GROUPS_SHARED_WITH,
+        ALLOW_GROUP,
+        DENY_GROUP,
+        GET_FRIEND_REQUESTS,
+        APPROVE_FRIEND_REQUESTS,
+        REJECT_FRIEND_REQUESTS,
+        REMOVE_FRIEND, 
+        FRIENDSHIP_REQUEST_RECEIVED
         // response to external RPG request
     }
 
@@ -180,7 +211,7 @@ public class Request {
      */
     public Request(String apiMethodName, Type type, EngineId engineId, boolean isFireAndForget,
             long timeout) {
-        mType = type; // TODO find out a type yourself?
+        mType = type; // TODO find out a type yourself?TY
         mEngineId = engineId;
         mApiMethodName = apiMethodName;
         mIsFireAndForget = isFireAndForget;
@@ -188,7 +219,8 @@ public class Request {
         mTimeout = timeout;
 
         if ((type == Type.RETRIEVE_PUBLIC_KEY) || (type == Type.SIGN_UP) || (type == Type.STATUS)
-                || (type == Type.SIGN_IN)) {
+                || (type == Type.SIGN_IN) || (type == Type.UPLOAD_CONTENT) || (type == Type.UPLOAD_CONTENT_AND_PUBLISH) 
+                || (type == Type.GET_CONTENT)) {
             // we need to register, sign in, get t&c's etc. so the request needs
             // to happen without
             // user auth

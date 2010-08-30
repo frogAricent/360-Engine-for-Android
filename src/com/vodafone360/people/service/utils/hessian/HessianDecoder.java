@@ -36,17 +36,29 @@ import java.util.zip.GZIPInputStream;
 
 import com.caucho.hessian.micro.MicroHessianInput;
 import com.vodafone360.people.datatypes.ActivityItem;
+import com.vodafone360.people.datatypes.AlbumListResponse;
+import com.vodafone360.people.datatypes.AlbumResponse;
 import com.vodafone360.people.datatypes.AuthSessionHolder;
 import com.vodafone360.people.datatypes.BaseDataType;
+import com.vodafone360.people.datatypes.CommentListResponse;
+import com.vodafone360.people.datatypes.CommentsResponse;
 import com.vodafone360.people.datatypes.Contact;
 import com.vodafone360.people.datatypes.ContactChanges;
 import com.vodafone360.people.datatypes.ContactDetailDeletion;
 import com.vodafone360.people.datatypes.ContactListResponse;
+import com.vodafone360.people.datatypes.ContentListResponse;
+import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.Conversation;
 import com.vodafone360.people.datatypes.ExternalResponseObject;
+import com.vodafone360.people.datatypes.Group;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.ItemList;
+import com.vodafone360.people.datatypes.ListOfLong;
+import com.vodafone360.people.datatypes.LocationNudgeResult;
+import com.vodafone360.people.datatypes.LongGeocodeAddress;
 import com.vodafone360.people.datatypes.PresenceList;
+import com.vodafone360.people.datatypes.PrivacySetting;
+import com.vodafone360.people.datatypes.PrivacySettingList;
 import com.vodafone360.people.datatypes.PublicKeyDetails;
 import com.vodafone360.people.datatypes.PushAvailabilityEvent;
 import com.vodafone360.people.datatypes.PushChatConversationEvent;
@@ -352,10 +364,11 @@ public class HessianDecoder {
      * @param type The type of the request that was sent, e.g. get contacts changes.
      * 
      * @return The type of the response that was parsed (to be found in DecodedResponse.ResponseType).
+     * @throws IOException 
      * 
      */
     private int decodeResponseByRequestType(List<BaseDataType> clist,
-            Hashtable<String, Object> hash, Request.Type type) {
+            Hashtable<String, Object> hash, Request.Type type) throws IOException {
     	int responseType = DecodedResponse.ResponseType.UNKNOWN.ordinal();
     	
         switch (type) {
@@ -474,7 +487,206 @@ public class HessianDecoder {
                 clist.add(mConversation);
                 responseType = DecodedResponse.ResponseType.CREATE_CONVERSATION_RESPONSE.ordinal();
                 break;
-            default:
+            
+            case POST_COMMENT:
+    			CommentsResponse postCommentsResp = new CommentsResponse();
+    			postCommentsResp = postCommentsResp.createFromHashtable(hash);
+    			clist.add(postCommentsResp);
+                responseType = DecodedResponse.ResponseType.POST_COMMENTS_RESPONSE.ordinal();
+    			break;
+    		
+            case DELETE_COMMENT:
+    			CommentsResponse deleteCommentResp = new CommentsResponse();
+    			deleteCommentResp = deleteCommentResp.createFromHashtable(hash);
+    			clist.add(deleteCommentResp);
+                responseType = DecodedResponse.ResponseType.DELETE_COMMENTS_RESPONSE.ordinal();
+    			break;
+
+    		case GET_COMMENT :
+    			CommentListResponse getCommentsResp = new CommentListResponse();
+    			getCommentsResp = getCommentsResp.createFromHashTable(hash);
+    			clist.add(getCommentsResp);
+                responseType = DecodedResponse.ResponseType.GET_COMMENTS_RESPONSE.ordinal();
+    			break;
+    		
+    		case UPDATE_COMMENT :
+    			CommentsResponse updateCommentsResp = new CommentsResponse();
+    			updateCommentsResp = updateCommentsResp.createFromHashtable(hash);
+    			clist.add(updateCommentsResp);
+                responseType = DecodedResponse.ResponseType.UPDATE_COMMENTS_RESPONSE.ordinal();
+    			break;
+    		
+    		case ADD_ALBUM:
+    			AlbumResponse mAlbum = new AlbumResponse();
+    			mAlbum = mAlbum.createFromHashtable(hash);
+    			clist.add(mAlbum);
+                responseType = DecodedResponse.ResponseType.ADD_ALBUMS_RESPONSE.ordinal();
+    			break;
+    		
+    		case UPDATE_ALBUM:
+    			AlbumResponse updateAlbumResp = new AlbumResponse();
+    			updateAlbumResp = updateAlbumResp.createFromHashtable(hash);
+    			clist.add(updateAlbumResp);
+    			responseType = DecodedResponse.ResponseType.UPDATE_ALBUMS_RESPONSE.ordinal();
+    			break;
+    		
+    		case DELETE_ALBUM:
+    			AlbumResponse deleteAlbumResp = new AlbumResponse();
+    			deleteAlbumResp = deleteAlbumResp.createFromHashtable(hash);
+    			clist.add(deleteAlbumResp);
+    			responseType = DecodedResponse.ResponseType.DELETE_ALBUMS_RESPONSE.ordinal();
+    			break;
+
+    		case GET_ALBUM:
+    			AlbumListResponse getAlbumResp = new AlbumListResponse();
+    			getAlbumResp = getAlbumResp.createFromHashTable(hash);
+    			clist.add(getAlbumResp);
+    			responseType = DecodedResponse.ResponseType.GET_ALBUMS_RESPONSE.ordinal();
+    			break;
+    		
+    		case ADD_CONTENT_TO_ALBUM:
+               	ContentListResponse addContentToAlbumResp = new ContentListResponse();
+               	addContentToAlbumResp = addContentToAlbumResp.createFromHashtable(hash);
+                clist.add(addContentToAlbumResp);
+                responseType = DecodedResponse.ResponseType.ADD_CONTENT_TO_ALBUM_RESPONSE.ordinal();
+               	break;
+               	
+            case DELETE_CONTENT_FROM_ALBUM:
+               	ContentListResponse deleteContentFromAlbumResp = new ContentListResponse();
+               	deleteContentFromAlbumResp = deleteContentFromAlbumResp.createFromHashtable(hash);
+                clist.add(deleteContentFromAlbumResp);
+                responseType = DecodedResponse.ResponseType.DELETE_CONTENT_FROM_ALBUM_RESPONSE.ordinal();
+               	break;			
+            
+            case PUBLISH_ALBUM:
+            	AlbumResponse publishAlbumResp = new AlbumResponse();
+            	publishAlbumResp = publishAlbumResp.createFromHashtable(hash);
+            	clist.add(publishAlbumResp);
+            	responseType = DecodedResponse.ResponseType.PUBLISH_ALBUMS_RESPONSE.ordinal();
+            	break;
+            
+            case UPLOAD_CONTENT:
+            	ContentListResponse addContentResp = new ContentListResponse();
+            	addContentResp = addContentResp.createFromHashtable(hash);
+                clist.add(addContentResp);
+                responseType = DecodedResponse.ResponseType.ADD_CONTENT_RESPONSE.ordinal();
+            	break;
+            
+            case GET_CONTENT:
+            	ContentResponse mContentResponse = new ContentResponse();
+            	mContentResponse = mContentResponse.createFromHashtable(hash);
+            	clist.add(mContentResponse);
+            	responseType = DecodedResponse.ResponseType.GET_CONTENT_RESPONSE.ordinal();
+            	break;
+            	
+            case DELETE_CONTENT:
+            	ContentListResponse deleteContentResp = new ContentListResponse();
+            	deleteContentResp = deleteContentResp.createFromHashtable(hash);
+                clist.add(deleteContentResp);
+                responseType = DecodedResponse.ResponseType.DELETE_CONTENT_RESPONSE.ordinal();
+            	break;
+            
+            case PUBLISH_CONTENT:
+            	ContentListResponse publishedContent = new ContentListResponse();
+            	publishedContent = publishedContent.createFromHashtable(hash);
+            	clist.add(publishedContent);
+            	responseType = DecodedResponse.ResponseType.PUBLISH_CONTENT_RESPONSE.ordinal();
+            	break;
+            
+            case GET_GEOCODE_ADDRESS:
+    			LongGeocodeAddress mGeoCode = new LongGeocodeAddress();
+    			mGeoCode = mGeoCode.createFromHashtable(hash);
+    			clist.add(mGeoCode);
+            	responseType = DecodedResponse.ResponseType.GET_LOCATION_RESPONSE.ordinal();
+    			break;
+
+    		case SEND_LOCATION_NUDGE:
+    			LocationNudgeResult mNudge = new LocationNudgeResult();
+    			mNudge=mNudge.createFromHashtable(hash);
+    			clist.add(mNudge);
+            	responseType = DecodedResponse.ResponseType.SEND_LOCATION_NUDGE_RESPONSE.ordinal();
+    			break;
+
+    		case ADD_GROUP:
+    			Group grp = new Group();
+    			grp = grp.createFromHashtable(hash);
+    			clist.add(grp);
+            	responseType = DecodedResponse.ResponseType.ADD_MY_GROUP_RESPONSE.ordinal();
+    			break;
+
+    		case DELETE_GROUP:
+    			ListOfLong grpIdList = new ListOfLong();
+    			grpIdList = grpIdList.createFromHashtable(hash);
+            	responseType = DecodedResponse.ResponseType.DELETE_MY_GROUP_RESPONSE.ordinal();
+    			clist.add(grpIdList);
+    			
+    		case GET_GROUP_PRIVACY:
+    			PrivacySettingList list = new PrivacySettingList();
+    			list.populateFromHashtable(hash);
+    			clist.add(list);
+            	responseType = DecodedResponse.ResponseType.GET_PRIVACY_SETTINGS_RESPONSE.ordinal();
+    			break;
+    		
+    		case SET_GROUP_PRIVACY:
+    			PrivacySetting psSet = new PrivacySetting();
+    			psSet = psSet.createFromHashtable(hash);
+    			clist.add(psSet);
+    			break;
+            
+    		case GET_GROUPS_SHARED_WITH:
+    			ListOfLong groupIds = new ListOfLong();
+    			groupIds = groupIds.createFromHashtable(hash);
+    			clist.add(groupIds);
+    			responseType = DecodedResponse.ResponseType.GET_GROUPS_SHARED_WITH_RESPONSE.ordinal();
+    			break;
+    		
+    		case ALLOW_GROUP:
+    			//Fall through
+    		case DENY_GROUP:
+    			//Fall through
+    		case SHARE_ALBUM:
+    			ItemList albumlist = new ItemList(ItemList.Type.album);
+    			albumlist.populateFromHashtable(hash);
+    			clist.add(albumlist);
+    			responseType = DecodedResponse.ResponseType.SHARE_ALBUM_RESPONSE.ordinal();
+    			break;
+    			
+    		case FRIENDSHIP_REQUEST:
+    			ListOfLong userId = new ListOfLong();
+    			userId = userId.createFromHashtable(hash);
+    			clist.add(userId);
+    			responseType = DecodedResponse.ResponseType.FRIENDSHIP_REQUEST_RESPONSE.ordinal();
+    			break;
+    			
+    		case GET_FRIEND_REQUESTS:
+    			ItemList friendReq = new ItemList(ItemList.Type.friend_requests);
+    			friendReq.populateFromHashtable(hash);
+    			clist.add(friendReq);
+    			responseType = DecodedResponse.ResponseType.GET_FRIEND_RESPONSE.ordinal();
+    			break;
+    			
+    		case APPROVE_FRIEND_REQUESTS:
+    			ListOfLong friendshipIdList = new ListOfLong();
+    			friendshipIdList = friendshipIdList.createFromHashtable(hash);
+    			clist.add(friendshipIdList);
+    			responseType = DecodedResponse.ResponseType.APPROVE_FRIEND_RESPONSE.ordinal();
+    			break;
+    			
+    		case REJECT_FRIEND_REQUESTS:
+    			ListOfLong rejectedIdList = new ListOfLong();
+    			rejectedIdList = rejectedIdList.createFromHashtable(hash);
+    			clist.add(rejectedIdList);
+    			responseType = DecodedResponse.ResponseType.REJECT_FRIEND_RESPONSE.ordinal();
+    			break;
+    			
+    		case REMOVE_FRIEND:
+    			ListOfLong removedUserIdList = new ListOfLong();
+    			removedUserIdList = removedUserIdList.createFromHashtable(hash);
+    			clist.add(removedUserIdList);
+    			responseType = DecodedResponse.ResponseType.REMOVE_FRIEND_RESPONSE.ordinal();
+    			break;
+    			
+    		default:
                 LogUtils.logE("HessianDecoder.decodeResponseByRequestType() Unhandled type["
                         + type.name() + "]");
         }

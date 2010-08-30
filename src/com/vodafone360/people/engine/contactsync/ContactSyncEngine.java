@@ -27,9 +27,11 @@ package com.vodafone360.people.engine.contactsync;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
@@ -37,7 +39,11 @@ import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.Settings;
 import com.vodafone360.people.database.DatabaseHelper;
 import com.vodafone360.people.database.DatabaseHelper.DatabaseChangeType;
+import com.vodafone360.people.database.tables.ContactsTable;
 import com.vodafone360.people.datatypes.BaseDataType;
+import com.vodafone360.people.datatypes.FriendshipRequest;
+import com.vodafone360.people.datatypes.ItemList;
+import com.vodafone360.people.datatypes.ListOfLong;
 import com.vodafone360.people.datatypes.PushEvent;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.EngineManager;
@@ -50,6 +56,7 @@ import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.service.agent.NetworkAgent.AgentState;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
+import com.vodafone360.people.service.io.api.Contacts;
 import com.vodafone360.people.utils.LogUtils;
 
 /**
@@ -99,6 +106,15 @@ public class ContactSyncEngine extends BaseEngine implements IContactSyncCallbac
     /** The last known status of the contacts sync. */
     private ServiceStatus mLastStatus = ServiceStatus.SUCCESS;
 
+    private boolean isSendingFriendRequests = false;
+    
+    private boolean isGettingFriendRequests = false;
+    
+    private boolean isApprovingFriendRequests = false;
+    
+    private boolean isRejectingFriendRequests = false;
+    
+    private boolean isRemovingFriend = false;
     /**
      * Holds parameters for the UI sync request
      */
@@ -830,6 +846,31 @@ public class ContactSyncEngine extends BaseEngine implements IContactSyncCallbac
         if (mActiveProcessor != null) {
             mActiveProcessor.processCommsResponse(resp);
         }
+        
+        if(isSendingFriendRequests == true){
+        	isSendingFriendRequests = false;
+        	handleSendFriendReq(resp.mDataTypes);
+        }
+        
+        if(isGettingFriendRequests == true){
+        	isGettingFriendRequests = false;
+        	handleGetFriendReq(resp);
+        }
+        
+        if(isApprovingFriendRequests == true){
+        	isApprovingFriendRequests = false;
+        	handleApproveFriendReq(resp);
+        }
+        
+        if(isRejectingFriendRequests == true){
+        	isRejectingFriendRequests = false;
+        	handleRejectFriendReq(resp);
+        }
+        
+        if(isRemovingFriend == true){
+        	isRemovingFriend = false;
+        	handleRemoveFriend(resp);
+        }
     }
 
     /**
@@ -905,6 +946,26 @@ public class ContactSyncEngine extends BaseEngine implements IContactSyncCallbac
                     }
                 }
                 break;
+           
+            case SEND_FRIEND_REQ:
+            	sendFriendReq((Bundle)data);
+            	break;
+            	
+            case GET_FRIEND_REQ:
+            	startGetFriendReq();
+            	break;
+            	
+            case APPROVE_FRIEND_REQ:
+            	startApproveFriendReq((List<Long>)data);
+            	break;
+            	
+            case REJECT_FRIEND_REQ:
+            	startRejectFriendReq((List<Long>)data);
+            	break;
+            	
+            case REMOVE_FRIEND:
+            	startRemoveFriend((List<Long>)data);
+            	break;
             default:
                 // do nothing.
                 break;
@@ -1724,4 +1785,399 @@ public class ContactSyncEngine extends BaseEngine implements IContactSyncCallbac
         // FetchNativeContacts processor.
         startFetchNativeContactSyncTimer();
     }
+    
+    /**
+     * This method adds a request to send friend request. 
+     * The request is added to the UI request and processed when the engine is ready 
+     * 
+     * @param data contains the contact ID of the person to  whom request is to be send and message to be sent
+     */
+    public void addUiSendFriendReq(Bundle data){
+    	LogUtils.logD("ContactSyncEngine:addUiSendFriendReq");
+    	isSendingFriendRequests = true;
+    	addUiRequestToQueue(ServiceUiRequest.SEND_FRIEND_REQ, data);
+    }
+    
+    
+    /**
+     * 
+     * This method sends a request to server to send friend request
+     * 
+     * @param data contains the contact ID of the person to  whom request is to be send and message to be sent
+     * 
+     */
+    private void sendFriendReq(Bundle bundle){
+    	LogUtils.logD("ContactSyncEngine:sendFriendReq");
+    	if (!checkConnectivity()) {
+            return;
+        }
+    	Long userId = new Long(-1);
+    	String message = "Hi!! I want to be ur friend on VF360.. :)";
+    	if(bundle.get("message") != null){
+    		message = (String)bundle.get("message");
+    	}
+    	
+    	if(bundle.get("userid") != null){
+    		userId = (Long)bundle.get("userid");
+    	}
+    	
+    	if(userId == -1){
+    		LogUtils.logE("Your friend's Id cannot be -1");
+    		// Need to delete the request from the request queue.. IMP
+    		completeUiRequest(ServiceStatus.ERROR_USERNAME_INVALID);
+    	}
+    	
+        if (!setReqId(Contacts.sendFriendshipReq(this, userId,message))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    
+    /**
+     * This method handles Server response to send request. The response is Success if friend request is sent successfully and -1 on failure and on any wrong input Bad parameter is returned.
+     * 
+     * @param response contains list of BaseDataTypes generated from Server response.
+     * @return void
+     */
+    private void handleSendFriendReq(List<BaseDataType> data){
+    	LogUtils.logD("ContactSyncEngine:handleSendFriendReq");
+    	ServiceStatus errorStatus = getResponseStatus(BaseDataType.LIST_OF_LONG_DATATYPE, data);
+    	if(errorStatus == ServiceStatus.SUCCESS){
+    		ListOfLong userId = new ListOfLong();
+			userId = (ListOfLong)data.get(0);
+			LogUtils.logI("Friend request sent to user ID "+userId.mLongList.get(0));
+		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+			LogUtils.logE("Bad Server Parameter");
+		}else{
+			LogUtils.logE("Failure");
+		}
+    	
+    	completeUiRequest(errorStatus, null);
+    }
+    
+     /**
+     * This method adds a request to get friend request. 
+     * The request is added to the UI request and processed when the engine is ready 
+     * @param none
+     * @return void 
+     */
+    public void addUiGetFriendReq(){
+    	LogUtils.logD("ContactSyncEngine:addUiGetFriendReq");
+    	isGettingFriendRequests = true;
+    	addUiRequestToQueue(ServiceUiRequest.GET_FRIEND_REQ, null);
+    }
+        
+    /**
+     * This method sends request to get VF360 Friend requests
+     * @return void
+     */
+    private void startGetFriendReq(){
+    	LogUtils.logD("ContactSyncEngine:startGetFriendReq");
+    	if (!checkConnectivity()) {
+            return;
+        }
+        
+        if (!setReqId(Contacts.getFriendshipReq(this))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    /**
+     * This method handles Server response to handles friend requests received. 
+     * @param response contains list of BaseDataTypes generated from Server response.
+     */
+    
+    private void handleGetFriendReq(DecodedResponse response){
+    	LogUtils.logD("ContactSyncEngine:handleGetFriendReq");
+    	ServiceStatus errorStatus = getResponseStatus(BaseDataType.ITEM_LIST_DATA_TYPE, response.mDataTypes);
+    	if(errorStatus == ServiceStatus.SUCCESS){
+			LogUtils.logI("Friendship requests received.");
+			handleReceivedFriendReqIds(response.mDataTypes);
+			}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+			LogUtils.logE("Bad Server Parameter");
+		}else{
+			LogUtils.logE("Failure");
+		}
+    	completeUiRequest(errorStatus, null);
+    }
+    /**
+     * This method handles the received friends request id
+     * @param data contains list of BaseDataTypes generated from Server response.
+     */
+    private void handleReceivedFriendReqIds(List<BaseDataType> data){
+    	LogUtils.logD("ContactSyncEngine.handleReceivedFriendReqIds - Received follwing Id's");
+    	List<FriendshipRequest> requests = new ArrayList<FriendshipRequest>();
+    	for (int i = 0; i < data.size(); i++) {
+    		ItemList itemList = (ItemList)data.get(i);
+            for (int j = 0; j < itemList.mItemList.size(); j++) {
+            	requests.add((FriendshipRequest)itemList.mItemList.get(j));
+            }
+    	}
+    	for (int i = 0; i < requests.size(); i++) {
+            LogUtils.logI(requests.get(i).toString());
+    	}
+    	
+    	if(requests.size() != 0){
+    		mCache.setReqId(requests.get(0).mRequestId, requests.get(0).mUserProfile.userID,requests.get(0).mUserProfile.contactID);
+    		
+    	}
+    }
+    
+     /**
+     * This method adds a request to reject friend requests. The request is added to the UI request and processed when the engine is ready.
+     * @param reqIdList contains new friend request id list
+     * @return void 
+     */
+    public void addUiRejectFriendReq(List<Long> reqIdList){
+    	LogUtils.logD("ContactSyncEngine:addUiRejectFriendReq");
+    	isRejectingFriendRequests = true;
+    	addUiRequestToQueue(ServiceUiRequest.REJECT_FRIEND_REQ, reqIdList);
+    }
+    
+    
+    /**
+     * Sends a request to server to reject friend requests
+     * @param reqIds contains id of the friends to be rejected
+     * @return void
+     */
+    private void startRejectFriendReq(List<Long> reqIds){
+    	LogUtils.logD("ContactSyncEngine:startRejectFriendReq");
+    	if (!checkConnectivity()) {
+            return;
+        }
+        
+        if (!setReqId(Contacts.rejectFriendshipReq(this, reqIds))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    /***
+     * Handle Server response to reject a friend request. 
+     * The response is Success if request is rejected successfully and -1 on failure and on any wrong input Bad parameter is returned.
+     * @param response contains the list of BaseDataTypes generated from Server 
+     * @return void
+     */
+    
+    private void handleRejectFriendReq(DecodedResponse response){
+    	LogUtils.logD("ContactSyncEngine:handleRejectFriendReq");
+    	ServiceStatus errorStatus = getResponseStatus(BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
+    	if(errorStatus == ServiceStatus.SUCCESS){
+			LogUtils.logI("User Profiles received.");
+			handleReceivedRejectIds(response.mDataTypes);
+		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+			LogUtils.logE("Bad Server Parameter");
+		}else{
+			LogUtils.logE("Failure");
+		}
+    	
+    	completeUiRequest(errorStatus, null);
+    }
+    /**
+     * This method handles the rejected friend request id
+     * @param data contains the list of BaseDataTypes generated from Server
+     */
+    private void handleReceivedRejectIds(List<BaseDataType> data){
+    	LogUtils.logI("ContactSyncEngine.handleReceivedRejectIds()");
+    	if(data.size() != 0){
+			List<Long> reqIdList = new ArrayList<Long>();
+			for(int it = 0;it < data.size(); it++){
+				ListOfLong reqList = (ListOfLong)data.get(it);
+				
+				for (int j = 0; j < reqList.mLongList.size(); j++) {
+					reqIdList.add((Long)reqList.mLongList.get(j));
+                }
+				if (reqIdList.get(0) != -1) {
+					LogUtils.logI(reqIdList.size()+ " user/s' friend request rejected");
+					/*for (int j = 0; j < reqIdList.size(); j++) {
+						LogUtils.logI("Request ID:" + reqIdList.get(j));
+					}*/
+				}else{
+					LogUtils.logE("The user could not be rejected");
+				}
+				
+			}
+		}else{
+			LogUtils.logE("No data received");
+		}
+    }
+    
+       
+    /**
+     * This method adds a request to remove friend. The request is added to the UI request and processed when the engine is ready.
+     * @param userIdList contains list of user id
+     * @return void 
+     */
+    public void addUiRemoveFriend(List<Long> userIdList){
+    	LogUtils.logD("ContactSyncEngine:addUiRemoveFriend");
+    	isRemovingFriend = true;
+    	addUiRequestToQueue(ServiceUiRequest.REMOVE_FRIEND, userIdList);
+    }
+    
+    
+    /**
+     * This method send request to remove friend
+     * @param usrIds contains the user id of the friend to be removed
+     * @return void 
+     */
+    private void startRemoveFriend(List<Long> usrIds){
+    	LogUtils.logD("ContactSyncEngine:startRemoveFriendReq");
+    	if (!checkConnectivity()) {
+            return;
+        }
+        
+        if (!setReqId(Contacts.removeFriendship(this, usrIds))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    /**
+     * Handle response for removing friend
+     * @param response contains the list of BaseDataTypes generated from Server 
+     * @return void 
+     */
+    
+    private void handleRemoveFriend(DecodedResponse response){
+    	LogUtils.logD("ContactSyncEngine:handleRemoveFriend");
+    	ServiceStatus errorStatus = getResponseStatus(BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
+    	if(errorStatus == ServiceStatus.SUCCESS){
+			LogUtils.logD("User Profiles received.");
+			handleReceivedRemoveIds(response.mDataTypes);
+    	}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+			LogUtils.logE("Bad Server Parameter");
+		}else{
+			LogUtils.logE("Failure");
+		}
+    	
+    	completeUiRequest(errorStatus, null);
+    }
+    /**
+     * This method handle the id that need to be removed
+     * @param data contains the list of BaseDataTypes generated from Server 
+     * @return void 
+     */
+    private void handleReceivedRemoveIds(List<BaseDataType> data){
+    	LogUtils.logI("ContactSyncEngine.handleReceivedRemoveIds()");
+    	if(data.size() != 0){
+			List<Long> reqIdList = new ArrayList<Long>();
+			for(int it = 0;it < data.size(); it++){
+				ListOfLong reqList = (ListOfLong)data.get(it);
+				
+				for (int j = 0; j < reqList.mLongList.size(); j++) {
+					reqIdList.add((Long)reqList.mLongList.get(j));
+                }
+				if (reqIdList.get(0) != -1) {
+					LogUtils.logI(reqIdList.size()+ " friend/s' removed");
+					/*for (int j = 0; j < reqIdList.size(); j++) {
+						LogUtils.logI("User ID:" + reqIdList.get(j));
+					}*/
+				}else{
+					LogUtils.logE("The user could not be removed");
+				}
+				
+			}
+			Long contLocalId ;
+			contLocalId = ContactsTable.fetchLocalIdFromUserId(mCache.getUserId(), mDb.getReadableDatabase());
+			mDb.deleteContact(contLocalId);
+    	}else{
+			LogUtils.logE("No data received");
+		}
+    }
+  
+    
+    /**
+     * This method adds a request to approve pending friend requests. 
+     * The request is added to the UI request and processed when the engine is ready.
+     * 
+     * @param reqIdList The new invites request id list
+     * @return void
+     */
+    public void addUiApproveFriendReq(List<Long> reqIdList){
+    	LogUtils.logD("ContactSyncEngine:addUiApproveFriendReq");
+    	isApprovingFriendRequests = true;
+    	addUiRequestToQueue(ServiceUiRequest.APPROVE_FRIEND_REQ, reqIdList);
+    }
+    
+    
+    /**
+     * This method sends a request to server to approve friend requests
+     * @param reqIds : contains the  new invites request id list
+     * @return void 
+     */
+    private void startApproveFriendReq(List<Long> reqIds){
+    	LogUtils.logD("ContactSyncEngine:startApproveFriendReq");
+    	if (!checkConnectivity()) {
+            return;
+        }
+    	
+    	if (!setReqId(Contacts.approveFriendshipReq(this, reqIds))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    /***
+     * Handle response for approving friend request
+     * @param response contains the list of BaseDataTypes generated from Server
+     * @return void  
+     */
+    
+    private void handleApproveFriendReq(DecodedResponse response){
+    	LogUtils.logD("ContactSyncEngine:handleApproveFriendReq");
+    	ServiceStatus errorStatus = getResponseStatus(BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
+    	if(errorStatus == ServiceStatus.SUCCESS){
+			LogUtils.logD("User Profiles received.");
+			handleReceivedApproveIds(response.mDataTypes);
+		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+			LogUtils.logE("Bad Server Parameter");
+		}else{
+			LogUtils.logE("Failure");
+		}
+    	
+    	completeUiRequest(errorStatus, null);
+    }
+    /**
+     * This method handles the received approve
+     * @param data contains the list of BaseDataTypes generated from Server
+     * @return void
+     */
+    private void handleReceivedApproveIds(List<BaseDataType> data){
+    	LogUtils.logI("ContactSyncEngine.handleReceivedApproveIds()");
+    	if(data.size() != 0){
+			List<Long> reqIdList = new ArrayList<Long>();
+			for(int it = 0;it < data.size(); it++){
+				ListOfLong reqList = (ListOfLong)data.get(it);
+				
+				for (int j = 0; j < reqList.mLongList.size(); j++) {
+					reqIdList.add((Long)reqList.mLongList.get(j));
+                }
+				if (reqIdList.get(0) != -1) {
+					LogUtils.logI(reqIdList.size()
+							+ " users accepted as friends");
+					/*for (int j = 0; j < reqIdList.size(); j++) {
+						LogUtils.logI("Request ID:" + reqIdList.get(j));
+					}*/
+				}else{
+					LogUtils.logE("The user was not accepted as friend");
+				}
+				
+			}
+		}else{
+			LogUtils.logE("No data received");
+		}
+    }
+    
+    /**
+     * Get Connectivity status from NetworkAgent.
+     * 
+     * @return true if NetworkAgent reports we have connectivity, false
+     *         otherwise (complete outstanding request with ERROR_COMMS).
+     */
+    private boolean checkConnectivity() {
+        if (NetworkAgent.getAgentState() != NetworkAgent.AgentState.CONNECTED) {
+            completeUiRequest(ServiceStatus.ERROR_COMMS, null);
+            return false;
+        }
+        return true;
+    }
+    
+    
 }

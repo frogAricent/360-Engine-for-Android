@@ -26,10 +26,16 @@
 package com.vodafone360.people.service.interfaces;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.os.Bundle;
 import android.os.Handler;
 
+import com.vodafone360.people.datatypes.Album;
+import com.vodafone360.people.datatypes.Comment;
+import com.vodafone360.people.datatypes.Content;
+import com.vodafone360.people.datatypes.EntityKey;
+import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
@@ -358,4 +364,196 @@ public interface IPeopleService {
      */
     void updateChatNotification(long localContactId);
 
+    /**
+     * Adds comment to an entity in the platform
+     * 
+     * @param albumList Provide a list of Albums to be updated.
+     */
+    void postComment(List <Comment> commentsList);
+    
+    /**
+     * Deletes a list of Comments in the platform
+     * 
+     * @param albumList Provide a list of Albums to be updated.
+     */
+    void deleteComment(Bundle data);
+    
+    /**
+     * Gets a list of Comments from the platform
+     * 
+     * @param entitykeylist Provide a list of comments to be retrieved.
+     */
+    void getComment(List<EntityKey> entitykeylist);
+    
+    /**
+     * Updates a list of Comments in the platform
+     * 
+     * @param commentsList Provide a list of comments to be updated.
+     */
+    void updateComment(List<Comment> commentsList);
+    
+    /**
+     * Adds a list of Albums to the platform
+     * 
+     * @param albumList Provide a list of Albums to be added to the platform.
+     */
+    void addAlbum(List<Album> albumList);
+    
+    
+    /**
+     * Deletes a list of Albums from the platform
+     * 
+     * @param albumList Provide a list of Albums to be added to the platform.
+     */
+    void deleteAlbum(List<Long> albumList);
+
+    
+    /**
+     * Gets a list of Albums from the platform
+     * 
+     * @param albumList Provide a list of Albums to be added to the platform.
+     */
+    void getAlbum(List<Long> albumList);
+    
+    /**
+     * Updates a list of Albums in the platform
+     * 
+     * @param albumList Provide a list of Albums to be updated.
+     */
+    void updateAlbum(List<Album> albumList);
+    
+    /**
+     * Adds a list of content to an Album
+     * 
+     * @param data Bundle containing the list of Content and the Album Id
+     */
+    void addContentToAlbum(Bundle data);
+
+    /**
+     * Deletes a list of content from an Album
+     * 
+     * @param data Bundle containing the list of Content and the Album Id
+     */
+	void deleteContentFromAlbum(Bundle data);
+	
+	 /**
+     * Publishes a list of Albums to a community
+     * 
+     * @param data Bundle containing the list of Album Ids
+     * 			and the community Id  
+     */
+    void publishAlbum(Bundle data);
+
+    /**
+     * Adds a list of content to the platform
+     * 
+     * @param contentlist The list of contents to be added
+     */
+    void addContent(List<Content> contentlist);
+
+    /**
+     * Gets a list of contents from the platform
+     * 
+     * @param data Bundle containing the list of Content Ids
+     * 			and the filter list
+     */
+	void getContent(Bundle data);
+
+	 /**
+     * Publishes a list of contents to a community
+     * 
+     * @param data Bundle containing the list of content Ids
+     * 			and the community Id  
+     */
+	void publishContent(Bundle data);
+
+	/**
+     * Deletes a list of content from the platform
+     * 
+     * @param contentlist The list of contents to be deleted
+     */
+	void deleteContent(List<Long> contentList);
+	
+	/**
+     * Deletes a list of content from the platform
+     * 
+     * @param b The bundle containing the location information
+     */
+	void startLocationEngine(Bundle b);
+	
+	/**
+     * Deletes a list of content from the platform
+     * 
+     * @param b The bundle containing the location information
+     */
+	void sendLocationNudge(Bundle b);
+	
+	 /**
+     * This method should be called to add user defined groups
+     * 
+     */
+    void addUserGroup(String groupName);
+       
+    /**
+     * This method should be called to delete user defined groups
+     * 
+     */
+    void deleteUserGroup(String groupName);
+    
+    /**
+     * This method should be called to get group privacy setting
+     * 
+     */
+    void getGroupPrivacySetting(String groupName);
+    
+    /**
+     * This method should be called to set group privacy setting
+     * 
+     */
+    void setGroupPrivacySetting(String groupName, int contentType, int status);
+
+    /**
+     * Method to Share an Album with a group 
+     */
+    void shareAlbum(Long groupId, EntityKey entityId);
+    
+    /**
+     * Method to Share an Album with a group. But no notification is sent to user
+     */
+    void allowGroup(Long groupId, EntityKey entityId);
+    
+    /**
+     * Method to get the groups with which an album is shared
+     */
+    void albumSharedWith(EntityKey entityId);
+    
+    /**
+     * Method to deny permission to an album for a group
+     */
+    void denyAlbum(Long groupId, EntityKey entityId);
+
+    /**
+     * Method to send friend request
+     */
+    void sendFriendRequest(Bundle data);
+    
+    /**
+     * Method to get friend request
+     */
+    void getFriendRequest();
+   
+    /**
+     * Method to approve friend request
+     */
+    void approveFriendRequest(List<Long> requestIdList);
+    
+    /**
+     * Method to reject friend request
+     */
+    void rejectFriendRequest(List<Long> requestIdList);
+    
+    /**
+     * Method to remove friend
+     */
+    void removeFriendRequest(List<Long> userIdList);
 }

@@ -51,6 +51,7 @@ package com.caucho.hessian.micro;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -454,6 +455,8 @@ public class MicroHessianInput {
                 return readBytes(tag);
             case 'f':
                 return readFault();
+            case 'D':
+               return readDouble(tag);
             default:
                 LogUtils.logE("HessianDecoder.decodeType() Unknown type");
                 return null;
@@ -526,6 +529,13 @@ public class MicroHessianInput {
         return mStringBuilder.substring(0, mStringBuilder.length());
     }
 
+    private double readDouble(int tag) throws IOException {
+        if (tag != 'D')
+             throw protocolException("expected Double");
+	         DataInputStream dis = new DataInputStream(is);
+	         return dis.readDouble();
+	     }
+    
     public Hashtable<String, Object> readHashMap() throws IOException {
         // read map type
         int tag = is.read();

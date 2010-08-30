@@ -136,5 +136,96 @@ abstract public class BaseDataType {
      * System Notification data type
      */    
     public static final int SYSTEM_NOTIFICATION_DATA_TYPE = 24;
+    /**
+     * Comment data type
+     */    
+    public static final int COMMENTS_DATATYPE = 25;
+    /**
+     * Comment list data type
+     */    
+    public static final int COMMENT_LIST_DATATYPE = 26;
+    /**
+     * Comment response data type
+     */    
+    public static final int COMMENTS_RESPONSE_DATATYPE = 27;
+    /**
+     * Entity key data type
+     */    
+    public static final int ENTITY_KEY_DATATYPE = 28;
     
+    /**
+     * Album data type
+     */
+    public static final int ALBUM_DATATYPE = 29;
+
+    /**
+     * Album list response data type
+     */
+    public static final int ALBUM_LIST_RESPONSE_DATATYPE = 30;
+
+    /**
+     * Album response data type
+     */
+    public static final int ALBUM_RESPONSE_DATATYPE = 31;
+
+    /**
+     * Content data type
+     */
+    public static final int CONTENT_DATATYPE = 32;
+
+    /**
+     * Content list response data type
+     */
+    public static final int CONTENT_LIST_RESPONSE_DATATYPE = 33;
+
+    /**
+     * Content response data type
+     */
+    public static final int CONTENT_RESPONSE_DATATYPE = 34;
+    
+    /**
+     * Tag data type
+     */
+    public static final int TAG_DATATYPE = 35;
+    
+    /**
+     * LocationNudgeResult data type
+     */
+    public static final int LOCATION_NUDGE_RESULT_DATATYPE = 36;
+
+    /**
+     * LongGeocodeAddress data type
+     */
+    public static final int LONG_GEOCODE_ADDRESS_DATATYPE = 37;
+    
+    /**
+     * LongGeocodeAddress data type
+     */
+    public static final int PRIVACY_SETTING_DATATYPE = 38;
+    
+    /**
+     * LongGeocodeAddress data type
+     */
+    public static final int PRIVACY_SETTING_LIST_DATATYPE = 39;
+    
+    /**
+     * ListOfLong data type   
+     */
+    public static final int LIST_OF_LONG_DATATYPE = 40;
+    
+    /**
+     * ListOfLong data type   
+     */
+    public static final int FRIENDSHIP_REQUEST_DATATYPE = 41;
+    
+    /**
+     * Group data type
+     */
+    public static final int GROUP_DATATYPE = 42;
+
+    /**
+     * Long data type
+     */
+    public static final int LONG_DATATYPE = 43;
+
 }

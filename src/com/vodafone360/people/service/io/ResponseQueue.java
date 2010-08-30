@@ -114,8 +114,69 @@ public class ResponseQueue {
     		/** The response type for get t&cs. */
     		GET_T_AND_C_RESPONSE,
     		/** The response type for get privacy statement. */
-    		GET_PRIVACY_STATEMENT_RESPONSE; 
-    		
+    		GET_PRIVACY_STATEMENT_RESPONSE, 
+    		/** The response type for post comments. */
+    		POST_COMMENTS_RESPONSE,
+    		/** The response type for delete comments. */
+    		DELETE_COMMENTS_RESPONSE,
+    		/** The response type for update comments. */
+    		UPDATE_COMMENTS_RESPONSE,
+    		/** The response type for get comments. */
+    		GET_COMMENTS_RESPONSE,
+    		/** The response type for add albums. */
+    		ADD_ALBUMS_RESPONSE,
+    		/** The response type for update albums. */
+    		UPDATE_ALBUMS_RESPONSE,
+    		/** The response type for delete albums. */
+    		DELETE_ALBUMS_RESPONSE,
+    		/** The response type for get albums. */
+    		GET_ALBUMS_RESPONSE,
+    		/** The response type for publish albums. */
+    		PUBLISH_ALBUMS_RESPONSE,
+    		/** The response type for add content to album. */
+    		ADD_CONTENT_TO_ALBUM_RESPONSE,
+    		/** The response type for delete content from album. */
+    		DELETE_CONTENT_FROM_ALBUM_RESPONSE,
+    		/** The response type for add content. */
+    		ADD_CONTENT_RESPONSE,
+    		/** The response type for add content and publish. */
+    		ADD_CONTENT_AND_PUBLISH_RESPONSE,
+    		/** The response type for delete content. */
+    		DELETE_CONTENT_RESPONSE,
+    		/** The response type for publish content. */
+    		PUBLISH_CONTENT_RESPONSE,
+    		/** The response type for get content. */
+    		GET_CONTENT_RESPONSE,
+    		/** The response type for get locaiton. */
+    		GET_LOCATION_RESPONSE,
+    		/** The response type for send location nudge. */
+    		SEND_LOCATION_NUDGE_RESPONSE,
+    		/** The response type for add group. */
+    		ADD_MY_GROUP_RESPONSE,
+    		/** The response type for delete group. */
+    		DELETE_MY_GROUP_RESPONSE,
+    		/** The response type for get privacy settings. */
+    		GET_PRIVACY_SETTINGS_RESPONSE,
+    		/** The response type for set privacy settings. */
+    		SET_PRIVACY_SETTINGS_RESPONSE,
+    		/** The response type getting shared groups. */
+    		GET_GROUPS_SHARED_WITH_RESPONSE,
+    		/** The response type for Allow group for sharing. */
+    		ALLOW_GROUP_RESPONSE,
+    		/** The response type for denying sharing of a group. */
+    		DENY_GROUP_RESPONSE,
+    		/** The response type for sharing album. */
+    		SHARE_ALBUM_RESPONSE,
+    		/** The response type for friendship request */
+    		FRIENDSHIP_REQUEST_RESPONSE,
+    		/** The response type of get friend request*/
+    		GET_FRIEND_RESPONSE,
+    		/** The response type of approve friend request*/
+    		APPROVE_FRIEND_RESPONSE,
+    		/** The response type of reject friend request*/
+    		REJECT_FRIEND_RESPONSE,
+    		/** The response type of remove friend request*/
+    		REMOVE_FRIEND_RESPONSE;
     		// TODO add more types here and remove them from the BaseDataType. Having them in ONE location is better than in dozens!!!
     	}
     	

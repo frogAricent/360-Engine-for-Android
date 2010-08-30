@@ -25,20 +25,37 @@
 
 package com.vodafone360.people.engine.content;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+
+import android.os.Bundle;
+import android.util.Log;
 
 import com.vodafone360.people.database.DatabaseHelper;
+import com.vodafone360.people.datatypes.Album;
+import com.vodafone360.people.datatypes.AlbumListResponse;
+import com.vodafone360.people.datatypes.AlbumResponse;
 import com.vodafone360.people.datatypes.BaseDataType;
+import com.vodafone360.people.datatypes.Content;
+import com.vodafone360.people.datatypes.ContentListResponse;
+import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.ExternalResponseObject;
 import com.vodafone360.people.datatypes.ServerError;
 import com.vodafone360.people.datatypes.SystemNotification;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.EngineManager.EngineId;
+import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.ServiceUiRequest;
+import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.io.QueueManager;
 import com.vodafone360.people.service.io.Request;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
+import com.vodafone360.people.service.io.api.Contents;
+import com.vodafone360.people.service.transport.IConnection;
+import com.vodafone360.people.service.transport.http.content.ContentManager;
+import com.vodafone360.people.utils.LogUtils;
 
 /**
  * Content engine for downloading and uploading all kind of content (pictures,
@@ -46,6 +63,7 @@ import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
  */
 public class ContentEngine extends BaseEngine {
 
+	
     /**
      * Constructor for the ContentEngine.
      * 
@@ -59,6 +77,41 @@ public class ContentEngine extends BaseEngine {
         mEngineId = EngineId.CONTENT_ENGINE;
     }
 
+    private ContentManager mContentManager = null;
+	
+    private IConnection mConnection;
+    
+	/**
+     * States for ContentEngine. States are based on the requests that the
+     * engine needs to handle.
+     */
+    private enum State {
+        IDLE,
+        ADDING_ALBUM,
+        UPDATING_ALBUM,
+        PUBLISHING_ALBUM,
+        DELETING_ALBUM,
+        GETTING_ALBUM,
+        ADDING_CONTENT_TO_ALBUM,
+        DELETING_CONTENT_FROM_ALBUM,
+        GETTING_CONTENT,
+        UPLOADING_CONTENT,
+        UPLOADING_AND_PUBLISHING,
+        DOWNLOADING_CONTENT, 
+        PUBLISHING_CONTENT,
+        DELETING_CONTENT
+    }
+    
+    /**
+     * mutex for thread synchronization
+     */
+    private Object mMutex = new Object();
+    
+    /**
+     * Stores the current state of the engine
+     */
+	private State mState = State.IDLE;
+	
     /**
      * Queue with unprocessed ContentObjects.
      */
@@ -84,6 +137,19 @@ public class ContentEngine extends BaseEngine {
      */
     private Hashtable<Integer, ContentObject> requestContentObjectMatchTable = new Hashtable<Integer, ContentObject>();
 
+    /** List array of Albums retrieved from Server. */
+	private ArrayList<AlbumResponse> mAlbumList = new ArrayList<AlbumResponse>();
+	
+	/** Album retrieved from Server. */
+	private AlbumListResponse mAlbumResponse = new AlbumListResponse();
+
+	/** List array of Content IDs retrieved from Server. */
+	private ArrayList<ContentListResponse> mContentIdList = new ArrayList<ContentListResponse>();
+	
+	/** List array of Content binaries retrieved from Server. */
+	private ArrayList<ContentResponse> mContentResponseList = new ArrayList<ContentResponse>();
+	
+	
     /**
      * Getter for the local instance of DatabaseHelper.
      * 
@@ -141,6 +207,9 @@ public class ContentEngine extends BaseEngine {
     public final long getNextRunTime() {
         processQueue();
         // if there are CommsResponses outstanding, run now
+    	if (isUiRequestOutstanding()) {
+            return 0;
+        }
         if (isCommsResponseOutstanding()) {
             return 0;
         }
@@ -152,6 +221,12 @@ public class ContentEngine extends BaseEngine {
      */
     @Override
     public void onCreate() {
+    	mContentManager = new ContentManager(this);
+		mConnection = new ContentManager(this);
+		mConnection.startThread();
+		QueueManager.getInstance().addQueueListener(mConnection);
+
+		mContentManager.start();
     }
 
     /**
@@ -184,6 +259,7 @@ public class ContentEngine extends BaseEngine {
      */
     @Override
     protected final void processCommsResponse(final DecodedResponse resp) {
+    	LogUtils.logD("ContentEngine processCommsResponse");
         ContentObject co = requestContentObjectMatchTable.remove(resp.mReqId);
 
         if (co == null) { // check if we have an invalid response
@@ -210,6 +286,44 @@ public class ContentEngine extends BaseEngine {
             co.setExtResponse((ExternalResponseObject) data);
             co.getTransferListener().transferComplete(co);
         }
+        
+        switch (mState) {
+	    	case ADDING_ALBUM:
+	    		handleAddAlbumResponse(resp.mDataTypes);
+	    		break;
+	    	case DELETING_ALBUM:
+	          	handleDeleteAlbumResponse(resp.mDataTypes);
+	          	break;
+	        case GETTING_ALBUM:
+	          	handleGetAlbumResponse(resp.mDataTypes);
+	          	break;
+	        case UPDATING_ALBUM:
+	    		handleUpdateAlbumResponse(resp.mDataTypes);
+	    		break;
+	        case ADDING_CONTENT_TO_ALBUM:
+	        	handleAddContentToAlbumResponse(resp.mDataTypes);
+	        	break;
+	        case DELETING_CONTENT_FROM_ALBUM:
+	        	handleDeleteContentFromAlbumResponse(resp.mDataTypes);
+	        	break;
+	        case PUBLISHING_ALBUM:
+	        	handlePublishAlbumResponse(resp.mDataTypes);
+	        	break;
+	        case UPLOADING_CONTENT:
+	        	handleUploadContentResponse(resp.mDataTypes);
+	            break;
+	        case GETTING_CONTENT:
+	        	handleGetContentResponse(resp.mDataTypes);
+	        	break;
+	        case PUBLISHING_CONTENT:
+	        	handlePublishContentResponse(resp.mDataTypes);
+	        	break;
+	        case DELETING_CONTENT:
+	        	handleDeleteContentResponse(resp.mDataTypes);
+	        	break;
+	        default: // do nothing.
+	        	break;
+        }
     }
 
     /**
@@ -217,7 +331,45 @@ public class ContentEngine extends BaseEngine {
      */
     @Override
     protected void processUiRequest(final ServiceUiRequest requestId, final Object data) {
-
+    	LogUtils.logD("ContentEngine.processUiRequest() - reqID = " + requestId);
+        switch (requestId) {
+        case ADD_ALBUM:
+        	startAddAlbum((List<Album>) data);
+        	break;
+        case DELETE_ALBUM:
+        	startDeleteAlbum((List<Long>) data);
+        	break;
+        case GET_ALBUM:
+        	startGetAlbum((List<Long>) data);
+        	break;
+        case UPDATE_ALBUM:
+        	startUpdateAlbum((List<Album>) data);
+        	break;
+        case ADD_CONTENT_TO_ALBUM:
+        	startAddContentToAlbum(data);
+        	break;
+        case DELETE_CONTENT_FROM_ALBUM:
+        	startDeleteContentFromAlbum(data);
+        	break;
+        case PUBLISH_ALBUM:
+        	startPublishAlbum(data);
+        	break;
+        case UPLOAD_CONTENT:
+            startUploadContent((List<Content>) data);
+            break;
+        case GET_CONTENT:
+        	startGetContent(data);
+        	break;
+        case PUBLISH_CONTENT:
+        	startPublishContent(data);
+        	break;
+        case DELETE_CONTENT:
+        	startDeleteContent((List<Long>) data);
+        	break;
+        default:
+            completeUiRequest(ServiceStatus.ERROR_NOT_FOUND, null);
+            break;
+        }
     }
 
     /**
@@ -229,7 +381,12 @@ public class ContentEngine extends BaseEngine {
         if (isCommsResponseOutstanding() && processCommsInQueue()) {
             return;
         }
-
+        if (processTimeout()) {
+            return;
+        }
+        if (isUiRequestOutstanding()) {
+            processUiQueue();
+        }
         ContentObject co; 
         boolean queueChanged = false;
         while ((co = mDownloadQueue.poll()) != null) {
@@ -246,5 +403,812 @@ public class ContentEngine extends BaseEngine {
             QueueManager.getInstance().fireQueueStateChanged();
         }
     }
+    
 
+	 /**
+    * Change current IdentityEngine state.
+    * 
+    * @param newState new state.
+    */
+   private void newState(State newState) {
+       State oldState = mState;
+       synchronized (mMutex) {
+           if (newState == mState) {
+               return;
+           }
+           mState = newState;
+       }
+       LogUtils.logV("ContentEngine.newState: " + oldState + " -> " + mState);
+   }
+   
+   /**
+    * Add request to add albums. The request is added to the UI
+    * request and processed when the engine is ready.
+    * 
+    * @param albumList Contains the list of Albums to be uploaded 
+    */
+   public void addUiAddAlbumRequest(List<Album> albumlist){
+	   LogUtils.logD("ContentsEngine.addUiAddAlbumRequest()");
+	   addUiRequestToQueue(ServiceUiRequest.ADD_ALBUM, albumlist);
+   }
+   
+   /**
+    * Add request to delete albums. The request is added to the UI
+    * request and processed when the engine is ready.
+    * 
+    * @param albumList Contains the list of Album Ids to be deleted
+    */
+   public void addUiDeleteAlbumRequest(Object data){
+	   LogUtils.logD("ContentsEngine.addUiDeleteAlbumRequest()");
+ 	   addUiRequestToQueue(ServiceUiRequest.DELETE_ALBUM, data);
+    }  
+  
+   /**
+    * Add request to get albums. The request is added to the UI
+    * request and processed when the engine is ready.
+    * 
+    * @param albumList Contains the list of Album Ids to be fetched 
+    */
+  public void addUiGetAlbumRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiGetAlbumRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.GET_ALBUM, data);
+   }
+   
+  /**
+   * Add request to update albums. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param albumList Contains the list of Albums to be updated
+   */
+  public void addUiUpdateAlbumRequest(List<Album> albumlist){
+	  LogUtils.logD("ContentsEngine.addUiUpdateAlbumRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.UPDATE_ALBUM, albumlist);
+   }
+  
+  /**
+   * Add request to add content to albums. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param data Bundle containing the list of contents and album Id
+   */
+  public void addUiAddContentToAlbumRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiAddContentToAlbumRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.ADD_CONTENT_TO_ALBUM, data);
+  }
+ 
+  /**
+   * Add request to delete contents from albums. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param data Bundle containing the list of contents and album Id    
+   */
+  public void addUiDeleteContentFromAlbumRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiDeleteContentFromAlbumRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.DELETE_CONTENT_FROM_ALBUM, data);
+  }
+  
+  /**
+   * Add request to publish a list of albums. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param data Bundle containing the list of albums and the community id    
+   */
+  public void addUiPublishAlbumRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiPublishAlbumRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.PUBLISH_ALBUM, data);
+   }
+  
+  /**
+   * Add request to upload a list of contents. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param contentlist The list of contents to be uploaded  
+   */
+  public void addUiUploadContentRequest(List<Content> contentlist){
+	  LogUtils.logD("ContentsEngine.addUiUploadContentRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.UPLOAD_CONTENT, contentlist);
+  }
+  
+  /**
+   * Add request to delete a list of contents. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param contentlist The list of contents to be deleted  
+   */
+  public void addUiDeleteContentRequest(List<Long> contentlist){
+	  LogUtils.logD("ContentsEngine.addUiDeleteContentRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.DELETE_CONTENT, contentlist);
+  }
+	    
+  /**
+   * Add request to upload content and publish. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param contentlist The list of contents to be uploaded   
+   */
+  public void addUiUploadContentAndPublishRequest(List<Content> contentlist){
+	  LogUtils.logD("ContentsEngine.addUiUploadContentAndPublishRequest	()");
+	  addUiRequestToQueue(ServiceUiRequest.UPLOAD_CONTENT_AND_PUBLISH, contentlist);
+  }
+	    
+  /**
+   * Add request to publish contents to a community. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param data Bundle containing the list of contents to be published 
+   * 				and the community id
+   */
+  public void addUiPublishContentRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiPublishContentRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.PUBLISH_CONTENT, data);
+  }
+  
+  /**
+   * Add request to get contents. The request is added to the UI
+   * request and processed when the engine is ready.
+   * 
+   * @param contentlist The list of contents to be downloaded
+   */
+  public void addUiGetContentRequest(Object data){
+	  LogUtils.logD("ContentsEngine.addUiGetContentRequest()");
+	  addUiRequestToQueue(ServiceUiRequest.GET_CONTENT, data);
+  }
+ 
+  
+   /**
+    * Issue request to Add albums. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param albumList Albums list.
+    */
+   private void startAddAlbum(List <Album> albumList) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.ADDING_ALBUM);
+       if (!setReqId(Contents.addAlbum(this, albumList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to Delete albums. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param albumList Albums list.
+    */
+   private void startDeleteAlbum(List<Long> albumList) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.DELETING_ALBUM);
+       if (!setReqId(Contents.deleteAlbum(this, albumList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to Get albums. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param albumList Albums list.
+    */
+   private void startGetAlbum(List<Long> albumList) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.GETTING_ALBUM);
+       if (!setReqId(Contents.getAlbums(this, albumList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to Update albums. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param albumList Albums list.
+    */
+   private void startUpdateAlbum(List <Album> albumList) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.UPDATING_ALBUM);
+       if (!setReqId(Contents.updateAlbum(this, albumList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to delete contents from album. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param data Bundle containing the list of contents and the album Id
+    */
+   private void startDeleteContentFromAlbum(Object data) {
+   	if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.DELETING_CONTENT_FROM_ALBUM);
+       Bundle b = (Bundle) data;
+       Long albumId = b.getLong("aid");
+       long contentids[] = b.getLongArray("contentids");
+       
+       List<Long> contentIdList = new ArrayList<Long> ();
+       for(int i = 0; i < contentids.length; i++){
+       	contentIdList.add(new Long(contentids[i]));
+       }
+       
+       if (!setReqId(Contents.deleteContentFromAlbum(this, contentIdList, albumId))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+	}
+
+   /**
+    * Issue request to add contents to album. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param data Bundle containing the list of contents and the album Id
+    */
+	private void startAddContentToAlbum(Object data) {
+		 if (!checkConnectivity()) {
+	            return;
+	        }
+	        newState(State.ADDING_CONTENT_TO_ALBUM);
+	        Bundle b = (Bundle) data;
+	        Long albumId = b.getLong("aid");
+	        long contentids[] = b.getLongArray("contentids");
+	        
+	        List<Long> contentIdList = new ArrayList<Long> ();
+	        for(int i = 0; i < contentids.length; i++){
+	        	contentIdList.add(new Long(contentids[i]));
+	        }
+	        
+	        if (!setReqId(Contents.addContentToAlbum(this, contentIdList, albumId))) {
+	            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+	        }
+	}
+	
+   /**
+    * Issue request to Publish albums. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param data Bundle containing the list of albums and the community id 
+    */
+   private void startPublishAlbum(Object data) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.PUBLISHING_ALBUM);
+       Bundle b = (Bundle) data;
+       String communityId = b.getString("commid");
+       long albumIds[] = b.getLongArray("albumids");
+       
+       List<Long> albumList = new ArrayList<Long> ();
+       for(int i = 0; i < albumIds.length; i++){
+       	albumList.add(new Long(albumIds[i]));
+       }
+       
+       if (!setReqId(Contents.publishAlbum(this, albumList, communityId))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to add contents. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param contentList List of contents to be added
+    */
+   private void startUploadContent(List <Content> contentList) {
+   	System.out.println("ContentEngine.startUploadContent()");
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.UPLOADING_CONTENT);
+       if (!setReqId(Contents.uploadContent(this, contentList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to add content and publish. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param contentList The list of contents to be added
+    */
+   private void startUploadContentAndPublish(List <Content> contentList) {
+   	System.out.println("ContentEngine.startUploadContentAndPublish()");
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.UPLOADING_AND_PUBLISHING);
+       if (!setReqId(Contents.uploadContentAndPublish(this, contentList))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+
+   /**
+    * Issue request to Publish contents. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param data Bundle containing the list of contents and the community id 
+    */
+   private void startPublishContent(Object data) {
+       if (!checkConnectivity()) {
+           return;
+       }
+       newState(State.PUBLISHING_CONTENT);
+       Bundle b = (Bundle) data;
+       String communityId = b.getString("commid");
+       long contentIds[] = b.getLongArray("contentids");
+       
+       List<Long> contentList = new ArrayList<Long> ();
+       for(int i = 0; i < contentIds.length; i++){
+       	contentList.add(new Long(contentIds[i]));
+       }
+       
+       if (!setReqId(Contents.publishContent(this, contentList, communityId))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+   }
+   
+   /**
+    * Issue request to Publish contents. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param data Bundle containing the list of contents and filter list
+    */
+   private void startGetContent(Object data) {
+	   if (!checkConnectivity()) {
+           return;
+       }
+	   ArrayList<Long> contentIdList = new ArrayList<Long>();
+	   long contentIdArray[] = ((Bundle) data).getLongArray("contentidlist");
+	   if(contentIdArray != null){
+	    	   System.out.println("Content id array not null");
+		   for(int i = 0; i < contentIdArray.length;  i++){
+	    		   contentIdList.add(contentIdArray[i]);
+	    	   }
+	   }
+	   
+       newState(State.GETTING_CONTENT);
+       if (!setReqId(Contents.getContents(this, contentIdList, prepareStringFilter((Bundle)data)))) {
+           completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+       }
+	}
+
+   /**
+    * Issue request to delete contents. (Request is not issued if
+    * there is currently no connectivity).
+    * 
+    * @param contentList The list of contents to be deleted
+    */
+   private void startDeleteContent(List<Long> contentList) {
+   	if (!checkConnectivity()) {
+	          return;
+	      }
+	      newState(State.DELETING_CONTENT);
+	      if (!setReqId(Contents.deleteContent(this, contentList))) {
+	          completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+	      }
+	}
+   
+   /**
+    * Prepares the list of filters
+    * 
+    * @param filter Bundle containing the filters
+    */
+   private static Map<String, List<String>> prepareStringFilter(Bundle filter) {
+       Map<String, List<String>> returnFilter = null;
+       if (filter != null && filter.keySet().size() > 0) {
+           returnFilter = new Hashtable<String, List<String>>();
+           for (String key : filter.keySet()) {
+           	if(!key.equals("contentidlist"))
+           		returnFilter.put(key, filter.getStringArrayList(key));
+           }
+       } else {
+           returnFilter = null;
+       }
+       return returnFilter;
+   }
+   
+   /**
+    * Handle Server response to add albums request. The response
+    * is a list of Album ids if successful or -1 in case of error 
+    * 
+    * @param data List of BaseDataTypes generated from Server response.
+    */
+   private void handleAddAlbumResponse(List<BaseDataType> data) {
+		LogUtils.logD("ContentsEngine.handleAddAlbumResponse()");
+//		 ServiceStatus errorStatus = genericHandleResponseType("AlbumResponse", data);
+		ServiceStatus errorStatus = getResponseStatus(BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	        	mAlbumList.clear();
+	               for (BaseDataType item : data) {
+	            	   Log.d("handleAddAlbumResponse", "Reading Data");
+	                   if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
+	                	   mAlbumList.add((AlbumResponse)item);
+	                       LogUtils.logD("Album id: " + ((AlbumResponse)item).mAlbumList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleAddAlbumResponse Unexpected response");
+	                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleAddAlbumResponse error status: " + errorStatus.name());
+	        }
+           newState(State.IDLE);
+	}
+   
+   /**
+    * Handle Server response to get albums request. 
+    * 
+    * @param data List of BaseDataTypes generated from Server response.
+    */
+   private void handleGetAlbumResponse(List<BaseDataType> data) {
+   	LogUtils.logD("ContentsEngine.handleGetAlbumResponse()");
+
+//		 ServiceStatus errorStatus = genericHandleResponseType("AlbumListResponse", data);
+   		ServiceStatus errorStatus = getResponseStatus(BaseDataType.ALBUM_LIST_RESPONSE_DATATYPE, data);
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	               for (BaseDataType item : data) {
+	                   if (BaseDataType.ALBUM_LIST_RESPONSE_DATATYPE == item.getType()) {
+	                	   mAlbumResponse = (AlbumListResponse)item;
+	                       LogUtils.logD("Album id: " + mAlbumResponse.mAlbumList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleGetAlbumResponse unexpected type");
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleGetAlbumResponse error status: " + errorStatus.name());
+	        }
+           completeUiRequest(ServiceStatus.SUCCESS);
+           newState(State.IDLE);
+	}
+
+   /**
+    * Handle Server response to update albums request. 
+    * 
+    * @param data List of BaseDataTypes generated from Server response.
+    */
+   private void handleUpdateAlbumResponse(List<BaseDataType> data) {
+		LogUtils.logD("ContentsEngine.handleUploadAlbumResponse()");
+
+//		 ServiceStatus errorStatus = genericHandleResponseType("AlbumResponse", data);
+		 ServiceStatus errorStatus = getResponseStatus(BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
+
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	        	mAlbumList.clear();
+
+	               for (BaseDataType item : data) {
+	                   if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
+	                	   mAlbumList.add((AlbumResponse)item);
+	                       LogUtils.logD("Album id: " + ((AlbumResponse)item).mAlbumList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleUploadAlbumResponse Unexpected response");
+	                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleUploadAlbumResponse error status: " + errorStatus.name());
+	        }
+           completeUiRequest(ServiceStatus.SUCCESS);
+           newState(State.IDLE);
+	}
+   
+   /**
+    * Handle Server response to delete albums request. The response
+    * is a list of Album ids if successful or -1 in case of error 
+    * 
+    * @param data List of BaseDataTypes generated from Server response.
+    */
+	private void handleDeleteAlbumResponse(List<BaseDataType> data) {
+		LogUtils.logD("ContentsEngine.handleDeleteAlbumResponse()");
+
+//		 ServiceStatus errorStatus = genericHandleResponseType("AlbumResponse", data);
+   			ServiceStatus errorStatus = getResponseStatus(BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	        	mAlbumList.clear();
+
+	               for (BaseDataType item : data) {
+	                   if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
+	                	   mAlbumList.add((AlbumResponse)item);
+	                       LogUtils.logD("Album id: " + ((AlbumResponse)item).mAlbumList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleDeleteAlbumResponse Unexpected response");
+	                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleDeleteAlbumResponse error status: " + errorStatus.name());
+	        }
+           completeUiRequest(ServiceStatus.SUCCESS);
+           newState(State.IDLE);
+	}
+	
+	private void handleDeleteContentFromAlbumResponse(
+			List<BaseDataType> data) {
+		LogUtils.logD("ContentsEngine.handleDeleteContentFromAlbumResponse()");
+
+//		 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+		 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	        	mContentIdList.clear();
+
+	               for (BaseDataType item : data) {
+	                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+	                	   mContentIdList.add((ContentListResponse)item);
+	                       LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleDeleteContentFromAlbumResponse Unexpected response");
+	                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleDeleteContentFromAlbumResponse error status: " + errorStatus.name());
+	        }
+          newState(State.IDLE);
+          completeUiRequest(ServiceStatus.SUCCESS);
+	}
+
+
+	private void handleAddContentToAlbumResponse(List<BaseDataType> data) {
+		LogUtils.logD("ContentsEngine.handleAddContentToAlbumResponse()");
+
+//		 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+		 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+
+	        if (errorStatus == ServiceStatus.SUCCESS) {
+	        	mContentIdList.clear();
+
+	               for (BaseDataType item : data) {
+	                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+	                	   mContentIdList.add((ContentListResponse)item);
+	                       LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+	                   } else {
+	                	   LogUtils.logE("ContentEngine handleAddContentToAlbumResponse Unexpected response");
+	                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+	                       return;
+	                   }
+	               }
+	            }
+	        else{
+	        	LogUtils.logE("ContentEngine handleAddContentToAlbumResponse error status: " + errorStatus.name());
+	        }
+           newState(State.IDLE);
+           completeUiRequest(ServiceStatus.SUCCESS);
+	}
+	
+	 /**
+    * Handle Server response to delete albums request. The response
+    * is a list of Album ids if successful or -1 in case of error 
+    * 
+    * @param data List of BaseDataTypes generated from Server response.
+    */
+	 private void handlePublishAlbumResponse(List<BaseDataType> data) {
+	    	LogUtils.logD("ContentsEngine.handlePublishAlbumResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("AlbumResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		        	mAlbumList.clear();
+
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
+		                	   mAlbumList.add((AlbumResponse)item);
+		                       LogUtils.logD("Album id: " + ((AlbumResponse)item).mAlbumList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handlePublishAlbumResponse Unexpected response");
+		                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handlePublishAlbumResponse error status: " + errorStatus.name());
+		        }
+	            completeUiRequest(ServiceStatus.SUCCESS);
+	            newState(State.IDLE);
+			
+		}
+	 	/**
+	     * Handle Server response to add contents request. The response
+	     * is a list of contents ids if successful or -1 in case of error 
+	     * 
+	     * @param data List of BaseDataTypes generated from Server response.
+	     */
+	 private void handleUploadContentResponse(List<BaseDataType> data) {
+			LogUtils.logD("ContentsEngine.handleUploadContentResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		        	mContentIdList.clear();
+
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+		                	   mContentIdList.add((ContentListResponse)item);
+		                       LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handleUploadContentResponse Unexpected response");
+		                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handleUploadImageResponse error status: " + errorStatus.name());
+		        }
+	            newState(State.IDLE);
+	            completeUiRequest(ServiceStatus.SUCCESS);
+		}
+	    
+	 	/**
+	     * Handle Server response to upload contents and publish request. The response
+	     * is a list of content ids if successful or -1 in case of error 
+	     * 
+	     * @param data List of BaseDataTypes generated from Server response.
+	     */
+	    private void handleUploadContentAndPublishResponse(List<BaseDataType> data) {
+			LogUtils.logD("ContentsEngine.handleUploadContentAndPublishResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		        	mContentIdList.clear();
+
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+		                	   mContentIdList.add((ContentListResponse)item);
+		                       LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handleUploadContentAndPublishResponse Unexpected response");
+		                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handleUploadContentAndPublishResponse error status: " + errorStatus.name());
+		        }
+	            newState(State.IDLE);
+	            completeUiRequest(ServiceStatus.SUCCESS);
+		}
+	    
+	    /**
+	     * Handle Server response to get contents. The response
+	     * is a list of contents if successful or -1 in case of error 
+	     * 
+	     * @param data List of BaseDataTypes generated from Server response.
+	     */
+	    private void handleGetContentResponse(List<BaseDataType> data) {
+	    	LogUtils.logD("ContentsEngine.handleGetContentResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("ContentResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.CONTENT_RESPONSE_DATATYPE == item.getType()) {
+		                	   mContentResponseList.add((ContentResponse)item);
+		                       LogUtils.logD("Album id: " + mContentResponseList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handleGetContentResponse Unexpected response");
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handleGetContentResponse error status: " + errorStatus.name());
+		        }
+	            completeUiRequest(ServiceStatus.SUCCESS);
+	            newState(State.IDLE);
+		}
+	    
+	    /**
+	     * Handle Server response to publish contents. The response
+	     * is a list of content ids if successful or -1 in case of error 
+	     * 
+	     * @param data List of BaseDataTypes generated from Server response.
+	     */
+	    private void handlePublishContentResponse(List<BaseDataType> data) {
+			LogUtils.logD("ContentsEngine.handlePublishContentResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		        	mContentIdList.clear();
+
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+		                	   mContentIdList.add((ContentListResponse)item);
+		                       LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handlePublishContentResponse Unexpected response");
+		                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handlePublishContentResponse error status: " + errorStatus.name());
+		        }
+	            newState(State.IDLE);
+	            completeUiRequest(ServiceStatus.SUCCESS);
+		}
+		
+	    /**
+	     * Handle Server response to delete contents. The response
+	     * is a list of content ids if successful or -1 in case of error 
+	     * 
+	     * @param data List of BaseDataTypes generated from Server response.
+	     */
+		private void handleDeleteContentResponse(List<BaseDataType> data) {
+			LogUtils.logD("ContentsEngine.handleDeleteContentResponse()");
+
+//			 ServiceStatus errorStatus = genericHandleResponseType("ContentListResponse", data);
+			 ServiceStatus errorStatus = getResponseStatus(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
+
+		        if (errorStatus == ServiceStatus.SUCCESS) {
+		        	mContentIdList.clear();
+
+		               for (BaseDataType item : data) {
+		                   if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item.getType()) {
+		                	   mContentIdList.add((ContentListResponse)item);
+		                	   LogUtils.logD("Content id: " + ((ContentListResponse)item).mContentIdList);
+		                   } else {
+		                	   LogUtils.logE("ContentEngine handleDeleteContentResponse Unexpected response");
+		                       completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+		                       return;
+		                   }
+		               }
+		            }
+		        else{
+		        	LogUtils.logE("ContentEngine handleDeleteContentResponse error status: " + errorStatus.name());
+		        }
+	            newState(State.IDLE);
+	            completeUiRequest(ServiceStatus.SUCCESS);
+		}
+		
+   /**
+    * Get Connectivity status from NetworkAgent.
+    * 
+    * @return true if NetworkAgent reports we have connectivity, false
+    *         otherwise (complete outstanding request with ERROR_COMMS).
+    */
+   private boolean checkConnectivity() {
+       if (NetworkAgent.getAgentState() != NetworkAgent.AgentState.CONNECTED) {
+           completeUiRequest(ServiceStatus.ERROR_COMMS, null);
+           return false;
+       }
+       return true;
+   }
+   
+   public boolean isUploading() {
+       return mState == State.UPLOADING_CONTENT;
+   }
+
+   public boolean isUploadingAndPublishing() {
+       return mState == State.UPLOADING_AND_PUBLISHING;
+   }
+   
+   public boolean isDownloadingContent() {
+       return mState == State.GETTING_CONTENT;
+   }
 }

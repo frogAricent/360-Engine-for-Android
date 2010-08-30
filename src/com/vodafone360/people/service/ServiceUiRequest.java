@@ -193,6 +193,7 @@ public enum ServiceUiRequest {
      * @see com.vodafone360.people.engine.meprofile.SyncMeEngine
      */
     DOWNLOAD_THUMBNAIL,
+    
     /** Remove all user data. */
     REMOVE_USER_DATA,
     /**
@@ -242,6 +243,202 @@ public enum ServiceUiRequest {
      * Gets the groups for the contacts that are retrieved from the backend.
      */
     GET_GROUPS,
+    
+    /**
+     *  Post Comments to entities in the platform.
+     * 
+     * @see com.vodafone360.people.engine.comments.CommentsEngine
+     */
+    
+    POST_COMMENT,
+    
+    /**
+     *  Deletes Comments from the platform.
+     * 
+     * @see com.vodafone360.people.engine.comments.CommentsEngine
+     */
+    DELETE_COMMENT,
+    /**
+     * Get The Comments from the platform 
+     * 
+     * @see com.vodafone360.people.engine.comments.CommentsEngine
+     */
+    GET_COMMENT,
+    /**
+     * Update Comments already existing in the platform.
+     */
+    UPDATE_COMMENT,
+    
+    /**
+     * Add Albums to the platform.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    ADD_ALBUM,
+    
+    /**
+     * Deletes Album from the platform.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    DELETE_ALBUM,
+    
+    /**
+     *  Get Albums from the platform.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    GET_ALBUM,
+    
+    /**
+     *  Update Albums in the platform.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    UPDATE_ALBUM,
+    
+    /**
+     *  Adds content to Album.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    ADD_CONTENT_TO_ALBUM, 
+    
+    /**
+     *  Deletes content from Album.
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    DELETE_CONTENT_FROM_ALBUM,
+    
+    /**
+     *  Publishes a list of Albums to the community 
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    PUBLISH_ALBUM,
+    
+    /**
+     *  Uploads a list of Content 
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    UPLOAD_CONTENT,
+    
+    /**
+     *  Uploads a list of content and publish to the community 
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    UPLOAD_CONTENT_AND_PUBLISH,
+    
+    /**
+     *  Gets a list of content 
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    GET_CONTENT,
+    
+    /**
+     *  Publishes a list of Content to the community 
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    PUBLISH_CONTENT,
+    
+    
+    /**
+     *  Deletes a list of Content
+     * 
+     * @see com.vodafone360.people.engine.contents.ContentEngine
+     */
+    DELETE_CONTENT,
+    
+    /**
+     * Gets a location
+     * 
+     * @see com.vodafone360.people.engine.location.LocationEngine
+     */
+    GET_GEOCODE_ADDRESS,
+    
+    /**
+     * Send location nudge
+     * 
+     * @see com.vodafone360.people.engine.location.LocationEngine
+     */
+    LOACTION_NUDGE,
+    
+    /**
+     * Add a User Defined Group
+     */
+    ADD_USER_GROUP,
+    
+    /**
+     * Deletes a User Defined Group
+     * 
+     * @see com.vodafone360.people.engine.groups.GroupEngine
+     */
+    
+    DELETE_USER_GROUP,
+    
+    /**
+     * Get groupPrivacysetting
+     * 
+     * @see com.vodafone360.people.engine.groups.GroupEngine
+     */
+    GET_GROUP_PRIVACY_SETTING,
+    
+    /**
+     * Set groupPrivacysetting
+     * 
+     * @see com.vodafone360.people.engine.groups.GroupEngine
+     */
+    SET_GROUP_PRIVACY_SETTING,
+    
+    /**
+     * Share Album
+     */
+    SHARE_ALBUM,
+    
+    /**
+     * Album shared with
+     */
+    ALBUM_SHARED_WITH,
+      
+    /**
+     * Allow group
+     */
+    ALLOW_GROUP,
+    
+    /**
+     * Deny group
+     */
+    DENY_GROUP,
+    
+    /**
+     * Send Friendship requests
+     */
+    SEND_FRIEND_REQ,
+    
+    /**
+     * Get Friendship requests
+     */
+    GET_FRIEND_REQ,
+    
+    /**
+     * Approve Friendship requests
+     */
+    APPROVE_FRIEND_REQ,
+    
+    /**
+     * Reject Friendship requests
+     */
+    REJECT_FRIEND_REQ,
+    
+    /**
+     * Remove Friendship
+     */
+    REMOVE_FRIEND,
     /*
      * Do not handle this message.
      */

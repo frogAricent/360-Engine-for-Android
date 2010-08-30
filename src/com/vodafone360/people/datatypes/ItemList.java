@@ -41,11 +41,13 @@ public class ItemList extends BaseDataType {
      * Enumeration of data-types items that can be returned as an ItemList.
      */
     public enum Type {
-        group_privacy,
-        status_msg,
-        contact_group_relation,
-        contact_group_relations,
-        long_value;
+    	group_privacy,
+		status_msg,
+		contact_group_relation,
+		contact_group_relations,
+		long_value,
+		album,
+		friend_requests;
     }
 
     private Integer mItemsSize = null;

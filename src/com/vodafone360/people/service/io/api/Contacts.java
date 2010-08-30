@@ -55,6 +55,17 @@ public class Contacts {
     private final static String FUNCTION_GET_MY_CHANGES = "contacts/getmychanges";
 
     private final static String FUNCTION_SET_ME = "contacts/setme";
+    
+    private final static String FUNCTION_REQUEST_FRIENDSHIP = "contacts/requestfriendship";
+    
+    private final static String FUNCTION_GET_FRIEND_REQUESTS = "contacts/getmyfriendshiprequests";
+    
+    private final static String FUNCTION_REJECT_FRIEND_REQUESTS = "contacts/rejectfriendshiprequests";
+    
+    private final static String FUNCTION_APPROVE_FRIEND_REQUESTS = "contacts/approvefriendshiprequests";
+    
+    private final static String FUNCTION_REMOVE_FRIEND = "contacts/removefriendships";
+
 
     /**
      * Implementation of contacts/deletecontactdetails API. Parameters are;
@@ -283,4 +294,155 @@ public class Contacts {
         queue.fireQueueStateChanged();
         return requestId;
     }
+    
+    /**
+     * Implementation of contacts/requestfriendship API. 
+     * @param engine Handle to ContactSync engine
+     * @param user id of the user to whom the requests must be sent
+     * @param mes contains the message to be sent along with request
+     * @return request id generated for this request.
+     */
+    public static int sendFriendshipReq(BaseEngine engine, Long userId, String mes) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("Contacts.sendFriendshipReq() Invalid session, return -1");
+            return -1;
+        }
+        
+        if(userId == null){
+        	LogUtils.logE("User Id cannot be null");
+        	return -1;
+        }
+
+        Request request = new Request(FUNCTION_REQUEST_FRIENDSHIP, Request.Type.FRIENDSHIP_REQUEST,
+                engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        
+        if(userId != null){
+        	LogUtils.logI("User Id:"+userId);
+        	request.addData("userid", userId);
+        }
+        
+        if(mes != null){
+        	LogUtils.logI("Message:"+mes);
+        	request.addData("message", mes);
+        }
+        
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
+    
+    /**
+     * Implementation of contacts/rejectfriendshiprequests API. List<Long> friendReqIds
+     * @param engine Handle to ContactSync engine
+     * @param friendReqIds id of the user whose friendship request is to be rejected 
+     * @return request id generated for this request.
+     */
+    public static int rejectFriendshipReq(BaseEngine engine, List<Long> friendReqIds) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("Contacts.rejectFriendshipReq() Invalid session, return -1");
+            return -1;
+        }
+        
+        if((friendReqIds.size() == 0) || (friendReqIds == null)){
+        	LogUtils.logE("The request Ids cannot be null or empty. Request not sent to server");
+        	return -1;
+        }
+
+        Request request = new Request(FUNCTION_REJECT_FRIEND_REQUESTS, Request.Type.REJECT_FRIEND_REQUESTS,
+                engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        
+        if(friendReqIds != null){
+        	request.addData("requestidlist", ApiUtils.createVectorOfLong(friendReqIds));
+        }
+
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
+    
+    
+    /**
+     * Implementation of contacts/removefriendships API. List<Long> friendReqIds
+     * @param engine Handle to ContactSync engine
+     * @param userIds id of the user whose friendship request needs to be removed 
+     * @return request id generated for this request.
+     */
+    public static int removeFriendship(BaseEngine engine, List<Long> userIds) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("Contacts.removeFriendship() Invalid session, return -1");
+            return -1;
+        }
+        
+        if((userIds.size() == 0) || (userIds == null)){
+        	LogUtils.logE("The user Id cannot be null.");
+        	return -1;
+        	
+        }
+
+        Request request = new Request(FUNCTION_REMOVE_FRIEND, Request.Type.REMOVE_FRIEND,
+                engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        
+        if(userIds != null){
+        	request.addData("useridlist", ApiUtils.createVectorOfLong(userIds));
+        }
+
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
+    /**
+     * Implementation of contacts/getmyfriendshiprequests API. Parameters are; [auth],
+     * String matchString, Map filterList [opt]
+     * 
+     * @param engine Handle to ContactSync engine
+     * @return request id generated for this request.
+     */
+    public static int getFriendshipReq(BaseEngine engine) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("Contacts.getFriendshipReq() Invalid session, return -1");
+            return -1;
+        }
+
+        Request request = new Request(FUNCTION_GET_FRIEND_REQUESTS, Request.Type.GET_FRIEND_REQUESTS,
+                engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
+    
+    /**
+     * Implementation of contacts/approvefriendshiprequests API. String matchString, Map filterList [opt]
+     * @param engine Handle to ContactSync engine
+     * @param friendReqIds id of the user whose friendship request needs to be approved 
+     * @return request id generated for this request.
+     */
+    public static int approveFriendshipReq(BaseEngine engine, List<Long> friendReqIds) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("Contacts.approveFriendshipReq() Invalid session, return -1");
+            return -1;
+        }
+        
+        if((friendReqIds.size() == 0) || (friendReqIds == null)){
+        	LogUtils.logE("The Request Id cannot be null. Request not sent.");
+        	return -1;
+         }
+
+        Request request = new Request(FUNCTION_APPROVE_FRIEND_REQUESTS, Request.Type.APPROVE_FRIEND_REQUESTS,
+                engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        
+        if(friendReqIds != null){
+        	request.addData("requestidlist", ApiUtils.createVectorOfLong(friendReqIds));
+        }
+
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
+    
 }
