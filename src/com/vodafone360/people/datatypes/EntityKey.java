@@ -129,6 +129,7 @@ public class EntityKey extends BaseDataType{
 	                    break;
 
 	                case ENTITY_TYPE:
+//	                	mType = EntityType.findType((String) value);
 	                	mEntityType = (String)value;
 	                    break;
    	                default:
@@ -144,7 +145,7 @@ public class EntityKey extends BaseDataType{
 	     * @param hash Hashtable containing EntityKey parameters
 	     * @return EntityKey created from Hashtable
 	     */
-	    protected EntityKey createFromHashtable(Hashtable<String, Object> hash) {
+	    public EntityKey createFromHashtable(Hashtable<String, Object> hash) {
 	        Enumeration<String> e = hash.keys();
 	        while (e.hasMoreElements()) {
 	            String key = e.nextElement();

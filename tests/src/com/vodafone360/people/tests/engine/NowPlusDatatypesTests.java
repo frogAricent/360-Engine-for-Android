@@ -73,7 +73,18 @@ import com.vodafone360.people.datatypes.IdentityCapability.CapabilityID;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.service.io.rpg.PushMessageTypes;
 import com.vodafone360.people.service.io.rpg.RpgPushMessage;
-
+/**
+ * 
+ * File Name : NowPlusDatatypesTests.java 
+ * Description : This class extends AndroidTestCase interface.
+ *  
+ * Revision History
+ * --------------------------------------------------------------
+ * Date		 Author		 SPR-Id		 Version		 Comments
+ * 01-Sep-10 	-		 - 			  0.01 			 Initial Release
+ * 
+ * 
+ */
 public class NowPlusDatatypesTests extends AndroidTestCase {
 
 	public void testActivityContact() {
@@ -448,10 +459,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test Comment Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ******************************************************************** 
 	 */
 	public void testComment() {
 		EntityKey entitykey = new EntityKey();
@@ -480,10 +493,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test CommentsResponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ******************************************************************** 
 	 */
 	@Suppress
 	public void testCommentsResponse() {
@@ -506,10 +521,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test CommentListResponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ******************************************************************** 
 	 */
 	public void testCommentsListResponse() {
 		List<Comment> commentList = new ArrayList<Comment>();
@@ -545,10 +562,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test EntityKey Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ******************************************************************** 
 	 */
 	public void testEntityKey() {
 		EntityKey input = new EntityKey();
@@ -572,10 +591,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test Album Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ******************************************************************** 
 	 */
 	public void testAlbum() {
 		Album input = new Album();
@@ -617,10 +638,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test AlbumListResponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ********************************************************************  
 	 */
 	public void testAlbumListResponse() {
 		List<Album> album = new ArrayList<Album>();
@@ -666,10 +689,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test AlbumResponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ********************************************************************  
 	 */
 	public void testAlbumResponse() {
 		List<Long> albumList = new ArrayList<Long>();
@@ -695,10 +720,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test Content Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ********************************************************************  
 	 */
 	public void testContent() {
 		Content input = new Content();
@@ -757,10 +784,12 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	/**
+	 ********************************************************************  
 	 * Method to test ContentListResponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
+	 ********************************************************************  
 	 */
 	public void testContentListResponse() {
 		List<Long> contentIdList = new ArrayList<Long>();
@@ -786,7 +815,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test Contentresponse Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testContentResponse() {
 		List<Long> contentIdList = new ArrayList<Long>();
@@ -822,7 +851,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test Tag Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testTag()
 	{
@@ -858,7 +887,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test LongGeocodeAddress Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	@Suppress
 	public void testLongGeocodeAddress() {
@@ -897,7 +926,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test LocationNudgeResult Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testLocationNudgeResult() {
 		LocationNudgeResult input = new LocationNudgeResult();
@@ -920,7 +949,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test PrivacySetting Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testPrivacySetting() {
 		PrivacySetting input = new PrivacySetting();
@@ -947,7 +976,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test PrivacySettingList Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testPrivacySettingList() {
 
@@ -977,7 +1006,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test FriendshipRequest Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	@Suppress
 	public void testFriendshipRequest() {
@@ -1017,7 +1046,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test Group Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testGroup() {
 		Group input = new Group();
@@ -1048,7 +1077,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * Method to test ListofLong Datatype
 	 * 
 	 * @param : null
-	 * @returntype : null
+	 * @return : null
 	 */
 	public void testListofLong()
 	{
