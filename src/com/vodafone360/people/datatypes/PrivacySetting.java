@@ -1,5 +1,17 @@
 package com.vodafone360.people.datatypes;
 
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -8,26 +20,25 @@ import java.util.Vector;
 
 import com.vodafone360.people.utils.LogUtils;
 
-
 /**
- * BaseDataType encapsulating privacy settings. 
+ * BaseDataType encapsulating an PrivacySetting retrieved from, or to be issued
+ * to, Now + server
  */
-public class PrivacySetting extends BaseDataType{
+public class PrivacySetting extends BaseDataType {
 
 	/**
 	 * Tags associated with PrivacySetting item.
 	 */
 	private enum Tags {
-		GROUP_ID("groupid"),
-		CONTENT_TYPE("contenttype"),
-		STATE("state");
+		GROUP_ID("groupid"), CONTENT_TYPE("contenttype"), STATE("state");
 
 		private final String tag;
 
 		/**
 		 * Construct Tags item from supplied String.
 		 * 
-		 * @param s String value for Tags item.
+		 * @param s
+		 *            String value for Tags item.
 		 */
 		private Tags(String s) {
 			tag = s;
@@ -45,7 +56,8 @@ public class PrivacySetting extends BaseDataType{
 		/**
 		 * Find Tags item for specified String.
 		 * 
-		 * @param tag String value to find in Tags items.
+		 * @param tag
+		 *            String value to find in Tags items.
 		 * @return Tags item for specified String, NULL otherwise.
 		 */
 		private static Tags findTag(String tag) {
@@ -58,7 +70,6 @@ public class PrivacySetting extends BaseDataType{
 		}
 	}
 
-
 	public Long mGroupId;
 
 	public int mContentType;
@@ -68,94 +79,103 @@ public class PrivacySetting extends BaseDataType{
 	/**
 	 * Populate PrivacySetting from supplied Hashtable.
 	 * 
-	 * @param hash Hashtable containing privacy setting details
+	 * @param hash
+	 *            Hashtable containing privacy setting details
 	 * @return PrivacySetting instance
 	 */
 	public PrivacySetting createFromHashtable(Hashtable<String, Object> hash) {
 		Enumeration<String> e = hash.keys();
-        while (e.hasMoreElements()) {
-            String key = e.nextElement();
-            Object value = hash.get(key);
-            Tags tag = Tags.findTag(key);
-            if (tag != null)
-                setValue(tag, value);
-        }
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			Object value = hash.get(key);
+			Tags tag = Tags.findTag(key);
+			if (tag != null)
+				setValue(tag, value);
+		}
 
-        return this;
+		return this;
 	}
-	
-	
-	public static List<PrivacySetting> populateFromHashtable(Hashtable<String, Object> hash) {
+
+	/**
+	 * Populates data from Hashtable
+	 * 
+	 * @param hash
+	 *            Hashtable containing PrivacySetting data
+	 * @return PrivacySetting list
+	 */
+	public static List<PrivacySetting> populateFromHashtable(
+			Hashtable<String, Object> hash) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
 		String privacySettingList = "PrivacySetting";
-		Vector<Hashtable<String, Object>> vect = (Vector<Hashtable<String, Object>>)hash
-        .get(privacySettingList);
+		Vector<Hashtable<String, Object>> vect = (Vector<Hashtable<String, Object>>) hash
+				.get(privacySettingList);
 		for (Hashtable<String, Object> msghash : vect) {
-            PrivacySetting privSet = new PrivacySetting();
-            privSetList.add(privSet.createFromHashtable(msghash));
-        }
+			PrivacySetting privSet = new PrivacySetting();
+			privSetList.add(privSet.createFromHashtable(msghash));
+		}
 		return privSetList;
 	}
-	
-	
+
 	@SuppressWarnings("unchecked")
-	public static List<PrivacySetting> populatefromHashtableGroupSetting(Hashtable inp) {
+	public static List<PrivacySetting> populatefromHashtableGroupSetting(
+			Hashtable inp) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
 		String privacySettingList = "PrivacySetting";
 		Enumeration er;
 		er = inp.elements();
-		while(er.hasMoreElements()){
+		while (er.hasMoreElements()) {
 			PrivacySetting ps = new PrivacySetting();
 			Object data = er.nextElement();
-			//LogUtils.logI("Hash data:"+data);
-			privSetList = populateList((Vector)data);
+			// LogUtils.logI("Hash data:"+data);
+			privSetList = populateList((Vector) data);
 			break;
-			//ps.createFromHashtable(data);
-			//privSetList.add(ps);
+			// ps.createFromHashtable(data);
+			// privSetList.add(ps);
 		}
-		/*for (Hashtable<String, Object> msghash : vect) {
-            PrivacySetting privSet = new PrivacySetting();
-            privSetList.add(privSet.createFromHashtable(msghash));
-        }*/
+		/*
+		 * for (Hashtable<String, Object> msghash : vect) { PrivacySetting
+		 * privSet = new PrivacySetting();
+		 * privSetList.add(privSet.createFromHashtable(msghash)); }
+		 */
 		return privSetList;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static List<PrivacySetting> populateList(Vector inp) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
 		Enumeration er;
 		er = inp.elements();
-		while(er.hasMoreElements()){
+		while (er.hasMoreElements()) {
 			PrivacySetting ps = new PrivacySetting();
 			Object data = er.nextElement();
-			//LogUtils.logI("Vector data:"+data);
-			ps.createFromHashtable((Hashtable<String,Object>)data);
+			// LogUtils.logI("Vector data:"+data);
+			ps.createFromHashtable((Hashtable<String, Object>) data);
 			privSetList.add(ps);
 		}
-		
+
 		return privSetList;
 	}
-
-
 
 	/**
 	 * Sets the value of the member data item associated with the specified tag.
 	 * 
-	 * @param tag Current tag
-	 * @param val Value associated with the tag
+	 * @param tag
+	 *            Current tag
+	 * @param val
+	 *            Value associated with the tag
 	 */
 	private void setValue(Tags tag, Object val) {
 		switch (tag) {
 		case GROUP_ID:
-			mGroupId = (Long)val;
+			mGroupId = (Long) val;
 			break;
 
 		case CONTENT_TYPE:
-			mContentType = (Integer)val;
+			mContentType = (Integer) val;
 			break;
 
 		case STATE:
-			mState = (Integer)val;
+			mState = (Integer) val;
 			break;
 
 		default:
@@ -163,7 +183,6 @@ public class PrivacySetting extends BaseDataType{
 			break;
 		}
 	}
-
 
 	/**
 	 * Create Hashtable from PrivacySetting parameters.
@@ -179,13 +198,12 @@ public class PrivacySetting extends BaseDataType{
 			if (mContentType != 0) {
 				htab.put(Tags.CONTENT_TYPE.tag(), mContentType);
 			}
-			if ((mState == 0)||(mState == 1)) {
+			if ((mState == 0) || (mState == 1)) {
 				htab.put(Tags.STATE.tag(), mState);
 			}
 		}
 		return htab;
 	}
-
 
 	@Override
 	public int getType() {

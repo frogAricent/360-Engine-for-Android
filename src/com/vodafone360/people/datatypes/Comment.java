@@ -1,12 +1,28 @@
 package com.vodafone360.people.datatypes;
 
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
 import android.util.Log;
 
-public class Comment extends BaseDataType{
+/**
+ * BaseDataType encapsulating an Comment retrieved from, or to be issued to, Now
+ * + server
+ */
+public class Comment extends BaseDataType {
 
 	public Long mCommentId = null;
 	public EntityKey mEntityKey = null;
@@ -15,147 +31,151 @@ public class Comment extends BaseDataType{
 	public String mExtCommentId = null;
 
 	/**
-     * Tags associated with Comment representing data items associated with
-     * Comment returned from server.
-     */
-    public enum Tags {
-        COMMENT_ID("commentid"),
-        ENTITY_KEY("entitykey"),
-        TEXT("text"),
-        INAPPROPRIATE("inappropriate"),
-        EXT_COMMENT_ID("extcommentid");
+	 * Tags associated with Comment representing data items associated with
+	 * Comment returned from server.
+	 */
+	public enum Tags {
+		COMMENT_ID("commentid"), ENTITY_KEY("entitykey"), TEXT("text"), INAPPROPRIATE(
+				"inappropriate"), EXT_COMMENT_ID("extcommentid");
 
-        private final String tag;
+		private final String tag;
 
-        /**
-         * Constructor creating Tags item for specified String.
-         * 
-         * @param s String value for Tags item.
-         */
-        private Tags(String s) {
-            tag = s;
-        }
+		/**
+		 * Constructor creating Tags item for specified String.
+		 * 
+		 * @param s
+		 *            String value for Tags item.
+		 */
+		private Tags(String s) {
+			tag = s;
+		}
 
-        /**
-         * String value associated with Tags item.
-         * 
-         * @return String value for Tags item.
-         */
-        private String tag() {
-            return tag;
-        }
+		/**
+		 * String value associated with Tags item.
+		 * 
+		 * @return String value for Tags item.
+		 */
+		private String tag() {
+			return tag;
+		}
 
-        /**
-         * Find Tags item for specified String.
-         * 
-         * @param tag String value to find Tags item for
-         * @return Tags item for specified String, null otherwise
-         */
-        private static Tags findTag(String tag) {
-            for (Tags tags : Tags.values()) {
-                if (tag.compareTo(tags.tag()) == 0) {
-                    return tags;
-                }
-            }
-            return null;
-        }
-    }
-    
-    private Tags findTag(String tag) {
-        for (Tags tags : Tags.values()) {
-            if (tag.compareTo(tags.tag()) == 0) {
-                return tags;
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Sets the value of the member data item associated with the specified tag.
-     * 
-     * @param tag Current tag
-     * @param val Value associated with the tag
-     */
-    private void setValue(Tags tag, Object value) {
-        if (tag != null) {
-            switch (tag) {
-                case COMMENT_ID:
-                    mCommentId = (Long)value;
-                    break;
+		/**
+		 * Find Tags item for specified String.
+		 * 
+		 * @param tag
+		 *            String value to find Tags item for
+		 * @return Tags item for specified String, null otherwise
+		 */
+		private static Tags findTag(String tag) {
+			for (Tags tags : Tags.values()) {
+				if (tag.compareTo(tags.tag()) == 0) {
+					return tags;
+				}
+			}
+			return null;
+		}
+	}
 
-                case ENTITY_KEY:
-                    Vector<Hashtable<String, Object>> v = (Vector<Hashtable<String, Object>>)value;
-                    for (Hashtable<String, Object> hash : v) {
-                        EntityKey entityKey = new EntityKey();
-                        entityKey.createFromHashtable(hash);
-                        mEntityKey = entityKey;
-                    }
-                    break;
+	private Tags findTag(String tag) {
+		for (Tags tags : Tags.values()) {
+			if (tag.compareTo(tags.tag()) == 0) {
+				return tags;
+			}
+		}
+		return null;
+	}
 
-                case TEXT:
-                    mText = (String)value;
-                    break;
+	/**
+	 * Sets the value of the member data item associated with the specified tag.
+	 * 
+	 * @param tag
+	 *            Current tag
+	 * @param val
+	 *            Value associated with the tag
+	 * @return void
+	 */
+	private void setValue(Tags tag, Object value) {
+		if (tag != null) {
+			switch (tag) {
+			case COMMENT_ID:
+				mCommentId = (Long) value;
+				break;
 
-                case INAPPROPRIATE:
-                    mInappropriate = (Boolean)value;
-                    break;
+			case ENTITY_KEY:
+				Vector<Hashtable<String, Object>> v = (Vector<Hashtable<String, Object>>) value;
+				for (Hashtable<String, Object> hash : v) {
+					EntityKey entityKey = new EntityKey();
+					entityKey.createFromHashtable(hash);
+					mEntityKey = entityKey;
+				}
+				break;
 
-                case EXT_COMMENT_ID:
-                    mExtCommentId = (String)value;
-                    break;
+			case TEXT:
+				mText = (String) value;
+				break;
 
-                default:
-                    // Do nothing.
-                    break;
-            }
-        }
-    }
+			case INAPPROPRIATE:
+				mInappropriate = (Boolean) value;
+				break;
 
-	 /**
-     * Create ActivityItem from HashTable generated by Hessian-decoder
-     * 
-     * @param hash Hashtable representing ActivityItem
-     * @return ActivityItem created from Hashtable
-     */
-    static public Comment createFromHashtable(Hashtable<String, Object> hash) {
-        Comment comment = new Comment();
-        Enumeration<String> e = hash.keys();
-        while (e.hasMoreElements()) {
-            String key = e.nextElement();
-            Object value = hash.get(key);
-            Tags tag = Tags.findTag(key);
-            comment.setValue(tag, value);
-        }
-        return comment;
-    }
-    
-    /**
-     * Create Hashtable from GroupItem parameters.
-     * 
-     * @return Hashtable generated from GroupItem parameters.
-     */
-    public Hashtable<String, Object> createHashtable() {
-        Hashtable<String, Object> htab = new Hashtable<String, Object>();
+			case EXT_COMMENT_ID:
+				mExtCommentId = (String) value;
+				break;
 
-        if (mCommentId != null) {
-            htab.put(Tags.COMMENT_ID.tag(), mCommentId);
-        }
-        if (mEntityKey != null) {
-        	 Vector<Object> v = new Vector<Object>();
-             v.add(mEntityKey.createHastable());
-             htab.put(Tags.ENTITY_KEY.tag(), v);
-        }
-        if (mText != null) {
-            htab.put(Tags.TEXT.tag(), mText);
-        }
-        if (mInappropriate != null) {
-            htab.put(Tags.INAPPROPRIATE.tag(), mInappropriate);
-        }
-        if (mExtCommentId != null) {
-            htab.put(Tags.EXT_COMMENT_ID.tag(), mExtCommentId);
-        }
-        return htab;
-    }
+			default:
+				// Do nothing.
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Create ActivityItem from HashTable generated by Hessian-decoder
+	 * 
+	 * @param hash
+	 *            Hashtable representing ActivityItem
+	 * @return ActivityItem created from Hashtable
+	 */
+	static public Comment createFromHashtable(Hashtable<String, Object> hash) {
+		Comment comment = new Comment();
+		Enumeration<String> e = hash.keys();
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			Object value = hash.get(key);
+			Tags tag = Tags.findTag(key);
+			comment.setValue(tag, value);
+		}
+		return comment;
+	}
+
+	/**
+	 * Create Hashtable from GroupItem parameters.
+	 * 
+	 * @param none
+	 * @return Hashtable generated from GroupItem parameters.
+	 */
+	public Hashtable<String, Object> createHashtable() {
+		Hashtable<String, Object> htab = new Hashtable<String, Object>();
+
+		if (mCommentId != null) {
+			htab.put(Tags.COMMENT_ID.tag(), mCommentId);
+		}
+		if (mEntityKey != null) {
+			Vector<Object> v = new Vector<Object>();
+			v.add(mEntityKey.createHastable());
+			htab.put(Tags.ENTITY_KEY.tag(), v);
+		}
+		if (mText != null) {
+			htab.put(Tags.TEXT.tag(), mText);
+		}
+		if (mInappropriate != null) {
+			htab.put(Tags.INAPPROPRIATE.tag(), mInappropriate);
+		}
+		if (mExtCommentId != null) {
+			htab.put(Tags.EXT_COMMENT_ID.tag(), mExtCommentId);
+		}
+		return htab;
+	}
 
 	@Override
 	public int getType() {

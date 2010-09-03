@@ -1,3 +1,13 @@
+/*
+* Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+* All rights reserved.
+*
+* This software is the confidential and proprietary information of 
+* Aricent Technologies ("Confidential Information").  You shall not
+* disclose such Confidential Information and shall use it only in
+* accordance with the terms of the license agreement you entered 
+* into with Aricent.
+*/
 package com.vodafone360.people.engine.location;
 
 import java.util.List;
@@ -16,6 +26,22 @@ import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Location;
 import com.vodafone360.people.utils.LogUtils;
 
+/***
+ * Engine is responsible for handling features like sending locationnudge and getting owns location
+ * <p>
+ * File Name : LocationEngine.java
+ * <p> 
+ * Description : This class extends BaseEngine and contain various callback and overridden methods.
+ * <p>
+ * Revision History
+ * <p>
+ * ------------------------------------------------------------------------
+ * <p>
+ * Date		Author		 SPR-Id		 Version		 Comments
+ * <p>
+ * - 	       		   		- 		  	0.01 	 		 Initial Release
+ * <p>
+ */
 public class LocationEngine extends BaseEngine { 
 	
 	/**
@@ -44,17 +70,31 @@ public class LocationEngine extends BaseEngine {
      * @param filter Bundle containing parameters for fetch identities request.
      *            This contains the set of filters applied to GetMyIdentities
      *            API call.
+     * @return null
      */
     public void addUiGetMyLocation(Bundle b) {
         LogUtils.logD("LocationEngine.addUiGetMyLocation()");
         addUiRequestToQueue(ServiceUiRequest.GET_GEOCODE_ADDRESS,b);
     }
     
+    /**
+     * Add request to send locationNudge on me profile
+     * 
+     * @param filter Bundle containing parameters to send location details like longitude, lattitude
+     *            This contains the set of filters applied to sendLocationnudge
+     *            API call.
+     * @return null
+     */
     public void  addUiSendLocationNudge(Bundle b) {
         LogUtils.logD("LocationEngine.addUiSendLocationNudge()");
         addUiRequestToQueue(ServiceUiRequest.LOACTION_NUDGE,b);
     }
-   
+    
+    /**
+     * Constructor
+     * 
+     * @param eventCallback IEngineEventCallback allowing engine to report back.
+     */
 	public LocationEngine(IEngineEventCallback eventCallback) {
 		super(eventCallback);
         mEngineId = EngineId.LOCATION_ENGINE;
@@ -95,6 +135,12 @@ public class LocationEngine extends BaseEngine {
 		
 	}
 
+	/**
+	   * Called when a server response is received, processes the response based
+	   * on the engine state.
+	   * 
+	   * @param resp Response data from server
+	   */
 	@Override
 	protected void processCommsResponse(final DecodedResponse resp) {
 		LogUtils.logD("LocationEngine.processCommsResponse");
@@ -115,9 +161,15 @@ public class LocationEngine extends BaseEngine {
 	              break;
       }
 	}
+	
+	/**
+	 * Handle Server response to get user's current location. 
+	 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE
+	 * 
+	 * @param data List of BaseDataTypes generated from Server response.
+	 */
 	  private void handleGetGeocodeAddressResult(List<BaseDataType> data) {
 	        Bundle bu = null;
-//	        ServiceStatus errorStatus = genericHandleResponseType(TYPE_STATUS_MSG, data);
 	        ServiceStatus errorStatus = getResponseStatus(BaseDataType.LONG_GEOCODE_ADDRESS_DATATYPE, data);
 
 	        if (errorStatus == ServiceStatus.SUCCESS) {
@@ -128,10 +180,15 @@ public class LocationEngine extends BaseEngine {
 		        newState(State.IDLE);
 	    }
 	  
+	  /**
+		 * Handle Server response to send locationnudge on ME profile 
+		 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE
+		 * 
+		 * @param data List of BaseDataTypes generated from Server response.
+		 */
 	  private void handleSendLocationNudgeResult(List<BaseDataType> data) {
 		    LogUtils.logD("LocationEngine.handleSendLocationNudgeResult");
 	        Bundle bu = null;
-//	        ServiceStatus errorStatus = genericHandleResponseType(TYPE_STATUS_MSG1, data);
 	        ServiceStatus errorStatus = getResponseStatus(BaseDataType.LOCATION_NUDGE_RESULT_DATATYPE, data);
 
 	        if (errorStatus == ServiceStatus.SUCCESS) {

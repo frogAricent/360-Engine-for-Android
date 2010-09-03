@@ -1,5 +1,16 @@
 package com.vodafone360.people.service.io.api;
-
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +23,9 @@ import com.vodafone360.people.service.io.QueueManager;
 import com.vodafone360.people.service.io.Request;
 import com.vodafone360.people.utils.LogUtils;
 
+/**
+ * Implementation of Now+ Location APIs
+ */
 public class Location {
 	
 	 private final static String FUNCTION_GET_LOCATION_GEOCODING = "location/geocoding";

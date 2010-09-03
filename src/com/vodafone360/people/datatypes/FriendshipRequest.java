@@ -1,5 +1,17 @@
 package com.vodafone360.people.datatypes;
 
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -8,6 +20,10 @@ import java.util.Vector;
 
 import com.vodafone360.people.utils.LogUtils;
 
+/**
+ * BaseDataType encapsulating an FriendshipRequest retrieved from, or to be
+ * issued to, Now + server
+ */
 public class FriendshipRequest extends BaseDataType {
 
 	@Override
@@ -20,17 +36,16 @@ public class FriendshipRequest extends BaseDataType {
 	 * Tags for fields associated with FriendshipRequest items.
 	 */
 	private enum Tags {
-		USER_PROFILE("userprofile"), 
-		MESSAGE("message"), 
-		REQUEST_ID("requestid"), 
-		TIME_STAMP("timestamp");
+		USER_PROFILE("userprofile"), MESSAGE("message"), REQUEST_ID("requestid"), TIME_STAMP(
+				"timestamp");
 
 		private final String tag;
 
 		/**
 		 * Constructor creating Tags item for specified String.
 		 * 
-		 * @param s String value for Tags item.
+		 * @param s
+		 *            String value for Tags item.
 		 */
 		private Tags(String s) {
 			tag = s;
@@ -54,7 +69,8 @@ public class FriendshipRequest extends BaseDataType {
 	/**
 	 * Find Tags item for specified String.
 	 * 
-	 * @param tag String value to search for in Tag
+	 * @param tag
+	 *            String value to search for in Tag
 	 * @return Tags item for specified String, NULL otherwise.
 	 */
 	private Tags findTag(String tag) {
@@ -85,10 +101,12 @@ public class FriendshipRequest extends BaseDataType {
 	/**
 	 * Create FriendshipRequest from Hashtable.
 	 * 
-	 * @param hash Hashtable containing FriendshipRequest information.
+	 * @param hash
+	 *            Hashtable containing FriendshipRequest information.
 	 * @return FriendshipRequest generated from Hashtable.
 	 */
-	public static FriendshipRequest createFromHashtable(Hashtable<String, Object> hash) {
+	public static FriendshipRequest createFromHashtable(
+			Hashtable<String, Object> hash) {
 		FriendshipRequest profile = new FriendshipRequest();
 		Enumeration<String> e = hash.keys();
 		while (e.hasMoreElements()) {
@@ -104,13 +122,16 @@ public class FriendshipRequest extends BaseDataType {
 	/**
 	 * Sets the value of the member data item associated with the specified tag.
 	 * 
-	 * @param tag Current tag
-	 * @param value Value associated with the tag
+	 * @param tag
+	 *            Current tag
+	 * @param value
+	 *            Value associated with the tag
 	 */
 	private void setValue(Tags tag, Object value) {
 		switch (tag) {
 		case USER_PROFILE:
-				mUserProfile = UserProfile.createFromHashtable((Hashtable<String, Object>) value);
+			mUserProfile = UserProfile
+					.createFromHashtable((Hashtable<String, Object>) value);
 			break;
 
 		case MESSAGE:

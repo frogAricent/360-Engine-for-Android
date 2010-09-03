@@ -1,3 +1,13 @@
+/*
+* Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+* All rights reserved.
+*
+* This software is the confidential and proprietary information of 
+* Aricent Technologies ("Confidential Information").  You shall not
+* disclose such Confidential Information and shall use it only in
+* accordance with the terms of the license agreement you entered 
+* into with Aricent.
+*/
 package com.vodafone360.people.engine.share;
 
 import java.util.ArrayList;
@@ -17,19 +27,33 @@ import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Share;
 import com.vodafone360.people.utils.LogUtils;
 
-public class ShareEngine extends BaseEngine{
+/***
+ * Engine is responsible for handling features like sharing album with groups,
+ * allowing and denying groups for sharing albums
+ * <p>
+ * File Name : ShareEngine.java
+ * <p>
+ * Description : This class extends BaseEngine and contain various callback and
+ * overridden methods.
+ * <p>
+ * Revision History
+ * <p>
+ * ------------------------------------------------------------------------
+ * <p>
+ * Date Author SPR-Id Version Comments
+ * <p>
+ * - - 0.01 Initial Release
+ * <p>
+ */
+public class ShareEngine extends BaseEngine {
 
 	/**
-     * Definitions of Share engines states; IDLE - engine is inactive
-     * SHARING_ALBUM: Sharing album with ME Profile,
-     * ALLOWING_GROUPS : allow sharing on groups ..etc
-     */
-	public static enum State{
-		IDLE,
-		SHARING_ALBUM,
-		GETTING_ALBUM_SHARED_WITH,
-		ALLOWING_GROUP,
-		DENYING_GROUP
+	 * Definitions of Share engines states; IDLE - engine is inactive
+	 * SHARING_ALBUM: Sharing album with ME Profile, ALLOWING_GROUPS : allow
+	 * sharing on groups ..etc
+	 */
+	public static enum State {
+		IDLE, SHARING_ALBUM, GETTING_ALBUM_SHARED_WITH, ALLOWING_GROUP, DENYING_GROUP
 
 	}
 
@@ -50,9 +74,9 @@ public class ShareEngine extends BaseEngine{
 	}
 
 	/**
-     * Return next run time for ShareEngine. Determined by whether we have
-     * a request we wish to issue, or there is a response that needs processing.
-     */
+	 * Return next run time for ShareEngine. Determined by whether we have a
+	 * request we wish to issue, or there is a response that needs processing.
+	 */
 	@Override
 	public long getNextRunTime() {
 		if (isUiRequestOutstanding()) {
@@ -88,55 +112,55 @@ public class ShareEngine extends BaseEngine{
 
 	}
 
-//	@Override
-//	protected void processCommsResponse(Response resp) {
-//		LogUtils.logD("ShareEngine.processCommsResponse() - resp = " + resp);
-//		switch (mState) {
-//		case IDLE:
-//			LogUtils.logW("IDLE should never happend");
-//			break;
-//		case SHARING_ALBUM:
-//			handleShareAlbum(resp.mDataTypes);
-//			break;
-//		case GETTING_ACCESSIBLE_CONTENTID:
-//			handleGetSharedContentId(resp.mDataTypes);
-//			break;
-//		case ALLOWING_GROUP:
-//			handleAllowGroup(resp.mDataTypes);
-//			break;
-//		case DENYING_GROUP:
-//			handleDenyGroup(resp.mDataTypes);
-//			break;
-//		case GETTING_ALBUM_SHARED_WITH:
-//			handleAlbumSharedWith(resp.mDataTypes);
-//			break;
-//		default:
-//			LogUtils.logW("default should never happend");
-//		break;
-//		}
-//
-//	}
-	 /**
-     * Handle an outstanding UI request.
-     */
+	// @Override
+	// protected void processCommsResponse(Response resp) {
+	// LogUtils.logD("ShareEngine.processCommsResponse() - resp = " + resp);
+	// switch (mState) {
+	// case IDLE:
+	// LogUtils.logW("IDLE should never happend");
+	// break;
+	// case SHARING_ALBUM:
+	// handleShareAlbum(resp.mDataTypes);
+	// break;
+	// case GETTING_ACCESSIBLE_CONTENTID:
+	// handleGetSharedContentId(resp.mDataTypes);
+	// break;
+	// case ALLOWING_GROUP:
+	// handleAllowGroup(resp.mDataTypes);
+	// break;
+	// case DENYING_GROUP:
+	// handleDenyGroup(resp.mDataTypes);
+	// break;
+	// case GETTING_ALBUM_SHARED_WITH:
+	// handleAlbumSharedWith(resp.mDataTypes);
+	// break;
+	// default:
+	// LogUtils.logW("default should never happend");
+	// break;
+	// }
+	//
+	// }
+	/**
+	 * Handle an outstanding UI request.
+	 */
 	@Override
 	protected void processUiRequest(ServiceUiRequest requestId, Object data) {
 		LogUtils.logD("ShareEngine.processUiRequest - reqID = " + requestId);
-		switch(requestId){
+		switch (requestId) {
 		case SHARE_ALBUM:
-			shareAlbum((Hashtable)data);	
+			shareAlbum((Hashtable) data);
 			break;
 
 		case ALBUM_SHARED_WITH:
-			albumSharedWith((EntityKey)data);	
+			albumSharedWith((EntityKey) data);
 			break;
-			
+
 		case ALLOW_GROUP:
-			allowGroup((Hashtable)data);	
+			allowGroup((Hashtable) data);
 			break;
-			
+
 		case DENY_GROUP:
-			denyGroup((Hashtable)data);	
+			denyGroup((Hashtable) data);
 			break;
 		}
 
@@ -146,8 +170,9 @@ public class ShareEngine extends BaseEngine{
 	public void run() {
 		LogUtils.logD("ShareEngine.run()");
 		if (isCommsResponseOutstanding() && processCommsInQueue()) {
-			LogUtils.logD("ShareEngine.ResponseOutstanding and processCommsInQueue. mState = "
-					+ mState.name());
+			LogUtils
+					.logD("ShareEngine.ResponseOutstanding and processCommsInQueue. mState = "
+							+ mState.name());
 			return;
 		}
 		if (processTimeout()) {
@@ -158,79 +183,93 @@ public class ShareEngine extends BaseEngine{
 		}
 
 	}
+
 	/**
-     * Add request to share album with groups. The request is added to the UI
-     * request and processed when the engine is ready.
-     * 
-     * @param groupID: The groupid of the group to which the entities will be shared.
-     * @param entityKey: album entities which are being shared.
-     */
-	public void addUiShareAlbum(Long groupId, EntityKey entityKey){
+	 * Add request to share album with groups. The request is added to the UI
+	 * request and processed when the engine is ready.
+	 * 
+	 * @param groupID
+	 *            : The groupid of the group to which the entities will be
+	 *            shared.
+	 * @param entityKey
+	 *            : album entities which are being shared.
+	 * @return void
+	 */
+	public void addUiShareAlbum(Long groupId, EntityKey entityKey) {
 		LogUtils.logD("ShareEngine.addUiShareAlbum()");
-		Hashtable<String, Object> inp = new Hashtable<String,Object>();
+		Hashtable<String, Object> inp = new Hashtable<String, Object>();
 		inp.put("groupid", groupId);
 		inp.put("entitykey", entityKey);
 		addUiRequestToQueue(ServiceUiRequest.SHARE_ALBUM, inp);
 	}
 
-	 /**
-     * Issue request to share album with groups. (Request is not issued if
-     * there is currently no connectivity).
-     * 
-     * @param input: The hashtable consists of groupId and entitykey list.
-     */
-	private void shareAlbum(Hashtable<String,Object> input){
+	/**
+	 * Issue request to share album with groups. (Request is not issued if there
+	 * is currently no connectivity).
+	 * 
+	 * @param input
+	 *            : The hashtable consists of groupId and entitykey list.
+	 * @return void
+	 */
+	private void shareAlbum(Hashtable<String, Object> input) {
 		LogUtils.logD("ShareEngine.shareAlbum()");
 		if (!checkConnectivity()) {
 			return;
 		}
 		newState(State.SHARING_ALBUM);
-		Long groupId = (Long)input.get("groupid");
+		Long groupId = (Long) input.get("groupid");
 		List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-		entityKeyList.add((EntityKey)input.get("entitykey"));
+		entityKeyList.add((EntityKey) input.get("entitykey"));
 		if (!setReqId(Share.shareWithGroup(this, groupId, entityKeyList))) {
 			completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
 		}
 	}
 
-
 	/**
-	 * Handle Server response to share album with groups. The response
-	 * should be a list of Entity keys for which the access was granted.
-	 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the data-type
-	 * retrieved are not Entity keys.
+	 * Handle Server response to share album with groups. The response should be
+	 * a list of Entity keys for which the access was granted. The request is
+	 * completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the
+	 * data-type retrieved are not Entity keys.
 	 * 
-	 * @param data List of BaseDataTypes generated from Server response.
+	 * @param data
+	 *            List of BaseDataTypes generated from Server response.
+	 * @return void
 	 */
 	private void handleShareAlbum(List<BaseDataType> data) {
 		LogUtils.logD("ShareEngine: handleShareAlbum");
-		ServiceStatus errorStatus = getResponseStatus(BaseDataType.ITEM_LIST_DATA_TYPE, data);
+		ServiceStatus errorStatus = getResponseStatus(
+				BaseDataType.ITEM_LIST_DATA_TYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
-			if(data.size() != 0){
-				//LogUtils.logI("The group was granted access to following albums");
+			if (data.size() != 0) {
+				// LogUtils.logI("The group was granted access to following albums");
 				LogUtils.logI("Granted access");
 				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for(int it = 0;it < data.size(); it++){
-					ItemList entityList = (ItemList)data.get(it);
+				for (int it = 0; it < data.size(); it++) {
+					ItemList entityList = (ItemList) data.get(it);
 					if (entityList.mType != ItemList.Type.album) {
-	                    completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-	                    return;
-	                }
+						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+						return;
+					}
 					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey)entityList.mItemList.get(j));
-	                }
-					/*for (int j = 0; j < entityKeyList.size(); j++) {
-						LogUtils.logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-						LogUtils.logI("Entity Type:"+entityKeyList.get(j).getEntityType());
-	                }*/
-					
+						entityKeyList.add((EntityKey) entityList.mItemList
+								.get(j));
+					}
+					/*
+					 * for (int j = 0; j < entityKeyList.size(); j++) {
+					 * LogUtils.
+					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
+					 * LogUtils
+					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
+					 * ()); }
+					 */
+
 				}
-			}else{
+			} else {
 				LogUtils.logE("No data received");
 			}
-		}else if(errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
-		}else{
+		} else {
 			LogUtils.logE("Failure");
 		}
 		completeUiRequest(errorStatus, null);
@@ -238,25 +277,30 @@ public class ShareEngine extends BaseEngine{
 
 	}
 
-	
 	/**
-     * Add request to get the groups with which an album is shared. The request is added to the UI
-     * request and processed when the engine is ready.
-     * 
-     * @param entityKey: The key representing the album entity for which the shared groups will be retrieved.
-     */
-	public void addUiSharedWith(EntityKey entityKey){
+	 * Add request to get the groups with which an album is shared. The request
+	 * is added to the UI request and processed when the engine is ready.
+	 * 
+	 * @param entityKey
+	 *            : The key representing the album entity for which the shared
+	 *            groups will be retrieved.
+	 * @return void
+	 */
+	public void addUiSharedWith(EntityKey entityKey) {
 		LogUtils.logD("ShareEngine.addUiSharedWith()");
 		addUiRequestToQueue(ServiceUiRequest.ALBUM_SHARED_WITH, entityKey);
 	}
-	
-	 /**
-     * Issue request to get the groups with which an album is shared. (Request is not issued if
-     * there is currently no connectivity).
-     * 
-     * @param entitykey: A key representing the album entity for which the shared groups will be retrieved
-     */
-	private void albumSharedWith(EntityKey entityKey){
+
+	/**
+	 * Issue request to get the groups with which an album is shared. (Request
+	 * is not issued if there is currently no connectivity).
+	 * 
+	 * @param entitykey
+	 *            : A key representing the album entity for which the shared
+	 *            groups will be retrieved
+	 * @return void
+	 */
+	private void albumSharedWith(EntityKey entityKey) {
 		LogUtils.logD("ShareEngine.albumSharedWith()");
 		if (!checkConnectivity()) {
 			return;
@@ -267,39 +311,43 @@ public class ShareEngine extends BaseEngine{
 		}
 	}
 
-
 	/**
-	 * Handle Server response to get the groups with which an album is shared. The response
-	 * should be a List of long 
-	 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the data-type
+	 * Handle Server response to get the groups with which an album is shared.
+	 * The response should be a List of long The request is completed with
+	 * ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the data-type
 	 * retrieved are not Entity keys.
 	 * 
-	 * @param data List of BaseDataTypes generated from Server response.
+	 * @param data
+	 *            List of BaseDataTypes generated from Server response.
+	 * @return void
 	 */
 	private void handleAlbumSharedWith(List<BaseDataType> data) {
 
 		LogUtils.logD("ShareEngine: handleAlbumSharedWith");
-		ServiceStatus errorStatus = getResponseStatus(BaseDataType.LIST_OF_LONG_DATATYPE, data);
+		ServiceStatus errorStatus = getResponseStatus(
+				BaseDataType.LIST_OF_LONG_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
-			if(data.size() != 0){
+			if (data.size() != 0) {
 				LogUtils.logI("Groups received");
 				List<Long> groupIdList = new ArrayList<Long>();
-				for(int it = 0;it < data.size(); it++){
-					ListOfLong groupList = (ListOfLong)data.get(it);
+				for (int it = 0; it < data.size(); it++) {
+					ListOfLong groupList = (ListOfLong) data.get(it);
 					for (int j = 0; j < groupList.mLongList.size(); j++) {
-						groupIdList.add((Long)groupList.mLongList.get(j));
-	                }
-					/*LogUtils.logI("The album has been granted access to "+groupIdList.size()+" groups");
-					for (int j = 0; j < groupIdList.size(); j++) {
-						LogUtils.logI("Group ID:"+groupIdList.get(j));
-					}*/
+						groupIdList.add((Long) groupList.mLongList.get(j));
+					}
+					/*
+					 * LogUtils.logI("The album has been granted access to "+groupIdList
+					 * .size()+" groups"); for (int j = 0; j <
+					 * groupIdList.size(); j++) {
+					 * LogUtils.logI("Group ID:"+groupIdList.get(j)); }
+					 */
 				}
-			}else{
+			} else {
 				LogUtils.logE("No data received");
 			}
-		}else if(errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
-		}else{
+		} else {
 			LogUtils.logE("Failure");
 		}
 		completeUiRequest(errorStatus, null);
@@ -307,85 +355,99 @@ public class ShareEngine extends BaseEngine{
 
 	}
 
-	
 	/**
-     * Add request to Grants access for a group to album entities. The request is added to the UI
-     * request and processed when the engine is ready.
-     * 
-     * @param groupId: The id of the group to which access to the entities will be granted 
-     * @param entityKey: The keys of the album entities to which the group is being allowed to access.
-     */
-	public void addUiAllowGroup(Long groupId, EntityKey entityKey){
+	 * Add request to Grants access for a group to album entities. The request
+	 * is added to the UI request and processed when the engine is ready.
+	 * 
+	 * @param groupId
+	 *            : The id of the group to which access to the entities will be
+	 *            granted
+	 * @param entityKey
+	 *            : The keys of the album entities to which the group is being
+	 *            allowed to access.
+	 * @return void
+	 */
+	public void addUiAllowGroup(Long groupId, EntityKey entityKey) {
 		LogUtils.logD("ShareEngine.addUiAllowGroup()");
-		Hashtable<String, Object> inp = new Hashtable<String,Object>();
-		if(groupId != null)
+		Hashtable<String, Object> inp = new Hashtable<String, Object>();
+		if (groupId != null)
 			inp.put("groupid", groupId);
 		else
 			LogUtils.logE("Group Id cannot be null");
-		if(entityKey != null)
+		if (entityKey != null)
 			inp.put("entitykey", entityKey);
 		else
 			LogUtils.logE("Entity Key cannot be null");
 		addUiRequestToQueue(ServiceUiRequest.ALLOW_GROUP, inp);
-		
+
 	}
-	 /**
-     * Issue request to Grants access for a group to album entities. (Request is not issued if
-     * there is currently no connectivity).
-     * 
-     * @param input: contains the group id 
-     */
-	private void allowGroup(Hashtable<String,Object> input){
+
+	/**
+	 * Issue request to Grants access for a group to album entities. (Request is
+	 * not issued if there is currently no connectivity).
+	 * 
+	 * @param input
+	 *            : contains the group id
+	 * @return void
+	 */
+	private void allowGroup(Hashtable<String, Object> input) {
 		LogUtils.logD("ShareEngine.allowGroup()");
 		if (!checkConnectivity()) {
 			return;
 		}
 		newState(State.ALLOWING_GROUP);
 
-		Long groupId = (Long)input.get("groupid");
+		Long groupId = (Long) input.get("groupid");
 		List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-		entityKeyList.add((EntityKey)input.get("entitykey"));
+		entityKeyList.add((EntityKey) input.get("entitykey"));
 		if (!setReqId(Share.allowGroup(this, groupId, entityKeyList))) {
 			completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
 		}
 	}
 
-
 	/**
-	 * Handle Server response to to grants access for a group to album entities. The response
-	 * should be a list of Entity keys for which the access was granted.
-	 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the data-type
-	 * retrieved are not Entity keys.
+	 * Handle Server response to to grants access for a group to album entities.
+	 * The response should be a list of Entity keys for which the access was
+	 * granted. The request is completed with ServiceStatus.SUCCESS or
+	 * ERROR_UNEXPECTED_RESPONSE if the data-type retrieved are not Entity keys.
 	 * 
-	 * @param data List of BaseDataTypes generated from Server response.
+	 * @param data
+	 *            List of BaseDataTypes generated from Server response.
+	 * @return void
 	 */
 	private void handleAllowGroup(List<BaseDataType> data) {
 		LogUtils.logD("ShareEngine: handleAllowGroup");
-		ServiceStatus errorStatus = getResponseStatus(BaseDataType.ITEM_LIST_DATA_TYPE, data);
+		ServiceStatus errorStatus = getResponseStatus(
+				BaseDataType.ITEM_LIST_DATA_TYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
-			if(data.size() != 0){
+			if (data.size() != 0) {
 				LogUtils.logI("Allowed access");
 				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for(int it = 0;it < data.size(); it++){
-					ItemList entityList = (ItemList)data.get(it);
+				for (int it = 0; it < data.size(); it++) {
+					ItemList entityList = (ItemList) data.get(it);
 					if (entityList.mType != ItemList.Type.album) {
-	                    completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-	                    return;
-	                }
+						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+						return;
+					}
 					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey)entityList.mItemList.get(j));
-	                }
-					/*for (int j = 0; j < entityKeyList.size(); j++) {
-						LogUtils.logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-						LogUtils.logI("Entity Type:"+entityKeyList.get(j).getEntityType());
-	                }*/
+						entityKeyList.add((EntityKey) entityList.mItemList
+								.get(j));
+					}
+					/*
+					 * for (int j = 0; j < entityKeyList.size(); j++) {
+					 * LogUtils.
+					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
+					 * LogUtils
+					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
+					 * ()); }
+					 */
 				}
-			}else{
+			} else {
 				LogUtils.logE("No data received");
 			}
-		}else if(errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
-		}else{
+		} else {
 			LogUtils.logE("Failure");
 		}
 		completeUiRequest(errorStatus, null);
@@ -394,78 +456,92 @@ public class ShareEngine extends BaseEngine{
 	}
 
 	/**
-     * Add request to removes access for a group to album entities. The request is added to the UI
-     * request and processed when the engine is ready.
-     * 
-     * @param groupId: The id of the group to which access to the entities will be granted 
-     * @param entityKey: The keys of the album entities to which the group is being allowed to access.
-     */
-	public void addUiDenyGroup(Long groupId, EntityKey entityKey){
+	 * Add request to removes access for a group to album entities. The request
+	 * is added to the UI request and processed when the engine is ready.
+	 * 
+	 * @param groupId
+	 *            : The id of the group to which access to the entities will be
+	 *            granted
+	 * @param entityKey
+	 *            : The keys of the album entities to which the group is being
+	 *            allowed to access.
+	 * @return void
+	 */
+	public void addUiDenyGroup(Long groupId, EntityKey entityKey) {
 		LogUtils.logD("ShareEngine.addUiDenyGroup()");
-		Hashtable<String, Object> inp = new Hashtable<String,Object>();
+		Hashtable<String, Object> inp = new Hashtable<String, Object>();
 		inp.put("groupid", groupId);
 		inp.put("entitykey", entityKey);
 		addUiRequestToQueue(ServiceUiRequest.DENY_GROUP, inp);
 	}
 
-	 /**
-     * Issue request request to removes access for a group to album entities. (Request is not issued if
-     * there is currently no connectivity).
-     * 
-     * @param input: contains the group id 
-     */
-	private void denyGroup(Hashtable<String,Object> input){
+	/**
+	 * Issue request request to removes access for a group to album entities.
+	 * (Request is not issued if there is currently no connectivity).
+	 * 
+	 * @param input
+	 *            : contains the group id
+	 * @return void
+	 */
+	private void denyGroup(Hashtable<String, Object> input) {
 		LogUtils.logD("ShareEngine.denyGroup()");
 		if (!checkConnectivity()) {
 			return;
 		}
 		newState(State.DENYING_GROUP);
 
-		Long groupId = (Long)input.get("groupid");
+		Long groupId = (Long) input.get("groupid");
 		List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-		entityKeyList.add((EntityKey)input.get("entitykey"));
+		entityKeyList.add((EntityKey) input.get("entitykey"));
 		if (!setReqId(Share.denyGroup(this, groupId, entityKeyList))) {
 			completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
 		}
 	}
 
-
 	/**
-	 * Handle Server response to to removes access for a group to album entities . The response
-	 * should be a list of Entity keys for which the access was granted.
-	 * The request is completed with ServiceStatus.SUCCESS or ERROR_UNEXPECTED_RESPONSE if the data-type
-	 * retrieved are not Entity keys.
+	 * Handle Server response to to removes access for a group to album entities
+	 * . The response should be a list of Entity keys for which the access was
+	 * granted. The request is completed with ServiceStatus.SUCCESS or
+	 * ERROR_UNEXPECTED_RESPONSE if the data-type retrieved are not Entity keys.
 	 * 
-	 * @param data List of BaseDataTypes generated from Server response.
+	 * @param data
+	 *            List of BaseDataTypes generated from Server response.
+	 * @return void
 	 */
 	private void handleDenyGroup(List<BaseDataType> data) {
 		LogUtils.logD("ShareEngine: handleDenyGroup");
-		ServiceStatus errorStatus = getResponseStatus(BaseDataType.ITEM_LIST_DATA_TYPE, data);
+		ServiceStatus errorStatus = getResponseStatus(
+				BaseDataType.ITEM_LIST_DATA_TYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
-			if(data.size() != 0){
+			if (data.size() != 0) {
 				LogUtils.logI("Denied access");
 				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for(int it = 0;it < data.size(); it++){
-					ItemList entityList = (ItemList)data.get(it);
+				for (int it = 0; it < data.size(); it++) {
+					ItemList entityList = (ItemList) data.get(it);
 					if (entityList.mType != ItemList.Type.album) {
-	                    completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-	                    return;
-	                }
+						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
+						return;
+					}
 					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey)entityList.mItemList.get(j));
-	                }
-					/*for (int j = 0; j < entityKeyList.size(); j++) {
-						LogUtils.logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-						LogUtils.logI("Entity Type:"+entityKeyList.get(j).getEntityType());
-	                }*/
-					
+						entityKeyList.add((EntityKey) entityList.mItemList
+								.get(j));
+					}
+					/*
+					 * for (int j = 0; j < entityKeyList.size(); j++) {
+					 * LogUtils.
+					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
+					 * LogUtils
+					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
+					 * ()); }
+					 */
+
 				}
-			}else{
+			} else {
 				LogUtils.logE("No data received");
 			}
-		}else if(errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
+		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
-		}else{
+		} else {
 			LogUtils.logE("Failure");
 		}
 		completeUiRequest(errorStatus, null);
@@ -473,7 +549,6 @@ public class ShareEngine extends BaseEngine{
 
 	}
 
-	
 	/**
 	 * Get Connectivity status from NetworkAgent.
 	 * 
@@ -491,7 +566,8 @@ public class ShareEngine extends BaseEngine{
 	/**
 	 * Change current ShareEngine state.
 	 * 
-	 * @param newState new state.
+	 * @param newState
+	 *            new state.
 	 */
 	private void newState(State newState) {
 		State oldState = mState;
@@ -503,32 +579,33 @@ public class ShareEngine extends BaseEngine{
 		}
 		LogUtils.logV("ShareEngine.newState: " + oldState + " -> " + mState);
 	}
-	
+
 	/**
-   * Called when a server response is received, processes the response based
-   * on the engine state.
-   * 
-   * @param resp Response data from server
-   */
+	 * Called when a server response is received, processes the response based
+	 * on the engine state.
+	 * 
+	 * @param resp
+	 *            Response data from server
+	 */
 	@Override
 	protected void processCommsResponse(DecodedResponse resp) {
-		       
-        switch (mState) {
-	    	case SHARING_ALBUM:
-	    		handleShareAlbum(resp.mDataTypes);
-	    		break;
-	    	case ALLOWING_GROUP:
-				handleAllowGroup(resp.mDataTypes);
-				break;
-			case DENYING_GROUP:
-				handleDenyGroup(resp.mDataTypes);
-				break;
-			case GETTING_ALBUM_SHARED_WITH:
-				handleAlbumSharedWith(resp.mDataTypes);
-				break;
-			default:
-				LogUtils.logW("default should never happend");
-        }
+
+		switch (mState) {
+		case SHARING_ALBUM:
+			handleShareAlbum(resp.mDataTypes);
+			break;
+		case ALLOWING_GROUP:
+			handleAllowGroup(resp.mDataTypes);
+			break;
+		case DENYING_GROUP:
+			handleDenyGroup(resp.mDataTypes);
+			break;
+		case GETTING_ALBUM_SHARED_WITH:
+			handleAlbumSharedWith(resp.mDataTypes);
+			break;
+		default:
+			LogUtils.logW("default should never happend");
+		}
 	}
 
 }

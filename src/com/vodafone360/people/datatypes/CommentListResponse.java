@@ -1,12 +1,26 @@
 package com.vodafone360.people.datatypes;
-
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
-
+/**
+ * BaseDataType encapsulating an CommentListResponse retrieved from
+ * Now + server
+ */
 public class CommentListResponse extends BaseDataType{
 
 	 /**

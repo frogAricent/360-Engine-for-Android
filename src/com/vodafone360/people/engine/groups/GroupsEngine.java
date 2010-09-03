@@ -47,6 +47,23 @@ import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.GroupPrivacy;
 import com.vodafone360.people.utils.LogUtils;
 
+/***
+ * Engine is responsible for handling features like adding user defined groups,
+ * updating groups, deleting groups and getting groups etc
+ * <p>
+ * File Name : GroupsEngine.java
+ * <p> 
+ * Description : This class extends BaseEngine and contain various overridden methods.
+ * <p>
+ * Revision History
+ * <p>
+ * ------------------------------------------------------------------------
+ * <p>
+ * Date		Author		 SPR-Id		 Version		 Comments
+ * <p>
+ * - 	       		   		- 		  	0.01 	 Initial Release
+ * <p>
+ */
 public class GroupsEngine extends BaseEngine {
     /**
      * Max number of groups to fetch from server in one request.
@@ -112,7 +129,8 @@ public class GroupsEngine extends BaseEngine {
 	 */
 	private Object mMutex = new Object();
 	/**
-	 * Groups Engine Constructor
+	 * Constructor
+	 * 
 	 * @param context
 	 * @param eventCallback
 	 * @param db
@@ -168,7 +186,14 @@ public class GroupsEngine extends BaseEngine {
     @Override
     protected void onTimeoutEvent() {
     }
-
+    
+    /**
+     * Called when a server response is received, processes the response based
+     * on the engine state.
+     * 
+     * @param resp Response data from server
+     * @return null
+     */
     @Override
     protected void processCommsResponse(DecodedResponse resp) {
         switch(mState){
@@ -238,9 +263,11 @@ public class GroupsEngine extends BaseEngine {
     }
 
     /**
-     * 
      * Adds a request to get groups from the backend that are associated with
      * the server contacts.
+     * 
+     * @param void
+     * @return void
      */
     public void addUiGetGroupsRequest() {
         LogUtils.logD("GroupsEngine.addUiGetGroupsRequest()");
@@ -270,7 +297,9 @@ public class GroupsEngine extends BaseEngine {
     
     /**
 	 * Adds UI request to add user defined group
+	 * 
 	 * @param groupName
+	 * @return void
 	 */
 
 	public void addUiAddUserDefinedGroup(String groupName) {
@@ -282,7 +311,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Adds UI request to delete user defined group
+	 * 
 	 * @param groupName
+	 * @return void
 	 */
 	public void addUiDeleteUserDefinedGroup(String groupName) {
 		LogUtils.logD("GroupsEngine.addUiDeleteUserDefinedGroup()");
@@ -309,7 +340,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Adds UI request to get group privacy settings
+	 * 
 	 * @param groupName
+	 * @return void
 	 */
 	
 	public void addUiGetGroupPrivacySetting(String groupName) {
@@ -338,9 +371,11 @@ public class GroupsEngine extends BaseEngine {
 
 	/**
 	 * Adds UI request to set group privacy settings
+	 * 
 	 * @param groupName
 	 * @param contentType
 	 * @param status
+	 * @return void
 	 */
 	public void addUiSetGroupPrivacySetting(String groupName, int contentType, int status) {
 		LogUtils.logD("GroupsEngine.addUiSetGroupPrivacySetting()");
@@ -370,6 +405,9 @@ public class GroupsEngine extends BaseEngine {
 
 	/**
 	 * Sends request to server to add a user defined group
+	 * 
+	 * @param groupName
+	 * @return void
 	 */
 	private void startAddUserGroup(String groupName) {
 		mAddUserGroupReq = false;
@@ -386,6 +424,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Sends request to server to delete a user defined group
+	 * 
+	 * @param groupId
+	 * @return void
 	 */
 	private void startDeleteUserGroup(Long groupId) {
 		mDeleteUserGroupReq = false;
@@ -405,7 +446,9 @@ public class GroupsEngine extends BaseEngine {
 
 	/**
 	 * Sends request to get group privacy settings
+	 * 
 	 * @param data
+	 * @return void
 	 */
 	private void startGetGroupPrivacySetting(Object data){
 		mGetGroupPrivacySettingReq = false;
@@ -427,9 +470,10 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Sends request to set group privacy settings
+	 * 
 	 * @param data
+	 * @return void
 	 */
-	
 	private void startSetGroupPrivacySetting(Object data){
 		mSetGroupPrivacySettingReq = false;
 		LogUtils.logD("GroupsEngine.startSetGroupPrivacySetting()");
@@ -460,7 +504,9 @@ public class GroupsEngine extends BaseEngine {
 
 	/**
 	 * Handles response received from server to add a User Group
+	 * 
 	 * @param resp
+	 * @return void
 	 */
 	private void handleAddUserGroupResponse(DecodedResponse resp) {
 		LogUtils.logD("GroupsEngine.handleAddUserGroupResponse");
@@ -481,7 +527,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Handles response received from server to delete a User Group
+	 * 
 	 * @param resp
+	 * @return void
 	 */
 	private void handleDeleteUserGroupResponse(DecodedResponse resp) {
 		LogUtils.logD("GroupsEngine.handleDeleteUserGroupResponse");
@@ -501,7 +549,9 @@ public class GroupsEngine extends BaseEngine {
 
 	/**
 	 * Handles response received from server to get group privacy setting
+	 * 
 	 * @param resp
+	 * @return void
 	 */
 	private void handleGetGroupPrivacySettingResponse(DecodedResponse resp) {
 		LogUtils.logD("GroupsEngine.handleGetGroupPrivacySettingResponse");
@@ -523,7 +573,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Handles response received from server to set group privacy setting
+	 * 
 	 * @param resp
+	 * @return void
 	 */
 	private void handleSetGroupPrivacySettingResponse(DecodedResponse resp) {
 		LogUtils.logD("GroupsEngine.handleSetGroupPrivacySettingResponse");
@@ -561,6 +613,7 @@ public class GroupsEngine extends BaseEngine {
 	 * Change current IdentityEngine state.
 	 * 
 	 * @param newState new state.
+	 * @return void
 	 */
 	private void newState(State newState) {
 		State oldState = mState;
@@ -588,7 +641,9 @@ public class GroupsEngine extends BaseEngine {
 	
 	/**
 	 * Handles the list of groups received from the server
+	 * 
 	 * @param resp
+	 * @return void
 	 */
 	
 	private void handleGetGroupsResponse(DecodedResponse resp){

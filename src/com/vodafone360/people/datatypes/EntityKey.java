@@ -1,212 +1,229 @@
 package com.vodafone360.people.datatypes;
 
+/*
+ ****************************************************************
+ * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information 
+ * of Aricent Technologies ("Confidential Information").You 
+ * shall not disclose such Confidential Information and shall use 
+ * it only in accordance with the terms of the license agreement 
+ * you entered into with Aricent.
+ ****************************************************************
+ */
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-public class EntityKey extends BaseDataType{
+/**
+ * BaseDataType encapsulating an EntityKey retrieved from, or to be issued to,
+ * Now + server
+ */
+public class EntityKey extends BaseDataType {
 
 	/**
 	 * Identifies the entity id.
 	 */
 	public Long mEntityId = null;
-	
+
 	/**
-	 * Identifies the user id, as the owner of the entity. This may be specified as 
-	 * null to mean that the owner is the user that is calling the api methods. 
-	 * Also this may be returned as null to identify that the owner of the entity 
-	 * of the entity is the user itself, that is calling the server APIs.
+	 * Identifies the user id, as the owner of the entity. This may be specified
+	 * as null to mean that the owner is the user that is calling the api
+	 * methods. Also this may be returned as null to identify that the owner of
+	 * the entity of the entity is the user itself, that is calling the server
+	 * APIs.
 	 */
 	public Long mUserId = null;
-	
+
 	/**
-	 * Identifies the type of the entity. This information is needed to understand 
-	 * to which entity type we are referring. Possibile values are ACTIVITIES, CALENDARS,
-	 * CALLS, CONTACTS, CONTENT, MESSAGES, MUSIC
+	 * Identifies the type of the entity. This information is needed to
+	 * understand to which entity type we are referring. Possibile values are
+	 * ACTIVITIES, CALENDARS, CALLS, CONTACTS, CONTENT, MESSAGES, MUSIC
 	 */
 	public String mEntityType = null;
-	  
+
 	private enum Tags {
-	        ENTITY_ID("entityid"),
-	        USER_ID("userid"),
-	        ENTITY_TYPE("entitytype");
-	       
-	        private final String tag;
+		ENTITY_ID("entityid"), USER_ID("userid"), ENTITY_TYPE("entitytype");
 
-	        /**
-	         * Constructor creating Tags item for specified String.
-	         * 
-	         * @param s String value for Tags item.
-	         */
-	        private Tags(String s) {
-	            tag = s;
-	        }
+		private final String tag;
 
-	        /**
-	         * String value associated with Tags item.
-	         * 
-	         * @return String value for Tags item.
-	         */
-	        private String tag() {
-	            return tag;
-	        }
-
-	        /**
-	         * Find Tags item for specified String.
-	         * 
-	         * @param tag String value to find Tags item for
-	         * @return Tags item for specified String, null otherwise
-	         */
-	        private static Tags findTag(String tag) {
-	            for (Tags tags : Tags.values()) {
-	                if (tag.compareTo(tags.tag()) == 0) {
-	                    return tags;
-	                }
-	            }
-	            return null;
-	        }
-	    }
-	
-	 /**
-     * Entity types
-     */
-    public enum EntityType {
-    	ACTIVITIES("activities"), 
-    	CALENDARS("calendars"), 
-    	CALLS("calls"),
-    	CONTACTS("contacts"), 
-    	CONTENT("content"),
-    	MESSAGES("messages"), 
-    	MUSIC("music");
-
-        private String mTypeCode;
-
-        /**
-         * Constructor creating type item for specified String.
-         * 
-         * @param s String value for type item.
-         */
-        private EntityType(String s) {
-            mTypeCode = s;
-        }
-
-        /**
-         * String value associated with type item.
-         * 
-         * @return String value for type item.
-         */
-        public String getTypeCode() {
-            return mTypeCode;
-        }
-
-        /**
-         * Find type item for specified String
-         * 
-         * @param tag String value to find type item for
-         * @return type item for specified String, null otherwise
-         */
-        public static EntityType findType(String t) {
-            for (EntityType types : EntityType.values()) {
-                if (t.compareTo(types.getTypeCode()) == 0) {
-                    return types;
-                }
-            }
-            return null;
-        }
-    }
-
-    
-	    /**
-	     * Sets the value of the member data item associated with the specified tag.
-	     * 
-	     * @param tag Current tag
-	     * @param val Value associated with the tag
-	     */
-	    private void setValue(Tags tag, Object value) {
-	        if (tag != null) {
-	            switch (tag) {
-	                case ENTITY_ID:
-	                    mEntityId = (Long)value;
-	                    break;
-
-	                case ENTITY_TYPE:
-//	                	mType = EntityType.findType((String) value);
-	                	mEntityType = (String)value;
-	                    break;
-   	                default:
-	                    // Do nothing.
-	                    break;
-	            }
-	        }
-	    }
-	    
-	    /**
-	     * Create EntityKey from Hashtable generated by Hessian-decoder
-	     * 
-	     * @param hash Hashtable containing EntityKey parameters
-	     * @return EntityKey created from Hashtable
-	     */
-	    public EntityKey createFromHashtable(Hashtable<String, Object> hash) {
-	        Enumeration<String> e = hash.keys();
-	        while (e.hasMoreElements()) {
-	            String key = e.nextElement();
-	            Object value = hash.get(key);
-	            Tags tag = findTag(key);
-	            setValue(tag, value);
-	        }
-
-	        return this;
-	    }
-	    
-	    private Tags findTag(String tag) {
-	        for (Tags tags : Tags.values()) {
-	            if (tag.compareTo(tags.tag()) == 0) {
-	                return tags;
-	            }
-	        }
-	        return null;
-	    }
-	    
-	    public Hashtable<String, Object> createHastable() {
-	        Hashtable<String, Object> htab = new Hashtable<String, Object>();
-
-	        if (mEntityId != null) {
-	            htab.put("entityid", mEntityId);
-	        }
-	        if (mUserId != null) {
-	            htab.put(Tags.USER_ID.tag(), mUserId);
-	        }
-	        if (mEntityType != null) {
-	            htab.put("entitytype", mEntityType);
-	        }
-	        return htab;
-	    }
-	    public Long getEntityId(){
-			return mEntityId;
-		}
-		
-		public Long getUserId(){
-			return mUserId;
-		}
-		
-		public String getEntityType(){
-			return mEntityType;
-		}
-		
-		public void setEntityId(Long value){
-			mEntityId = value;
-		}
-		
-		public void setUserId(Long value){
-			mUserId = value;
-		}
-		
-		public void setEntityType(String value){
-			mEntityType = value;
+		/**
+		 * Constructor creating Tags item for specified String.
+		 * 
+		 * @param s
+		 *            String value for Tags item.
+		 */
+		private Tags(String s) {
+			tag = s;
 		}
 
-		@Override
-		public int getType() {
-			return ENTITY_KEY_DATATYPE;
+		/**
+		 * String value associated with Tags item.
+		 * 
+		 * @return String value for Tags item.
+		 */
+		private String tag() {
+			return tag;
 		}
+
+		/**
+		 * Find Tags item for specified String.
+		 * 
+		 * @param tag
+		 *            String value to find Tags item for
+		 * @return Tags item for specified String, null otherwise
+		 */
+		private static Tags findTag(String tag) {
+			for (Tags tags : Tags.values()) {
+				if (tag.compareTo(tags.tag()) == 0) {
+					return tags;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Entity types
+	 */
+	public enum EntityType {
+		ACTIVITIES("activities"), CALENDARS("calendars"), CALLS("calls"), CONTACTS(
+				"contacts"), CONTENT("content"), MESSAGES("messages"), MUSIC(
+				"music");
+
+		private String mTypeCode;
+
+		/**
+		 * Constructor creating type item for specified String.
+		 * 
+		 * @param s
+		 *            String value for type item.
+		 */
+		private EntityType(String s) {
+			mTypeCode = s;
+		}
+
+		/**
+		 * String value associated with type item.
+		 * 
+		 * @return String value for type item.
+		 */
+		public String getTypeCode() {
+			return mTypeCode;
+		}
+
+		/**
+		 * Find type item for specified String
+		 * 
+		 * @param tag
+		 *            String value to find type item for
+		 * @return type item for specified String, null otherwise
+		 */
+		public static EntityType findType(String t) {
+			for (EntityType types : EntityType.values()) {
+				if (t.compareTo(types.getTypeCode()) == 0) {
+					return types;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Sets the value of the member data item associated with the specified tag.
+	 * 
+	 * @param tag
+	 *            Current tag
+	 * @param val
+	 *            Value associated with the tag
+	 */
+	private void setValue(Tags tag, Object value) {
+		if (tag != null) {
+			switch (tag) {
+			case ENTITY_ID:
+				mEntityId = (Long) value;
+				break;
+
+			case ENTITY_TYPE:
+				// mType = EntityType.findType((String) value);
+				mEntityType = (String) value;
+				break;
+			default:
+				// Do nothing.
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Create EntityKey from Hashtable generated by Hessian-decoder
+	 * 
+	 * @param hash
+	 *            Hashtable containing EntityKey parameters
+	 * @return EntityKey created from Hashtable
+	 */
+	public EntityKey createFromHashtable(Hashtable<String, Object> hash) {
+		Enumeration<String> e = hash.keys();
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			Object value = hash.get(key);
+			Tags tag = findTag(key);
+			setValue(tag, value);
+		}
+
+		return this;
+	}
+
+	private Tags findTag(String tag) {
+		for (Tags tags : Tags.values()) {
+			if (tag.compareTo(tags.tag()) == 0) {
+				return tags;
+			}
+		}
+		return null;
+	}
+
+	public Hashtable<String, Object> createHastable() {
+		Hashtable<String, Object> htab = new Hashtable<String, Object>();
+
+		if (mEntityId != null) {
+			htab.put("entityid", mEntityId);
+		}
+		if (mUserId != null) {
+			htab.put(Tags.USER_ID.tag(), mUserId);
+		}
+		if (mEntityType != null) {
+			htab.put("entitytype", mEntityType);
+		}
+		return htab;
+	}
+
+	public Long getEntityId() {
+		return mEntityId;
+	}
+
+	public Long getUserId() {
+		return mUserId;
+	}
+
+	public String getEntityType() {
+		return mEntityType;
+	}
+
+	public void setEntityId(Long value) {
+		mEntityId = value;
+	}
+
+	public void setUserId(Long value) {
+		mUserId = value;
+	}
+
+	public void setEntityType(String value) {
+		mEntityType = value;
+	}
+
+	@Override
+	public int getType() {
+		return ENTITY_KEY_DATATYPE;
+	}
 }
-	    
