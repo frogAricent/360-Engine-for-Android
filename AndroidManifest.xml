@@ -57,12 +57,13 @@
     <!-- Android 2.X specific -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
  	
-    <application android:theme="@style/PeopleWhiteTheme" 
+    <application  
 		android:name=".MainApplication"
 		android:label="@string/app_name" 
-		android:debuggable="true"
-		android:icon="@drawable/pt_launcher_icon">
-                          
+		android:debuggable="true">
+		
+            <!-- android:icon="@drawable/pt_launcher_icon" -->              
+           
 		<service android:name=".service.RemoteService" 
 		android:exported = "true">
 			<intent-filter>
