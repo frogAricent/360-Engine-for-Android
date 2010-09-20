@@ -32,6 +32,7 @@ import java.util.Map;
 
 import android.os.Bundle;
 
+import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.IdentityCapability;
@@ -48,7 +49,6 @@ import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Identities;
 import com.vodafone360.people.service.io.rpg.PushMessageTypes;
 import com.vodafone360.people.service.transport.ConnectionManager;
-import com.vodafone360.people.service.transport.http.HttpConnectionThread;
 import com.vodafone360.people.service.transport.tcp.ITcpConnectionListener;
 import com.vodafone360.people.utils.LogUtils;
 
@@ -70,7 +70,8 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         VALIDATING_IDENTITY_CREDENTIALS,
         SETTING_IDENTITY_STATUS,
         GETTING_MY_IDENTITIES,
-        GETTING_MY_CHATABLE_IDENTITIES
+        GETTING_MY_CHATABLE_IDENTITIES,
+        DELETING_IDENTITIES
     }
 
     /**
@@ -140,6 +141,8 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
     
     /** List array of Identities retrieved from Server. */
     private ArrayList<Identity> mMyIdentityList;
+    
+    public ArrayList<Identity> mDupIdentityList = new ArrayList<Identity>();
 
     /** List array of Identities supporting chat retrieved from Server. */
     private ArrayList<String> mMyChatableIdentityList = null;
@@ -153,6 +156,8 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
 	public static final String KEY_AVAILABLE_IDS = "availableids";
 	/** The key for my identities for the push ui message. */
 	public static final String KEY_MY_IDS = "myids";
+	/**Application cache**/
+	private static ApplicationCache mAppCache = null;
 
     /**
      * Constructor
@@ -323,6 +328,19 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         emptyUiRequestQueue();
         addUiRequestToQueue(ServiceUiRequest.VALIDATE_IDENTITY_CREDENTIALS, data);
     }
+    
+    /**
+     * Add request to delete the  user's identities.
+     * 
+     * @param filter Bundle containing parameters for fetch identities request.
+     *            This contains the set of filters applied to GetMyIdentities
+     *            API call.
+     */
+    public void addUiDeleteIdentity(Bundle bundle) {
+        LogUtils.logD("IdentityEngine.addUiDeleteIdentity()");
+        emptyUiRequestQueue();
+        addUiRequestToQueue(ServiceUiRequest.DELETE_IDENTITIES, bundle);
+    }
 
     /**
      * Issue any outstanding UI request.
@@ -340,6 +358,9 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
             case SET_IDENTITY_CAPABILITY_STATUS:
                 executeSetIdentityStatusRequest(data);
                 break;
+            case DELETE_IDENTITIES:
+            	startDeleteIdentity(data);
+            	break;
             default:
                 completeUiRequest(ServiceStatus.ERROR_NOT_FOUND, null);
                 break;
@@ -421,6 +442,9 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
 	        	case BaseDataType.STATUS_MSG_DATA_TYPE:
 	        		handleValidateIdentityCredentials(resp.mDataTypes);
 	        		break;
+	        	case BaseDataType.DELETE_IDENTITY:
+	            	handleDeletionOfIdentitiesResponse(resp.mDataTypes);
+	            	break;
 	            default:
 	                LogUtils.logW("IdentityEngine.processCommsResponse DEFAULT should never happened.");
 	                break;
@@ -612,6 +636,27 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         completeUiRequest(errorStatus, bu);
         newState(State.IDLE);
     }
+    
+    /**
+     * Handle Server response to request for deletion of Identities. The response
+     * is TRUE if identity deleted, else FALSE. 
+     * 
+     * @param data List of BaseDataTypes generated from Server response.
+     */
+    private void handleDeletionOfIdentitiesResponse(List<BaseDataType> data) {
+        Bundle bu = null;
+        LogUtils.logD("IdentityEngine: handleDeletionOfIdentitiesResponse");
+        ServiceStatus errorStatus = getResponseStatus(BaseDataType.DELETE_IDENTITY, data);
+        if (errorStatus == ServiceStatus.SUCCESS) {
+            LogUtils.logE("IdentityEngine: server returned SUCCESS for deleteIdentity(). Identity Deleted");
+          //TODO:Handling of response from the server to be implemented
+        } else {
+        	LogUtils.logE("IdentityEngine: server returned FAILURE for deleteIdentity()");
+        }
+        LogUtils.logD("IdentityEngine: handleServerGetAvailableIdentitiesResponse completw UI req");
+        completeUiRequest(errorStatus, bu);
+        newState(State.IDLE);
+    }
 
     /**
      * 
@@ -765,5 +810,48 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         }
         super.onReset();
     }
+    
+    /**
+     * Issue request to retrieve available Identities. (Request is not issued if
+     * there is currently no connectivity).
+     * 
+     * @param data Bundled request data.
+     */
+    private void startDeleteIdentity(Object data) {
+    	LogUtils.logD("IdentityEngine: startDeleteIdentity()");
+        if (!isConnected()) {
+            return;
+        }
+        newState(State.DELETING_IDENTITIES);
+        Bundle bundle = (Bundle) data;
+        String network = null;
+        String mIdentityId = null;
+        String sns = bundle.getString("identity");
+        
+        ArrayList<Identity> localCopy = new ArrayList<Identity>();
+        //localCopy = mDupIdentityList;
+        localCopy = mMyIdentityList;
+        
+        if(localCopy != null){
+        	int listSize = localCopy.size();
+			for(Identity id : localCopy){
+				LogUtils.logI("Identities.deleteIdentity() Identity Name " + id.mName);
+				LogUtils.logI("Identities.deleteIdentity() Identity ID " + id.mIdentityId);
+				if(id.mName.equals(sns)){
+					LogUtils.logE("Identities.deleteIdentity() Identity to be deleted found- " + id.mName);
+					network = id.mNetwork;
+					mIdentityId = id.mIdentityId;
+					break;
+				}
+			}
+		}else{
+			LogUtils.logE("Identities.deleteIdentity() IdentityList is null");
+		}
+        if (!setReqId(Identities.deleteIdentity(this, network, mIdentityId))) {
+            completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
+        }
+    }
+    
+    
 
 }

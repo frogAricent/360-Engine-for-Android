@@ -118,6 +118,13 @@ public enum ServiceUiRequest {
      * @see com.vodafone360.people.engine.identitys.IdentityEngine
      */
     GET_MY_IDENTITIES,
+    
+    /**
+     * Delete a third party account
+     * 
+     * @see com.vodafone360.people.engine.identitys.IdentityEngine
+     */
+    DELETE_IDENTITIES,
     /**
      * Get list of 3rd party accounts for current user that support chat,
      * handled by IdentitiesEngine.

@@ -100,6 +100,37 @@ public abstract class ContactDetailsTable {
                     + Field.LOCALCONTACTID + " = ?";
     
     /**
+     * Select LocalContactID
+     * From ContactDetails
+     * Where Key = 7 and StringVal = ? 
+     * 
+     */    
+    public static SQLiteStatement fetchLocalFromStringValStatement(SQLiteDatabase readableDb) {
+    	try {
+            return readableDb.compileStatement("SELECT " + Field.LOCALCONTACTID + " FROM " + TABLE_NAME + " WHERE "
+                    + Field.KEY + " = 7 AND " + Field.STRINGVAL + " = ?");
+        } catch (SQLException e) {
+            LogUtils.logE("ContactsDetailsTable.fetchLocalFromStringValStatement() "
+                    + "Exception - Compile error:\n", e);
+            return null;
+        }
+    }
+    
+    public static Long fetchLocalFromFacebookId(Long facebookId, SQLiteStatement statement) {
+        DatabaseHelper.trace(false, "ContactsDetailsTable.fetchLocalFromFacebookId() facebookId["
+                + facebookId + "]");
+        if (statement == null || facebookId == null) {
+            return null;
+        }
+        try {
+            statement.bindLong(1, facebookId);
+            return statement.simpleQueryForLong();
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+    
+    /**
      * SELECT 
      * DetailLocalId, Key, 
      * DetailServerId, NativeContactIdDup, 

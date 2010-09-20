@@ -44,7 +44,7 @@ import com.vodafone360.people.datatypes.ExternalResponseObject;
  */
 public final class ThumbnailUtils {
     /** Full path for the thumbnails. **/
-    public static final String THUMBNAIL_FILE_LOCATION = "/data/data/com.vodafone360.people/app_np_thumbs/";
+    public static final String THUMBNAIL_FILE_LOCATION = "/data/data/com.tesla.people/app_np_thumbs/";
 
     /** JPEG file extension. **/
     private static final String JPG_EXTENSION = ".jpg";

@@ -212,7 +212,14 @@ public class ActivityItem extends BaseDataType {
         MUSIC_RECOMMENDATION_RECEIVED_TRACK_ANON("music_recommendation_received_track_anon"),
         MUSIC_RECOMMENDATION_RECEIVED_ALBUM_ANON("music_recommendation_received_album_anon"),
         MUSIC_RECOMMENDATION_RECEIVED_PLAYLIST_ANON("music_recommendation_received_playlist_anon"),
-        ACTIVITY_EVENT_UNKNOWN("unknown_activity");
+        ACTIVITY_EVENT_UNKNOWN("unknown_activity"),
+        
+        /*******Added New Types for Facebook Plug in*******/
+        ACTIVITY_ALBUM_FEED("album_feed"),
+        ACTIVITY_PHOTO_FEED("photo_feed"),
+        ACTIVITY_LINK_FEED("link_feed"),
+        ACTIVITY_COMMENT_FEED("comment_feed"),
+        ACTIVITY_LIKE_FEED("like_feed");
 
         private String mTypeCode;
 
@@ -378,7 +385,7 @@ public class ActivityItem extends BaseDataType {
      * Unique identifier for the activity. This can be empty when setting a new
      * activity (the id is generated on the server side)
      */
-    public Long activityId = null;
+    public String activityId = null;
 
     /*
      * Timestamp representing the time of the activity. This may not be related
@@ -442,7 +449,7 @@ public class ActivityItem extends BaseDataType {
      * activities. To get activities that have a mParentActivity set, the
      * 'children' filter must be used with a value of the parent Activity's id.
      */
-    public Long parentActivity = null;
+    public String parentActivity = null;
 
     /**
      * Indicates wether this activity 'groups' several child activities. When
@@ -499,7 +506,11 @@ public class ActivityItem extends BaseDataType {
         if (tag != null) {
             switch (tag) {
                 case ACTIVITY_ID:
-                    activityId = (Long)value;
+                	System.out.println("Test Code");
+                	activityId = value.toString();
+                	//activityId = (String)value;
+                	
+                	
                     break;
 
                 case CONTACT:
@@ -541,7 +552,7 @@ public class ActivityItem extends BaseDataType {
                     break;
 
                 case PARENT_ACTIVITY:
-                    parentActivity = (Long)value;
+                    parentActivity = (String)value;
                     break;
 
                 case PREVIEW:

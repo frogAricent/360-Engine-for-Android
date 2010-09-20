@@ -26,6 +26,7 @@
 package com.vodafone360.people;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Handler;
 
 import com.vodafone360.people.database.DatabaseHelper;
@@ -51,6 +52,8 @@ public class MainApplication extends Application {
     private DatabaseHelper mDatabaseHelper;
 
     private final ApplicationCache mApplicationCache = new ApplicationCache();
+
+    private static Context ctx = null;
     
     /**
      * Called when the Application is created.
@@ -62,6 +65,7 @@ public class MainApplication extends Application {
         mDatabaseHelper = new DatabaseHelper(this);
         mDatabaseHelper.start();
         LoginPreferences.getCurrentLoginActivity(this);
+        ctx = getApplicationContext();
     }
 
     /**
@@ -208,4 +212,8 @@ public class MainApplication extends Application {
     public InternetAvail getInternetAvail() {
         return mDatabaseHelper.fetchOption(PersistSettings.Option.INTERNETAVAIL).getInternetAvail();
     }
+    
+    public static Context getContext(){
+		return ctx;
+	}
 }

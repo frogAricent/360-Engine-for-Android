@@ -717,6 +717,7 @@ public class ContactSyncEngine extends BaseEngine implements
 			return getCurrentTimeout();
 		}
 
+
 		if (isCommsResponseOutstanding()) {
 			return 0;
 		}
@@ -742,6 +743,30 @@ public class ContactSyncEngine extends BaseEngine implements
 		}
 		return getCurrentTimeout();
 	}
+
+    /**
+     * Checks if a server sync can be started based on network conditions and
+     * engine state
+     * 
+     * @return true if a sync can be started, false otherwise.
+     */
+    private boolean readyToStartServerSync() {
+        if (!Settings.ENABLE_SERVER_CONTACT_SYNC) {
+            return false;
+        }
+        /*
+        if (!EngineManager.getInstance().getSyncMeEngine().isFirstTimeMeSyncComplete()) {
+            return false;
+        }
+        if (!mFirstTimeSyncStarted) {
+            return false;
+        }*/
+        if (mState != State.IDLE || NetworkAgent.getAgentState() != AgentState.CONNECTED) {
+            return false;
+        }
+        return true;
+    }
+
 
 	/**
 	 * Called by framework when {@link #getNextRunTime()} reports that the
@@ -1037,29 +1062,7 @@ public class ContactSyncEngine extends BaseEngine implements
 		newState(State.IDLE);
 	}
 
-	/**
-	 * Checks if a server sync can be started based on network conditions and
-	 * engine state
-	 * 
-	 * @return true if a sync can be started, false otherwise.
-	 */
-	private boolean readyToStartServerSync() {
-		if (!Settings.ENABLE_SERVER_CONTACT_SYNC) {
-			return false;
-		}
-		if (!EngineManager.getInstance().getSyncMeEngine()
-				.isFirstTimeMeSyncComplete()) {
-			return false;
-		}
-		if (!mFirstTimeSyncStarted) {
-			return false;
-		}
-		if (mState != State.IDLE
-				|| NetworkAgent.getAgentState() != AgentState.CONNECTED) {
-			return false;
-		}
-		return true;
-	}
+	
 
 	/**
 	 * Checks if a fetch native sync can be started based on network conditions
@@ -1931,8 +1934,8 @@ public class ContactSyncEngine extends BaseEngine implements
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			ListOfLong userId = new ListOfLong();
 			userId = (ListOfLong) data.get(0);
-			LogUtils.logI("Friend request sent to user ID "
-					+ userId.mLongList.get(0));
+			LogUtils.logI("Friend request sent to user ID "+ userId.mLongList.get(0));
+			//TODO:Handling of response from the server to be implemented
 		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
 		} else {
@@ -1986,7 +1989,8 @@ public class ContactSyncEngine extends BaseEngine implements
 				BaseDataType.ITEM_LIST_DATA_TYPE, response.mDataTypes);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			LogUtils.logI("Friendship requests received.");
-			handleReceivedFriendReqIds(response.mDataTypes);
+			receivedFriendReqIds(response.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
 		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
 		} else {
@@ -2002,9 +2006,9 @@ public class ContactSyncEngine extends BaseEngine implements
 	 *            contains list of BaseDataTypes generated from Server response.
 	 * @return void
 	 */
-	private void handleReceivedFriendReqIds(List<BaseDataType> data) {
+	private void receivedFriendReqIds(List<BaseDataType> data) {
 		LogUtils
-				.logD("ContactSyncEngine.handleReceivedFriendReqIds - Received follwing Id's");
+				.logD("ContactSyncEngine.receivedFriendReqIds - Received follwing Id's");
 		List<FriendshipRequest> requests = new ArrayList<FriendshipRequest>();
 		for (int i = 0; i < data.size(); i++) {
 			ItemList itemList = (ItemList) data.get(i);
@@ -2072,7 +2076,8 @@ public class ContactSyncEngine extends BaseEngine implements
 				BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			LogUtils.logI("User Profiles received.");
-			handleReceivedRejectIds(response.mDataTypes);
+			receivedRejectIds(response.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
 		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
 		} else {
@@ -2089,8 +2094,8 @@ public class ContactSyncEngine extends BaseEngine implements
 	 *            contains the list of BaseDataTypes generated from Server
 	 * @return void
 	 */
-	private void handleReceivedRejectIds(List<BaseDataType> data) {
-		LogUtils.logI("ContactSyncEngine.handleReceivedRejectIds()");
+	private void receivedRejectIds(List<BaseDataType> data) {
+		LogUtils.logI("ContactSyncEngine.receivedRejectIds()");
 		if (data.size() != 0) {
 			List<Long> reqIdList = new ArrayList<Long>();
 			for (int it = 0; it < data.size(); it++) {
@@ -2162,7 +2167,8 @@ public class ContactSyncEngine extends BaseEngine implements
 				BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			LogUtils.logD("User Profiles received.");
-			handleReceivedRemoveIds(response.mDataTypes);
+			receivedRemoveIds(response.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
 		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
 		} else {
@@ -2179,8 +2185,8 @@ public class ContactSyncEngine extends BaseEngine implements
 	 *            contains the list of BaseDataTypes generated from Server
 	 * @return void
 	 */
-	private void handleReceivedRemoveIds(List<BaseDataType> data) {
-		LogUtils.logI("ContactSyncEngine.handleReceivedRemoveIds()");
+	private void receivedRemoveIds(List<BaseDataType> data) {
+		LogUtils.logI("ContactSyncEngine.receivedRemoveIds()");
 		if (data.size() != 0) {
 			List<Long> reqIdList = new ArrayList<Long>();
 			for (int it = 0; it < data.size(); it++) {
@@ -2200,10 +2206,10 @@ public class ContactSyncEngine extends BaseEngine implements
 				}
 
 			}
-			Long contLocalId;
+			/*Long contLocalId;
 			contLocalId = ContactsTable.fetchLocalIdFromUserId(mCache
 					.getUserId(), mDb.getReadableDatabase());
-			mDb.deleteContact(contLocalId);
+			mDb.deleteContact(contLocalId);*/
 		} else {
 			LogUtils.logE("No data received");
 		}
@@ -2256,7 +2262,8 @@ public class ContactSyncEngine extends BaseEngine implements
 				BaseDataType.LIST_OF_LONG_DATATYPE, response.mDataTypes);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			LogUtils.logD("User Profiles received.");
-			handleReceivedApproveIds(response.mDataTypes);
+			receivedApproveIds(response.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
 		} else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER) {
 			LogUtils.logE("Bad Server Parameter");
 		} else {
@@ -2273,8 +2280,8 @@ public class ContactSyncEngine extends BaseEngine implements
 	 *            contains the list of BaseDataTypes generated from Server
 	 * @return void
 	 */
-	private void handleReceivedApproveIds(List<BaseDataType> data) {
-		LogUtils.logI("ContactSyncEngine.handleReceivedApproveIds()");
+	private void receivedApproveIds(List<BaseDataType> data) {
+		LogUtils.logI("ContactSyncEngine.receivedApproveIds()");
 		if (data.size() != 0) {
 			List<Long> reqIdList = new ArrayList<Long>();
 			for (int it = 0; it < data.size(); it++) {

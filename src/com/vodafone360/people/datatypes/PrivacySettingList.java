@@ -1,24 +1,36 @@
-package com.vodafone360.people.datatypes;
 
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+
+package com.vodafone360.people.datatypes;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
-
-import com.vodafone360.people.utils.LogUtils;
 
 /**
  * BaseDataType encapsulating an PrivacySettingList retrieved from, or to be
@@ -31,6 +43,8 @@ public class PrivacySettingList extends BaseDataType {
 	/** List-array of PrivacySettingList. */
 	public List<PrivacySetting> mItemList = new ArrayList<PrivacySetting>();
 
+	private final String PRIVSETSTRING = "statusprivacysettinglist";
+	
 	/** {@inheritDoc} */
 	@Override
 	public String toString() {
@@ -49,28 +63,21 @@ public class PrivacySettingList extends BaseDataType {
 	 *            Hashtable containing populateFromHashtable data
 	 * @return void
 	 */
+	@SuppressWarnings("unchecked")
 	public void populateFromHashtable(Hashtable<String, Object> hash) {
 
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
 
-		@SuppressWarnings("unchecked")
-		String privSetString = "statusprivacysettinglist";
 		Vector<Vector<Hashtable<String, Object>>> privGroupList = (Vector<Vector<Hashtable<String, Object>>>) hash
-				.get(privSetString);
-		privSetString = "privacysettinglist";
+				.get(PRIVSETSTRING);
+
 		if (privGroupList != null) {
-			Enumeration er;
-			er = privGroupList.elements();
+			Enumeration er = privGroupList.elements();
 			while (er.hasMoreElements()) {
 				Object key = er.nextElement();
 				privSetList = PrivacySetting
 						.populatefromHashtableGroupSetting((Hashtable) key);
 			}
-			/*
-			 * if(privSetList == null){
-			 * LogUtils.logE("Cannot typecast hash to vector:privSet is null");
-			 * }else{ LogUtils.logI("privSet:["+privSetList+"]"); }
-			 */
 		}
 
 		mItemList = privSetList;

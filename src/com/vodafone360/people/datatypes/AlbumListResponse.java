@@ -1,16 +1,30 @@
-package com.vodafone360.people.datatypes;
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+
+package com.vodafone360.people.datatypes;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -24,7 +38,7 @@ import java.util.Vector;
 public class AlbumListResponse extends BaseDataType {
 
 	 /**
-     * Tags associated with ContactListResponse item.
+     * Tags associated with AlbumListResponse item.
      */
     private enum Tags {
         ALBUM_LIST("albumlist"),
@@ -97,7 +111,8 @@ public class AlbumListResponse extends BaseDataType {
      * @param tag Current tag
      * @param value Value associated with the tag
      */
-    private void setValue(Tags tag, Object value) {
+    @SuppressWarnings("unchecked")
+	private void setValue(Tags tag, Object value) {
         switch (tag) {
             case ALBUM_LIST:
             	Vector<Hashtable<String, Object>> albumsVector = (Vector<Hashtable<String, Object>>)value;

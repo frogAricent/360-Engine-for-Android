@@ -31,6 +31,7 @@ import java.util.List;
 import android.os.Bundle;
 import android.os.Handler;
 
+import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.datatypes.Album;
 import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Content;
@@ -384,6 +385,7 @@ public interface IPeopleService {
      * @param entitykeylist Provide a list of comments to be retrieved.
      */
     void getComment(List<EntityKey> entitykeylist);
+
     
     /**
      * Updates a list of Comments in the platform
@@ -391,7 +393,6 @@ public interface IPeopleService {
      * @param commentsList Provide a list of comments to be updated.
      */
     void updateComment(List<Comment> commentsList);
-    
     /**
      * Adds a list of Albums to the platform
      * 
@@ -556,4 +557,13 @@ public interface IPeopleService {
      * Method to remove friend
      */
     void removeFriendRequest(List<Long> userIdList);
-}
+    
+    /***
+     * Begins the process of deleting a Third party Account that the user is
+     * already registered with from the Vodafone 360 back end. The response is
+     * sent to any currently registered Activity handlers.
+     * 
+     * @param Bundle filter the kind of identities to return.
+     */
+    void deleteIdentity(Bundle bundle);
+  }

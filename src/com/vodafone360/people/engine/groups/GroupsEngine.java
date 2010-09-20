@@ -26,7 +26,6 @@ package com.vodafone360.people.engine.groups;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -50,20 +49,8 @@ import com.vodafone360.people.utils.LogUtils;
 /***
  * Engine is responsible for handling features like adding user defined groups,
  * updating groups, deleting groups and getting groups etc
- * <p>
- * File Name : GroupsEngine.java
- * <p> 
- * Description : This class extends BaseEngine and contain various overridden methods.
- * <p>
- * Revision History
- * <p>
- * ------------------------------------------------------------------------
- * <p>
- * Date		Author		 SPR-Id		 Version		 Comments
- * <p>
- * - 	       		   		- 		  	0.01 	 Initial Release
- * <p>
- */
+ * 
+ **/
 public class GroupsEngine extends BaseEngine {
     /**
      * Max number of groups to fetch from server in one request.
@@ -97,10 +84,10 @@ public class GroupsEngine extends BaseEngine {
 	/**
 	 * To maintain the state of the Engine
 	 */
-	State mState;
+	State mState = State.IDLE;
 
 	/**
-	 * Contect
+	 * Context
 	 */
 	Context mContext;
 
@@ -220,6 +207,12 @@ public class GroupsEngine extends BaseEngine {
 		}
     }
 
+    /**
+     * Issue any outstanding UI request.
+     * 
+     * @param requestType Request to be issued.
+     * @param dara Data associated with the request.
+     */
     @Override
     protected void processUiRequest(ServiceUiRequest requestId, Object data) {
         switch (requestId) {
@@ -249,6 +242,10 @@ public class GroupsEngine extends BaseEngine {
         }
     }
 
+    /**
+     * Run function called via EngineManager. Should have a UI, Comms response
+     * or timeout event to handle.
+     */
     @Override
     public void run() {
         if (isUiRequestOutstanding() && processUiQueue()) {
@@ -307,8 +304,7 @@ public class GroupsEngine extends BaseEngine {
 		addUiRequestToQueue(ServiceUiRequest.ADD_USER_GROUP, groupName);
 		mAddUserGroupReq = true;
 	}
-	
-	
+
 	/**
 	 * Adds UI request to delete user defined group
 	 * 
@@ -515,10 +511,13 @@ public class GroupsEngine extends BaseEngine {
 
 		if(errorStatus == ServiceStatus.SUCCESS){
 			LogUtils.logI("GroupsEngine.handleAddUserGroupResponse() - User Group Added.");
+			//TODO:Handling of response from the server to be implemented
 		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
 			LogUtils.logE("GroupsEngine.handleAddUserGroupResponse() - Bad Server Parameter");
+			
 		}else{
 			LogUtils.logE("GroupsEngine.handleAddUserGroupResponse() - Failure");
+			
 		}
 		newState(State.IDLE);
 		completeUiRequest(errorStatus,null);
@@ -538,6 +537,7 @@ public class GroupsEngine extends BaseEngine {
 
 		if(errorStatus == ServiceStatus.SUCCESS){
 			LogUtils.logI("Group Deleted.");
+			//TODO:Handling of response from the server to be implemented
 		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
 			LogUtils.logE("handleDeleteUserGroupResponse() - Bad Server Parameter");
 		}else{
@@ -560,7 +560,8 @@ public class GroupsEngine extends BaseEngine {
 
 		if(errorStatus == ServiceStatus.SUCCESS){
 			LogUtils.logI("Received GroupPrivacy settings");
-			getGroupPrivacySettings(resp.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
+			displayGroupPrivacySettings(resp.mDataTypes);
 		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
 			LogUtils.logE("handleGetGroupPrivacySettingResponse() - Bad Server Parameter");
 		}else{
@@ -584,7 +585,7 @@ public class GroupsEngine extends BaseEngine {
 
 		if(errorStatus == ServiceStatus.SUCCESS){
 			LogUtils.logI("Privacy Settings set for the group");
-			//handleAddUserGroup(resp.mDataTypes);
+			//TODO:Handling of response from the server to be implemented
 		}else if (errorStatus == ServiceStatus.ERROR_BAD_SERVER_PARAMETER){
 			LogUtils.logE("handleSetGroupPrivacySettingResponse() - Bad Server Parameter");
 		}else{
@@ -631,7 +632,7 @@ public class GroupsEngine extends BaseEngine {
 	 * @param privacySettings
 	 */
 	
-	private void getGroupPrivacySettings(List<BaseDataType> privacySettings){
+	private void displayGroupPrivacySettings(List<BaseDataType> privacySettings){
 		//LogUtils.logI("Received List size is "+privacySettings.size());
 		PrivacySettingList psl = (PrivacySettingList)privacySettings.get(0);
 		for(PrivacySetting obj : psl.mItemList){

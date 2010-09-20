@@ -1,30 +1,44 @@
-package com.vodafone360.people.datatypes;
 
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+
+package com.vodafone360.people.datatypes;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
-import com.vodafone360.people.utils.LogUtils;
-
 /**
  * BaseDataType encapsulating an PrivacySetting retrieved from, or to be issued
  * to, Now + server
  */
 public class PrivacySetting extends BaseDataType {
+	
+	private static final String PRIVACYSETTINGLIST = "PrivacySetting";
 
 	/**
 	 * Tags associated with PrivacySetting item.
@@ -103,12 +117,12 @@ public class PrivacySetting extends BaseDataType {
 	 *            Hashtable containing PrivacySetting data
 	 * @return PrivacySetting list
 	 */
+	@SuppressWarnings("unchecked")
 	public static List<PrivacySetting> populateFromHashtable(
 			Hashtable<String, Object> hash) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
-		String privacySettingList = "PrivacySetting";
 		Vector<Hashtable<String, Object>> vect = (Vector<Hashtable<String, Object>>) hash
-				.get(privacySettingList);
+		.get(PRIVACYSETTINGLIST);
 		for (Hashtable<String, Object> msghash : vect) {
 			PrivacySetting privSet = new PrivacySetting();
 			privSetList.add(privSet.createFromHashtable(msghash));
@@ -116,30 +130,34 @@ public class PrivacySetting extends BaseDataType {
 		return privSetList;
 	}
 
+	/**
+	 * Populates group settings data from Hashtable
+	 * 
+	 * @param hash
+	 *            Hashtable containing GroupsPrivacySetting data
+	 * @return GroupsPrivacySetting list
+	 */
 	@SuppressWarnings("unchecked")
 	public static List<PrivacySetting> populatefromHashtableGroupSetting(
 			Hashtable inp) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
-		String privacySettingList = "PrivacySetting";
-		Enumeration er;
-		er = inp.elements();
+		Enumeration er = inp.elements();
+		
 		while (er.hasMoreElements()) {
-			PrivacySetting ps = new PrivacySetting();
 			Object data = er.nextElement();
-			// LogUtils.logI("Hash data:"+data);
 			privSetList = populateList((Vector) data);
 			break;
-			// ps.createFromHashtable(data);
-			// privSetList.add(ps);
 		}
-		/*
-		 * for (Hashtable<String, Object> msghash : vect) { PrivacySetting
-		 * privSet = new PrivacySetting();
-		 * privSetList.add(privSet.createFromHashtable(msghash)); }
-		 */
 		return privSetList;
 	}
 
+	/**
+	 * Populates data from Hashtable
+	 * 
+	 * @param hash
+	 *            Hashtable containing PrivacySetting data
+	 * @return PrivacySetting list
+	 */
 	@SuppressWarnings("unchecked")
 	public static List<PrivacySetting> populateList(Vector inp) {
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
@@ -148,7 +166,6 @@ public class PrivacySetting extends BaseDataType {
 		while (er.hasMoreElements()) {
 			PrivacySetting ps = new PrivacySetting();
 			Object data = er.nextElement();
-			// LogUtils.logI("Vector data:"+data);
 			ps.createFromHashtable((Hashtable<String, Object>) data);
 			privSetList.add(ps);
 		}

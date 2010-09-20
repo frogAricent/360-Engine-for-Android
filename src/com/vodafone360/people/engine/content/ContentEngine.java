@@ -265,6 +265,43 @@ public class ContentEngine extends BaseEngine {
 	@Override
 	protected final void processCommsResponse(final DecodedResponse resp) {
 		LogUtils.logD("ContentEngine processCommsResponse");
+		switch (mState) {
+		case ADDING_ALBUM:
+			handleAddAlbumResponse(resp.mDataTypes);
+			break;
+		case DELETING_ALBUM:
+			handleDeleteAlbumResponse(resp.mDataTypes);
+			break;
+		case GETTING_ALBUM:
+			handleGetAlbumResponse(resp.mDataTypes);
+			break;
+		case UPDATING_ALBUM:
+			handleUpdateAlbumResponse(resp.mDataTypes);
+			break;
+		case ADDING_CONTENT_TO_ALBUM:
+			handleAddContentToAlbumResponse(resp.mDataTypes);
+			break;
+		case DELETING_CONTENT_FROM_ALBUM:
+			handleDeleteContentFromAlbumResponse(resp.mDataTypes);
+			break;
+		case PUBLISHING_ALBUM:
+			handlePublishAlbumResponse(resp.mDataTypes);
+			break;
+		case UPLOADING_CONTENT:
+			handleUploadContentResponse(resp.mDataTypes);
+			break;
+		case GETTING_CONTENT:
+			handleGetContentResponse(resp.mDataTypes);
+			break;
+		case PUBLISHING_CONTENT:
+			handlePublishContentResponse(resp.mDataTypes);
+			break;
+		case DELETING_CONTENT:
+			handleDeleteContentResponse(resp.mDataTypes);
+			break;
+		default: // do nothing.
+			break;
+		}
 		ContentObject co = requestContentObjectMatchTable.remove(resp.mReqId);
 
 		if (co == null) { // check if we have an invalid response
@@ -889,6 +926,7 @@ public class ContentEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mAlbumList.clear();
 			for (BaseDataType item : data) {
 				Log.d("handleAddAlbumResponse", "Reading Data");
@@ -903,6 +941,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils.logE("ContentEngine handleAddAlbumResponse error status: "
 					+ errorStatus.name());
@@ -925,6 +964,7 @@ public class ContentEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.ALBUM_LIST_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			for (BaseDataType item : data) {
 				if (BaseDataType.ALBUM_LIST_RESPONSE_DATATYPE == item.getType()) {
 					mAlbumResponse = (AlbumListResponse) item;
@@ -935,6 +975,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils.logE("ContentEngine handleGetAlbumResponse error status: "
 					+ errorStatus.name());
@@ -959,8 +1000,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mAlbumList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
 					mAlbumList.add((AlbumResponse) item);
@@ -973,6 +1014,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleUploadAlbumResponse error status: "
@@ -998,8 +1040,8 @@ public class ContentEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mAlbumList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
 					mAlbumList.add((AlbumResponse) item);
@@ -1012,6 +1054,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleDeleteAlbumResponse error status: "
@@ -1037,8 +1080,8 @@ public class ContentEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1052,6 +1095,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleDeleteContentFromAlbumResponse error status: "
@@ -1078,8 +1122,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1093,6 +1137,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleAddContentToAlbumResponse error status: "
@@ -1119,8 +1164,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.ALBUM_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mAlbumList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.ALBUM_RESPONSE_DATATYPE == item.getType()) {
 					mAlbumList.add((AlbumResponse) item);
@@ -1133,6 +1178,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handlePublishAlbumResponse error status: "
@@ -1160,8 +1206,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1175,6 +1221,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleUploadImageResponse error status: "
@@ -1201,8 +1248,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1216,6 +1263,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleUploadContentAndPublishResponse error status: "
@@ -1242,6 +1290,7 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_RESPONSE_DATATYPE == item.getType()) {
 					mContentResponseList.add((ContentResponse) item);
@@ -1252,6 +1301,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleGetContentResponse error status: "
@@ -1278,8 +1328,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1293,6 +1343,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handlePublishContentResponse error status: "
@@ -1319,8 +1370,8 @@ public class ContentEngine extends BaseEngine {
 				BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mContentIdList.clear();
-
 			for (BaseDataType item : data) {
 				if (BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE == item
 						.getType()) {
@@ -1334,6 +1385,7 @@ public class ContentEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("ContentEngine handleDeleteContentResponse error status: "

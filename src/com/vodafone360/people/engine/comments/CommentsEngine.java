@@ -1,33 +1,48 @@
-package com.vodafone360.people.engine.comments;
+
 /*
-* Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
-* All rights reserved.
-*
-* This software is the confidential and proprietary information of 
-* Aricent Technologies ("Confidential Information").  You shall not
-* disclose such Confidential Information and shall use it only in
-* accordance with the terms of the license agreement you entered 
-* into with Aricent.
-*/
+ * CDDL HEADER START
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
+ */
+
+package com.vodafone360.people.engine.comments;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import android.os.Bundle;
 import android.util.Log;
-import com.vodafone360.people.database.DatabaseHelper;
+
 import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.CommentListResponse;
 import com.vodafone360.people.datatypes.CommentsResponse;
 import com.vodafone360.people.datatypes.EntityKey;
-import com.vodafone360.people.datatypes.StatusMsg;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.ServiceUiRequest;
 import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
-import com.vodafone360.people.service.io.api.Auth;
 import com.vodafone360.people.service.io.api.Comments;
 import com.vodafone360.people.utils.LogUtils;
 
@@ -69,7 +84,7 @@ public class CommentsEngine extends BaseEngine {
 
 	private CommentListResponse mCommentListResponse = new CommentListResponse();
 
-	private Comment mCommentResponse = new Comment();
+//	private Comment mCommentResponse = new Comment();
 	/** engine's current state **/
 
 	private State mState = State.IDLE;
@@ -145,6 +160,7 @@ public class CommentsEngine extends BaseEngine {
 	/**
 	 * Handle an outstanding UI request.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void processUiRequest(ServiceUiRequest requestId, Object data) {
 		LogUtils.logD("LoginEngine.processUiRequest() - reqID = " + requestId);
@@ -348,7 +364,7 @@ public class CommentsEngine extends BaseEngine {
 				BaseDataType.COMMENTS_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			mComment.clear();
-
+			//Print the response
 			for (BaseDataType item : data) {
 				if (BaseDataType.COMMENTS_RESPONSE_DATATYPE == item.getType()) {
 					mCommentsResponse.add((CommentsResponse) item);
@@ -361,6 +377,8 @@ public class CommentsEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
+			
 		} else {
 			LogUtils
 					.logE("CommentsEngine handleDeleteCommentResponse error status: "
@@ -383,6 +401,7 @@ public class CommentsEngine extends BaseEngine {
 				BaseDataType.COMMENTS_RESPONSE_DATATYPE, data);
 
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			mCommentsResponse.clear();
 			for (BaseDataType item : data) {
 				if (BaseDataType.COMMENTS_RESPONSE_DATATYPE == item.getType()) {
@@ -396,6 +415,7 @@ public class CommentsEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("CommentsEngine handlePostCommentResponse error status: "
@@ -416,6 +436,7 @@ public class CommentsEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.COMMENT_LIST_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//Print the response
 			for (BaseDataType item : data) {
 				mCommentsResponse.clear();
 				if (BaseDataType.COMMENT_LIST_DATATYPE == item.getType()) {
@@ -429,6 +450,7 @@ public class CommentsEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("CommentsEngine handleGetCommentResponse error status: "
@@ -452,6 +474,7 @@ public class CommentsEngine extends BaseEngine {
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.COMMENTS_RESPONSE_DATATYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
+			//print the response
 			mCommentsResponse.clear();
 			for (BaseDataType item : data) {
 				if (BaseDataType.COMMENTS_RESPONSE_DATATYPE == item.getType()) {
@@ -465,6 +488,7 @@ public class CommentsEngine extends BaseEngine {
 					return;
 				}
 			}
+			//TODO:Handling of response from the server to be implemented
 		} else {
 			LogUtils
 					.logE("CommentsEngine handlePostCommentResponse error status: "
@@ -515,22 +539,6 @@ public class CommentsEngine extends BaseEngine {
 		default: // do nothing.
 			break;
 		}
-		// switch (resp.mDataTypes.get(0).getType())
-		// {
-		// case BaseDataType.COMMENTS_RESPONSE_DATATYPE:
-		// handlePostCommentResponse(resp.mDataTypes);
-		// break;
-		// case BaseDataType.COMMENTS_RESPONSE_DATATYPE:
-		// handleDeleteCommentResponse(resp.mDataTypes);
-		// break;
-		// case BaseDataType.COMMENT_LIST_DATATYPE:
-		// handleGetCommentResponse(resp.mDataTypes);
-		// break;
-		// case BaseDataType.COMMENTS_RESPONSE_DATATYPE:
-		// handleUpdateCommentResponse(resp.mDataTypes);
-		// break;
-		// default: // do nothing.
-		// break;
-		// }
+		
 	}
 }

@@ -26,7 +26,6 @@
 package com.vodafone360.people.service.interfaces;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
 
 import android.os.Bundle;
@@ -40,7 +39,6 @@ import com.vodafone360.people.datatypes.Album;
 import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Content;
 import com.vodafone360.people.datatypes.EntityKey;
-import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
@@ -48,7 +46,6 @@ import com.vodafone360.people.datatypes.ContactSummary.OnlineStatus;
 import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.BaseEngine.IEngineEventCallback;
 import com.vodafone360.people.engine.presence.NetworkPresence;
-import com.vodafone360.people.engine.presence.NetworkPresence.SocialNetwork;
 import com.vodafone360.people.service.RemoteService;
 import com.vodafone360.people.service.ServiceUiRequest;
 import com.vodafone360.people.service.PersistSettings.InternetAvail;
@@ -56,6 +53,7 @@ import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.NetworkAgentState;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.utils.LogUtils;
+
 
 /***
  * @see com.vodafone360.people.engine.BaseEngine.IEngineEventCallback
@@ -685,4 +683,13 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
 		public void sendFriendRequest(Bundle data) {
 			EngineManager.getInstance().getContactSyncEngine().addUiSendFriendReq(data);
 		}
+		
+		/***
+	     * @see com.vodafone360.people.service.interfaces.IPeopleService#fetchMyIdentities(Bundle)
+	     */
+	    @Override
+	    public void deleteIdentity(Bundle bundle) {
+	        EngineManager.getInstance().getIdentityEngine().addUiDeleteIdentity(bundle);
+	    }
+	    
 }

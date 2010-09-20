@@ -124,6 +124,7 @@ public class ApplicationCache {
     private final static String HYVES_SUBSCRIBED = "HyvesSubscribed";
 
     public final static String PREFS_NAME = "NowPlus_Prefs";
+ public final static String IS_LOGIN_CHAT = "Is_Login_Chat";
 
     // Check settings
     public final static String PREFS_CHECK_FREQUENCY = "checkFrequency";

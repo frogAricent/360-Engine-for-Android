@@ -221,7 +221,6 @@ public abstract class ContactSummaryTable {
 
     public static final int STATUS_TEXT = 3;
 
-    @SuppressWarnings("unused")
     @Deprecated
     public static final int ONLINE_STATUS = 4;
 
@@ -844,6 +843,103 @@ public abstract class ContactSummaryTable {
         }
     }
 
+    public static Cursor fetchContactList(Long groupFilterId, CharSequence constraint,
+            Long meProfileId, SQLiteDatabase readableDb) {
+        if (Settings.ENABLED_DATABASE_TRACE) {
+            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() "
+                    + "groupFilterId[" + groupFilterId + "] constraint[" + constraint + "]"
+                    + " meProfileId[" + meProfileId + "]");
+        }
+        try {
+            if (meProfileId == null) {
+                // Ensure that when the profile is not available the function
+                // doesn't fail
+                // Since "Field <> null" always returns false
+                meProfileId = -1L;
+            }
+            if (groupFilterId == null) {
+                if (constraint == null) {
+                    // Fetch all contacts
+                    return fetchContactList(groupFilterId, meProfileId, readableDb);
+                } else {
+                    return fetchContactList(constraint, meProfileId, readableDb);
+                }
+            } else {
+                // filtering by group id
+                if (constraint == null) {
+                    return fetchContactList(groupFilterId, meProfileId, readableDb);
+                } else {
+                    // filter by both group and constraint
+                    final String dbSafeConstraint = DatabaseUtils.sqlEscapeString("%" + constraint
+                            + "%");
+                    return readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+                            + " FROM " + ContactSummaryTable.TABLE_NAME
+                            + getGroupConstraint(groupFilterId) + " AND "
+                            + ContactSummaryTable.Field.DISPLAYNAME + " LIKE " + dbSafeConstraint
+                            + " AND " + ContactSummaryTable.TABLE_NAME + "."
+                            + ContactSummaryTable.Field.LOCALCONTACTID + "<>" + meProfileId
+                            + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")",
+                            null);
+                }
+            }
+        } catch (SQLException e) {
+            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+                    + "SQLException - Unable to fetch filtered summary cursor", e);
+            return null;
+        }
+    }
+   
+
+    private static Cursor fetchContactList(Long groupFilterId, Long meProfileId,
+            SQLiteDatabase readableDb) {
+        if (Settings.ENABLED_DATABASE_TRACE) {
+            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() groupFilterId["
+                    + groupFilterId + "] meProfileId[" + meProfileId + "]");
+        }
+        try {
+            if (groupFilterId == null) {
+                // Fetch all contacts
+                return readableDb.rawQuery(getOrderedQueryStringSql(ContactSummaryTable.TABLE_NAME
+                        + "." + ContactSummaryTable.Field.LOCALCONTACTID + "<>" + meProfileId),
+                        null);
+            }
+            return readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+                    + " FROM " + ContactSummaryTable.TABLE_NAME + getGroupConstraint(groupFilterId)
+                    + " AND " + ContactSummaryTable.TABLE_NAME + "."
+                    + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+                    + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")", null);
+
+        } catch (SQLException e) {
+            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+                    + "SQLException - Unable to fetch filtered summary cursor", e);
+            return null;
+        }
+    }
+    
+    private static Cursor fetchContactList(CharSequence constraint, Long meProfileId,
+            SQLiteDatabase readableDb) {
+        if (Settings.ENABLED_DATABASE_TRACE) {
+            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() constraint["
+                    + constraint + "] meProfileId[" + meProfileId + "]");
+        }
+        try {
+            if (constraint == null) {
+                // Fetch all contacts
+                return readableDb.rawQuery(getOrderedQueryStringSql(), null);
+            }
+            final String dbSafeConstraint = DatabaseUtils.sqlEscapeString("%" + constraint + "%");
+            return readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+                    + " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE "
+                    + ContactSummaryTable.Field.DISPLAYNAME + " LIKE " + dbSafeConstraint + " AND "
+                    + ContactSummaryTable.TABLE_NAME + "."
+                    + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+                    + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")", null);
+        } catch (SQLException e) {
+            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+                    + "SQLException - Unable to fetch filtered summary cursor", e);
+            return null;
+        }
+    }
     /**
      * Fetches a contact list cursor for a given filter
      * 

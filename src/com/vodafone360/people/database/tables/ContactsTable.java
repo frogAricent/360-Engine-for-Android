@@ -647,6 +647,17 @@ public abstract class ContactsTable {
             return null;
         }
     }
+    
+    public static SQLiteStatement fetchServerFromLocalIdStatement(SQLiteDatabase readableDb) {
+    	try {
+            return readableDb.compileStatement("SELECT " + /*Field.LOCALID +"," + */Field.SERVERID + " FROM " + TABLE_NAME
+                    + " WHERE " + Field.LOCALID + "= ? ");
+        } catch (SQLException e) {
+            LogUtils.logE("ContactsTable.fetchServerFromLocalIdStatement() "
+                    + "Exception - Compile error:\n", e);
+            return null;
+        }
+    }
 
     /**
      * Searches the table for a contact server ID and if found, returns the
@@ -666,6 +677,20 @@ public abstract class ContactsTable {
         }
         try {
             statement.bindLong(1, contactServerId);
+            return statement.simpleQueryForLong();
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+    
+    public static Long fetchServerFromLocalId(Long localId, SQLiteStatement statement) {
+        DatabaseHelper.trace(false, "ContactsTable.fetchServerFromLocalId() localId["
+                + localId + "]");
+        if (statement == null || localId == null) {
+            return null;
+        }
+        try {
+            statement.bindLong(1, localId);
             return statement.simpleQueryForLong();
         } catch (SQLException e) {
             return null;

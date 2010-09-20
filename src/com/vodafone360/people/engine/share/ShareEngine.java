@@ -1,13 +1,29 @@
+
 /*
-* Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
-* All rights reserved.
-*
-* This software is the confidential and proprietary information of 
-* Aricent Technologies ("Confidential Information").  You shall not
-* disclose such Confidential Information and shall use it only in
-* accordance with the terms of the license agreement you entered 
-* into with Aricent.
-*/
+ * CDDL HEADER START
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
+ */
+
 package com.vodafone360.people.engine.share;
 
 import java.util.ArrayList;
@@ -30,20 +46,7 @@ import com.vodafone360.people.utils.LogUtils;
 /***
  * Engine is responsible for handling features like sharing album with groups,
  * allowing and denying groups for sharing albums
- * <p>
- * File Name : ShareEngine.java
- * <p>
- * Description : This class extends BaseEngine and contain various callback and
- * overridden methods.
- * <p>
- * Revision History
- * <p>
- * ------------------------------------------------------------------------
- * <p>
- * Date Author SPR-Id Version Comments
- * <p>
- * - - 0.01 Initial Release
- * <p>
+ * 
  */
 public class ShareEngine extends BaseEngine {
 
@@ -65,7 +68,7 @@ public class ShareEngine extends BaseEngine {
 	private Object mMutex = new Object();
 
 	/** Definitions for expected data-types returned from Server. */
-	private static final String TYPE_SHARE_ALBUM = "ItemList";
+//	private static final String TYPE_SHARE_ALBUM = "ItemList";
 
 	public ShareEngine(IEngineEventCallback eventCallback) {
 		super(eventCallback);
@@ -143,6 +146,7 @@ public class ShareEngine extends BaseEngine {
 	/**
 	 * Handle an outstanding UI request.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void processUiRequest(ServiceUiRequest requestId, Object data) {
 		LogUtils.logD("ShareEngine.processUiRequest - reqID = " + requestId);
@@ -241,29 +245,9 @@ public class ShareEngine extends BaseEngine {
 				BaseDataType.ITEM_LIST_DATA_TYPE, data);
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			if (data.size() != 0) {
-				// LogUtils.logI("The group was granted access to following albums");
 				LogUtils.logI("Granted access");
-				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for (int it = 0; it < data.size(); it++) {
-					ItemList entityList = (ItemList) data.get(it);
-					if (entityList.mType != ItemList.Type.album) {
-						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-						return;
-					}
-					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey) entityList.mItemList
-								.get(j));
-					}
-					/*
-					 * for (int j = 0; j < entityKeyList.size(); j++) {
-					 * LogUtils.
-					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-					 * LogUtils
-					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
-					 * ()); }
-					 */
-
-				}
+				//TODO:Handling of response from the server to be implemented
+				
 			} else {
 				LogUtils.logE("No data received");
 			}
@@ -329,19 +313,8 @@ public class ShareEngine extends BaseEngine {
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			if (data.size() != 0) {
 				LogUtils.logI("Groups received");
-				List<Long> groupIdList = new ArrayList<Long>();
-				for (int it = 0; it < data.size(); it++) {
-					ListOfLong groupList = (ListOfLong) data.get(it);
-					for (int j = 0; j < groupList.mLongList.size(); j++) {
-						groupIdList.add((Long) groupList.mLongList.get(j));
-					}
-					/*
-					 * LogUtils.logI("The album has been granted access to "+groupIdList
-					 * .size()+" groups"); for (int j = 0; j <
-					 * groupIdList.size(); j++) {
-					 * LogUtils.logI("Group ID:"+groupIdList.get(j)); }
-					 */
-				}
+				//TODO:Handling of response from the server to be implemented
+				
 			} else {
 				LogUtils.logE("No data received");
 			}
@@ -422,26 +395,8 @@ public class ShareEngine extends BaseEngine {
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			if (data.size() != 0) {
 				LogUtils.logI("Allowed access");
-				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for (int it = 0; it < data.size(); it++) {
-					ItemList entityList = (ItemList) data.get(it);
-					if (entityList.mType != ItemList.Type.album) {
-						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-						return;
-					}
-					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey) entityList.mItemList
-								.get(j));
-					}
-					/*
-					 * for (int j = 0; j < entityKeyList.size(); j++) {
-					 * LogUtils.
-					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-					 * LogUtils
-					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
-					 * ()); }
-					 */
-				}
+				//TODO:Handling of response from the server to be implemented
+				
 			} else {
 				LogUtils.logE("No data received");
 			}
@@ -515,27 +470,8 @@ public class ShareEngine extends BaseEngine {
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			if (data.size() != 0) {
 				LogUtils.logI("Denied access");
-				List<EntityKey> entityKeyList = new ArrayList<EntityKey>();
-				for (int it = 0; it < data.size(); it++) {
-					ItemList entityList = (ItemList) data.get(it);
-					if (entityList.mType != ItemList.Type.album) {
-						completeUiRequest(ServiceStatus.ERROR_UNEXPECTED_RESPONSE);
-						return;
-					}
-					for (int j = 0; j < entityList.mItemList.size(); j++) {
-						entityKeyList.add((EntityKey) entityList.mItemList
-								.get(j));
-					}
-					/*
-					 * for (int j = 0; j < entityKeyList.size(); j++) {
-					 * LogUtils.
-					 * logI("Entity Key:"+entityKeyList.get(j).mEntityId);
-					 * LogUtils
-					 * .logI("Entity Type:"+entityKeyList.get(j).getEntityType
-					 * ()); }
-					 */
-
-				}
+				//TODO:Handling of response from the server to be implemented
+				
 			} else {
 				LogUtils.logE("No data received");
 			}

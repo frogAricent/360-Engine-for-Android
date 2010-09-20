@@ -39,6 +39,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.CallLog.Calls;
 import android.telephony.PhoneNumberUtils;
+import android.util.Log;
 
 import com.vodafone360.people.Settings;
 import com.vodafone360.people.database.DatabaseHelper;
@@ -204,6 +205,8 @@ public abstract class ActivitiesTable {
         /** Maps to the contact name in the table. **/
         public String mContactName;
         /** Set to true if there is an avatar URL stored in the table. **/
+         public String mAvatar;
+        
         private boolean mHasAvatar;
         /** Maps to type in the table. **/
         public ActivityItem.Type mType;
@@ -312,7 +315,7 @@ public abstract class ActivitiesTable {
         writeableDb.execSQL("CREATE TABLE " + TABLE_NAME + " ("
                 + Field.LOCAL_ACTIVITY_ID
                 + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + Field.ACTIVITY_ID + " LONG, "
+                + Field.ACTIVITY_ID + " TEXT, "
                 + Field.TIMESTAMP + " LONG, "
                 + Field.TYPE + " TEXT, "
                 + Field.URI + " TEXT, "
@@ -321,7 +324,7 @@ public abstract class ActivitiesTable {
                 + Field.PREVIEW_URL + " TEXT, "
                 + Field.STORE + " TEXT, "
                 + Field.FLAG + " INTEGER, "
-                + Field.PARENT_ACTIVITY + " LONG, "
+                + Field.PARENT_ACTIVITY + " TEXT, "
                 + Field.HAS_CHILDREN + " INTEGER, "
                 + Field.VISIBILITY + " INTEGER, "
                 + Field.MORE_INFO + " TEXT, "
@@ -397,7 +400,7 @@ public abstract class ActivitiesTable {
         activityItem.localActivityId =
             SqlUtils.setLong(cursor, Field.LOCAL_ACTIVITY_ID.toString(), null);
         activityItem.activityId =
-            SqlUtils.setLong(cursor, Field.ACTIVITY_ID.toString(), null);
+            SqlUtils.setString(cursor, Field.ACTIVITY_ID.toString());
         activityItem.time =
             SqlUtils.setLong(cursor, Field.TIMESTAMP.toString(), null);
         activityItem.type =
@@ -414,7 +417,7 @@ public abstract class ActivitiesTable {
         activityItem.activityFlags =
             SqlUtils.setInt(cursor, Field.FLAG.toString(), null);
         activityItem.parentActivity =
-            SqlUtils.setLong(cursor, Field.PARENT_ACTIVITY.toString(), null);
+            SqlUtils.setString(cursor, Field.PARENT_ACTIVITY.toString());
         activityItem.hasChildren =
             SqlUtils.setBoolean(cursor, Field.HAS_CHILDREN.toString(),
                     activityItem.hasChildren);
@@ -559,7 +562,7 @@ public abstract class ActivitiesTable {
      * @param readableDb Readable SQLite database
      * @return SUCCESS or a suitable error code
      */
-    public static ServiceStatus fetchActivitiesIds(final List<Long> actIdList,
+    public static ServiceStatus fetchActivitiesIds(final List<String> actIdList,
             final Long timeStamp, final SQLiteDatabase readableDb) {
         DatabaseHelper.trace(false, "DatabaseHelper.fetchActivitiesIds()");
         Cursor cursor = null;
@@ -576,7 +579,7 @@ public abstract class ActivitiesTable {
                     + Field.TIMESTAMP + " >= " + queryTimeStamp
                     + " ORDER BY " + Field.TIMESTAMP + " DESC", null);
             while (cursor.moveToNext()) {
-                actIdList.add(cursor.getLong(0));
+                actIdList.add(cursor.getString(0));
             }
 
         } catch (SQLiteException e) {
@@ -607,7 +610,8 @@ public abstract class ActivitiesTable {
         SQLiteStatement statement =
             ContactsTable.fetchLocalFromServerIdStatement(writableDb);
 
-            for (ActivityItem activity : actList) {          
+            for (ActivityItem activity : actList) {
+
                 try {
                     writableDb.beginTransaction();
                 
@@ -619,6 +623,8 @@ public abstract class ActivitiesTable {
                                 ContactsTable.fetchLocalFromServerId(
                                         activityContact.mContactId,
                                         statement);
+                            
+                            
                             
                             int latestStatusVal = removeContactGroup(
                                     activityContact.mLocalContactId, 
@@ -635,7 +641,7 @@ public abstract class ActivitiesTable {
                         activity.localActivityId = writableDb.insertOrThrow(
                                 TABLE_NAME, null, fillUpdateData(activity, null));
                     }
-                    if (activity.localActivityId < 0) {
+                    if ( (activity.localActivityId < 0)) {
                         LogUtils.logE("ActivitiesTable.addActivities() "
                                 + "Unable to add activity");
                         return ServiceStatus.ERROR_DATABASE_CORRUPT;
@@ -778,7 +784,7 @@ public abstract class ActivitiesTable {
                     + Field.NATIVE_THREAD_ID + "=" + timelineItem.mNativeThreadId + ";";
                 }
             }
-
+            
             if (writableDb.delete(TABLE_NAME, whereClause, null) < 0) {
                 LogUtils.logE("ActivitiesTable.deleteTimelineActivity() "
                         + "Unable to delete specified activity");
@@ -791,6 +797,15 @@ public abstract class ActivitiesTable {
         }
         return ServiceStatus.SUCCESS;
     }
+    
+public static int deleteActivityByActivityId(String activityId,SQLiteDatabase writableDb){
+    	
+    	int rows = writableDb.delete(TABLE_NAME, Field.ACTIVITY_ID + " = '" + activityId +"' OR " + Field.PARENT_ACTIVITY + " = '" +activityId +"'", null);
+    	Log.v("ActivityTable.deleteActivityByActivityId() activityID "+activityId, "rows affected "+rows);
+    	return rows;
+    	
+    }
+
 
     /**
      * Deletes all the timeline activities for a particular contact from the table.
@@ -1916,4 +1931,57 @@ public abstract class ActivitiesTable {
         }
     }
  
+    /**
+     * Fetches a list of all feed items from the given time stamp.
+     *
+     * @param timeStamp Time stamp in milliseconds
+     * @param readableDb Readable SQLite database
+     * @return A cursor (use one of the {@link #getQueryData} methods to read
+     *         the data)
+     */
+    public static Cursor fetchFeedItemListCursor(final long timeStamp,
+            final SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "DatabaseHelper.fetchFeedItemList()");
+        return readableDb.rawQuery("SELECT " + getFeedQueryList() + " FROM "
+                + TABLE_NAME + " ORDER BY " + Field.CONTACT_ID + " ASC," + Field.TIMESTAMP + " DESC", null);
+    }
+    
+    /**
+     * Fetches a comma separated list of table fields which can be used in an
+     * SQL SELECT statement as the query projection. One of the
+     * {@link #getQueryData} methods can used to fetch data from the cursor.
+     *
+     * @return SQL string
+     */
+    private static String getFeedQueryList() {
+        DatabaseHelper.trace(false, "DatabaseHelper.getFeedQueryList()");
+        return Field.LOCAL_ACTIVITY_ID 
+            + ", " + Field.TIMESTAMP 
+            + ", " + Field.TYPE 
+            + ", " + Field.TITLE 
+            + ", " + Field.DESCRIPTION 
+            + ", " + Field.STORE 
+            + ", " + Field.FLAG 
+            + ", " + Field.CONTACT_ID 
+            + ", " + Field.USER_ID 
+            + ", " + Field.CONTACT_NAME 
+            + ", " + Field.LOCAL_CONTACT_ID 
+            + ", " + Field.CONTACT_NETWORK 
+            + ", " + Field.CONTACT_ADDRESS 
+            + ", " + Field.CONTACT_AVATAR_URL 
+            + ", " + Field.INCOMING
+            + ", " + Field.STORE;
+    }
+    
+    public static Cursor fetchRecentContactActivity(final long contactId,
+            final SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "ActivitiesTable.fetchRecentContactActivity()");
+        return readableDb.rawQuery("SELECT " + getFullQueryList() + " FROM "
+                + TABLE_NAME + " WHERE "
+                + Field.LOCAL_CONTACT_ID + " = " + contactId
+                + " ORDER BY " + Field.TIMESTAMP + " DESC", null);
+    }
+
+    
+    
 }

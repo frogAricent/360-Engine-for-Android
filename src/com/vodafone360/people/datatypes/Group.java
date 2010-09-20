@@ -1,17 +1,30 @@
-package com.vodafone360.people.datatypes;
 
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+package com.vodafone360.people.datatypes;
+
 import java.nio.ByteBuffer;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -51,8 +64,7 @@ public class Group extends BaseDataType implements Parcelable {
 		/**
 		 * Find Tags item for specified String.
 		 * 
-		 * @param tag
-		 *            String value to find in Tags items.
+		 * @param tag String value to find in Tags items.
 		 * @return Tags item for specified String, NULL otherwise.
 		 */
 		private static Tags findTag(String tag) {
@@ -183,7 +195,7 @@ public class Group extends BaseDataType implements Parcelable {
 		// TODO Auto-generated method stub
 		boolean[] validDataList = new boolean[MemberData.values().length];
 		int initialPos = dest.dataPosition();
-		dest.writeBooleanArray(validDataList); // Plaace holder for real array
+		dest.writeBooleanArray(validDataList); // Place holder for real array
 
 		if (mId != null) {
 			validDataList[MemberData.ID.ordinal()] = true;

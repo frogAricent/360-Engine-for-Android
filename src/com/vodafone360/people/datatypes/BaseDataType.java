@@ -227,5 +227,10 @@ abstract public class BaseDataType {
      * Long data type
      */
     public static final int LONG_DATATYPE = 43;
+    
+    /**
+     * Delete Identity Response
+     */
+    public static final int DELETE_IDENTITY = 44;
 
 }

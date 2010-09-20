@@ -442,6 +442,7 @@ public class PresenceEngine extends BaseEngine implements ILoginEventsListener,
         updatePresenceDatabase(presenceList.getUsers());
     }
 
+
     private void handleServerError(ServerError srvError) {
 
         LogUtils.logE("PresenceEngine.handleServerResponse() - Server error: " + srvError);
@@ -450,6 +451,7 @@ public class PresenceEngine extends BaseEngine implements ILoginEventsListener,
             LogUtils.logW("PresenceEngine handleServerResponce(): TIME OUT IS RETURNED TO PRESENCE ENGINE.");
         }
     }
+
 
     private void handleNewConversationId(Conversation conversation) {
         if (conversation.getTos() != null) {
@@ -783,7 +785,8 @@ public class PresenceEngine extends BaseEngine implements ILoginEventsListener,
         for(Identity identity : identities) {
                 presences.put(identity.mNetwork, statusString);
         }
-       return presences;
+        
+        return presences;
     }
 
 }

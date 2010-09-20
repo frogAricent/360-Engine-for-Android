@@ -1207,6 +1207,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         fireDatabaseChangedEvent(DatabaseChangeType.ACTIVITIES, true);
         return mStatus;
     }
+    
+    public void removeDuplicatesFromDatabase(List<ActivityItem> activityList){
+    	if (activityList.size() == 0) {
+            return;
+        }
+        int dupCount = 0;
+        SQLiteDatabase writableDb = getWritableDatabase();
+        
+        for (ActivityItem item : activityList) {
+        	if(item.activityId != null){
+        		dupCount += ActivitiesTable.deleteActivityByActivityId(item.activityId, writableDb);            
+        	}
+        }
+        LogUtils.logD("DataBaseHelper removeDuplicatesFromDatabase. Count dups = " + dupCount);
+    }
 
     /***
      * Fetches a list of activity IDs from a given time.
@@ -1217,7 +1232,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @see #fetchTimelineEvents(Long,
      *      com.vodafone360.people.database.tables.ActivitiesTable.TimelineNativeTypes[])
      */
-    public synchronized ServiceStatus fetchActivitiesIds(List<Long> activityIdList, Long timeStamp) {
+    public synchronized ServiceStatus fetchActivitiesIds(List<String> activityIdList, Long timeStamp) {
         if (Settings.ENABLED_DATABASE_TRACE) {
             trace(false, "DatabaseHelper.fetchActivitiesIds() timeStamp[" + timeStamp + "]");
         }
@@ -1239,7 +1254,59 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ActivitiesTable.TimelineNativeTypes[] types) {
         return ActivitiesTable.fetchTimelineEventList(timeStamp, types, getReadableDatabase());
     }
+    /***
+     * Fetches feeds events from a given time.
+     * 
+     * @param timeStamp The oldest time that should be included in the list
+     * @param types A list of required timeline types (or an empty list for all)
+     * @return SUCCESS or a suitable error code
+     * @see #addTimelineEvents(ArrayList, boolean)
+     * @see #fetchActivitiesIds(List, Long)
+     */
+    public synchronized ArrayList<TimelineSummaryItem> fetchFeeds() 
+    {
+    	Cursor mCursor ;
+    	ArrayList<TimelineSummaryItem> feedItemList = new ArrayList<TimelineSummaryItem>();
+    	
+		mCursor = ActivitiesTable.fetchFeedItemListCursor(0, getReadableDatabase());
+		if(mCursor != null){
+			int feedItemCount = mCursor.getCount();
+			mCursor.moveToFirst();
+			String lastAvatarUrl = null;
+			for (int iterator = 0; iterator < feedItemCount; iterator++){
+				String avatarUrl;
+				//mCursor.moveToPosition(iterator);
+				TimelineSummaryItem summaryItem = (TimelineSummaryItem)getItem(iterator,mCursor);
+				avatarUrl =  summaryItem.mAvatar;
+				if(avatarUrl == lastAvatarUrl){
+					summaryItem.mAvatar = null;
+				}else{
+					lastAvatarUrl = avatarUrl;
+				}
+				feedItemList.add(summaryItem);
+				if(!mCursor.move(1))
+					break;
+			}
+		}else{
+			LogUtils.logE("Error:Call getFeedList() " +
+					"before calling getAdapterFeedItemList. Cursor is null");
+			return null;
+		}
+		return feedItemList;
+    }
+    
+    public static Object getItem(int position, Cursor cursor) {
+		// TODO Auto-generated method stub
+		if (cursor != null) {
+            if (cursor.moveToPosition(position)) {
+                return ActivitiesTable.getTimelineData(cursor);
+            }
+        }
+        return null;
+	}
+    
 
+    
     /***
      * Fetches fires a database change event to the listeners.
      * 
@@ -2411,8 +2478,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return ContactSummaryTable.updateContactDisplayName(contact, writableDatabase);
     }
 
-    public List<Contact> fetchContactList() {
-        return ContactsTable.fetchContactList(getReadableDatabase());
+    private Long mMeProfileId = null;
+
+    public Cursor fetchContactList() {
+        //return ContactsTable.fetchContactList(getReadableDatabase());
+          return ContactSummaryTable.fetchContactList(null, null, mMeProfileId,
+                getReadableDatabase());
     }
 
     /**

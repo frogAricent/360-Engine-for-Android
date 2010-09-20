@@ -225,7 +225,8 @@ public class SystemNotification extends PushEvent {
      * @param tag Current tag
      * @param val Value associated with the tag
      */
-    private void setValue(Tags tag, Object value) {
+    @SuppressWarnings("unchecked")
+	private void setValue(Tags tag, Object value) {
         if (tag == null)
             return;
 

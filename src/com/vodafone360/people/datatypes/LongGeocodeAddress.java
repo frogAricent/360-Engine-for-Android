@@ -1,20 +1,33 @@
-package com.vodafone360.people.datatypes;
 
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+
+package com.vodafone360.people.datatypes;
+
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Vector;
 
 import com.vodafone360.people.utils.LogUtils;
@@ -69,16 +82,14 @@ public class LongGeocodeAddress extends BaseDataType {
 	 *            Hashtable containing LongGeocodeAddress data
 	 * @return LongGeocodeAddress created from supplied Hashtable.
 	 */
+	@SuppressWarnings("unchecked")
 	public LongGeocodeAddress createFromHashtable(Hashtable<String, Object> hash) {
 
-		System.out.println("LongGeocodeAddress.createFromHashtable() START ");
 		LongGeocodeAddress cont = new LongGeocodeAddress();
 		Enumeration<String> e = hash.keys();
-		Hashtable data = null;
 
 		while (e.hasMoreElements()) {
 			String key = e.nextElement();
-			System.out.println("keykeykeykeykeykeykeykey : " + key);
 			Object value = hash.get(key);
 
 			if (value != null) {
@@ -87,21 +98,12 @@ public class LongGeocodeAddress extends BaseDataType {
 					int s = v.size();
 					for (int i = 0; i < s; i++) {
 						Hashtable has = (Hashtable) v.elementAt(i);
-						System.out
-								.println("LongGeocodeAddress.createFromHashtable() : v.elementAt(i) : "
-										+ v.elementAt(i).toString());
 						Enumeration<String> e1 = has.keys();
 
 						while (e1.hasMoreElements()) {
 							String key1 = e1.nextElement();
-							System.out
-									.println("LongGeocodeAddress.createFromHashtable() keyssssssss : "
-											+ key1.toString());
 
 							Object value1 = has.get(key1);
-							System.out
-									.println("LongGeocodeAddress.createFromHashtable() value : "
-											+ value1.toString());
 							Tags tag = cont.findTag(key1);
 							cont.setValue(tag, value1.toString());
 						}
@@ -109,25 +111,14 @@ public class LongGeocodeAddress extends BaseDataType {
 
 				}
 			}
-
-			// Tags tag = cont.findTag(key);
-			//           
-			// cont.setValue(tag, value);
-			// data = (Hashtable)hash.get(key);
-
 		}
 
-		System.out
-				.println("LongGeocodeAddress.createFromHashtable() cont.CITY_NAME.toString() : "
-						+ cont.CITY_NAME.toString());
 		return cont;
 	}
 
 	private Tags findTag(String tag) {
-		System.out.println("LongGeocodeAddress.findTag() ---> " + tag);
 		for (Tags tags : Tags.values()) {
 			if (tag.compareTo(tags.tag()) == 0) {
-				System.out.println("LongGeocodeAddress.findTag()" + tags);
 				return tags;
 			}
 		}
@@ -145,8 +136,6 @@ public class LongGeocodeAddress extends BaseDataType {
 	 * @return void
 	 */
 	private void setValue(Tags tag, Object value) {
-		System.out.println("LongGeocodeAddress.setValue() tag : " + tag
-				+ " :  value :" + value);
 
 		if (tag == null) {
 			LogUtils.logE("Contact setValue tag is null");
@@ -156,31 +145,21 @@ public class LongGeocodeAddress extends BaseDataType {
 		switch (tag) {
 		case COUNTRY_NAME:
 			COUNTRY_NAME = (String) value;
-			System.out.println("LongGeocodeAddress.setValue() COUNTRY_NAME : "
-					+ COUNTRY_NAME);
 			break;
 		case CITY_NAME:
 			CITY_NAME = (String) value;
-			System.out.println("LongGeocodeAddress.setValue() CITY_NAME : "
-					+ CITY_NAME);
 			break;
 		case AREA_NAME:
 			AREA_NAME = (String) value;
-			System.out.println("LongGeocodeAddress.setValue() AREA_NAME : "
-					+ AREA_NAME);
 			break;
 		case STREET_NAME:
 			STREET_NAME = (String) value;
 			break;
 		case LATITUDE:
 			LATITUDE = (String) value;
-			System.out.println("LongGeocodeAddress.setValue() LATITUDE : "
-					+ LATITUDE);
 			break;
 		case LONGITUDE:
 			LONGITUDE = (String) value;
-			System.out.println("LongGeocodeAddress.setValue() LONGITUDE : "
-					+ LONGITUDE);
 			break;
 
 		default:

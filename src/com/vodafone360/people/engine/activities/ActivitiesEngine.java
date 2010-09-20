@@ -50,6 +50,7 @@ import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.ServiceUiRequest;
 import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.UiAgent;
+import com.vodafone360.people.service.interfaces.IPeopleServiceImpl;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Activities;
 import com.vodafone360.people.service.io.rpg.PushMessageTypes;
@@ -508,7 +509,7 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
         ServiceStatus errorStatus = ServiceStatus.SUCCESS;
 
         // add retrieved items to Activities table in db
-        removeDuplicates(activityList);
+        //removeDuplicates(activityList);
 
         // update the newest activity
         Long temp = findLastStatusUpdateTime(activityList);
@@ -580,19 +581,22 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
             return;
         }
         int dupCount = 0;
-        List<Long> actIdList = new ArrayList<Long>();
+        List<String> actIdList = new ArrayList<String>();
         mDb.fetchActivitiesIds(actIdList, findFirstStatusUpdateTime(activityList));
         for (int i = 0; i < activityList.size();) {
             boolean inc = true;
-            Long id = activityList.get(i).activityId;
+            String id = activityList.get(i).activityId;
             if (id != null) {
-                for (Long l : actIdList) {
-                    if (l.compareTo(id) == 0) {
-                        activityList.remove(i);
-                        inc = false;
-                        dupCount++;
-                        break;
-                    }
+                for (String l : actIdList) {
+                	if(l!= null)
+                	{
+	                    if (l.compareTo(id) == 0) {
+	                        activityList.remove(i);
+	                        inc = false;
+	                        dupCount++;
+	                        break;
+	                    }
+                	}
                 }
             }
             if (inc) {

@@ -1,17 +1,31 @@
-package com.vodafone360.people.datatypes;
 
 /*
- ****************************************************************
- * Copyright (c) 2010 Aricent Technologies (Holdings) Ltd.
- * All rights reserved.
+ * CDDL HEADER START
  *
- * This software is the confidential and proprietary information 
- * of Aricent Technologies ("Confidential Information").You 
- * shall not disclose such Confidential Information and shall use 
- * it only in accordance with the terms of the license agreement 
- * you entered into with Aricent.
- ****************************************************************
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at
+ * src/com/vodafone360/people/VODAFONE.LICENSE.txt or
+ * http://github.com/360/360-Engine-for-Android
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each file and
+ * include the License file at src/com/vodafone360/people/VODAFONE.LICENSE.txt.
+ * If applicable, add the following below this CDDL HEADER, with the fields
+ * enclosed by brackets "[]" replaced with your own identifying information:
+ * Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ *
+ * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
+ * Use is subject to license terms.
  */
+
+package com.vodafone360.people.datatypes;
+
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -37,7 +51,7 @@ public class EntityKey extends BaseDataType {
 
 	/**
 	 * Identifies the type of the entity. This information is needed to
-	 * understand to which entity type we are referring. Possibile values are
+	 * understand to which entity type we are referring. Possible values are
 	 * ACTIVITIES, CALENDARS, CALLS, CONTACTS, CONTENT, MESSAGES, MUSIC
 	 */
 	public String mEntityType = null;
@@ -73,6 +87,7 @@ public class EntityKey extends BaseDataType {
 		 *            String value to find Tags item for
 		 * @return Tags item for specified String, null otherwise
 		 */
+		@SuppressWarnings("unused")
 		private static Tags findTag(String tag) {
 			for (Tags tags : Tags.values()) {
 				if (tag.compareTo(tags.tag()) == 0) {

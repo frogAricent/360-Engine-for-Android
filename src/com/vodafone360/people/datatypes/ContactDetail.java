@@ -43,9 +43,7 @@ import android.text.format.Time;
 import com.vodafone360.people.utils.LogUtils;
 
 /**
- * BaseDataType representing ContactDetails retrieved from, or issued to,
- * server.
- * <p>
+ * BaseDataType representing ContactDetails retrieved from, or issued to, server.
  * Contains a specific contact detail such as name, address, phone number, etc.
  */
 public class ContactDetail extends BaseDataType implements Parcelable {
@@ -65,14 +63,33 @@ public class ContactDetail extends BaseDataType implements Parcelable {
     /**
      * Definitions of KEY types for Contact-Details.
      */
-    public enum DetailKeyTypes {
-        HOME("home"),
+    public static enum DetailKeyTypes {
+    	HOME("home"),
         WORK("work"),
         MOBILE("mobile"), // Type not recognised by NOW+ server - use CELL
         // instead
         BIRTHDAY("birthday"),
         CELL("cell"),
         FAX("fax"),
+        WORK_FAX("workfax"),
+        HOME_FAX("homefax"),
+        PAGER("pager"),
+        OTHER("other"),
+        AIM("aim"),
+        WINDOWS("windows"),
+        YAHOO("yahoo"),
+        SKYPE("skype"),
+        QQ("qq"),
+        GOOGLE("google"),
+        ICQ("icq"),
+        JABBER("jabber"),
+        CUSTOM("custom"),
+        PREFIX("prefix"),
+        MIDDLE("middle"),
+        SUFFIX("suffix"),
+        PHONETIC_GIVEN("phoneticgiven"),
+        PHONETIC_MIDDLE("phoneticmiddle"),
+        PHONETIC_FAMILY("phoneticfamily"),
         UNKNOWN("unknown");
 
         private final String typeName;
@@ -140,7 +157,9 @@ public class ContactDetail extends BaseDataType implements Parcelable {
         GROUP("group"), // 22only in API doc
         LINK("link"), // 23only in API doc
         EXTERNAL("external"), // 24only in API doc
-        UNKNOWN("unknown"); // 25only in API doc
+        UNKNOWN("unknown"), // 25only in API doc
+        GRID("grid");						//Newly added
+        
 
         private final String keyName;
 

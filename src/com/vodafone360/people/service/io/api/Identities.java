@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.vodafone360.people.Settings;
+import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.service.io.QueueManager;
@@ -52,6 +53,8 @@ public class Identities {
 
     private final static String FUNCTION_VALIDATE_IDENTITY_CREDENTIALS = "identities/validateidentitycredentials";
 
+    private final static String FUNCTION_DELETE_IDENTITY = "identities/deleteidentity";
+    
     public final static String ENABLE_IDENTITY = "enable";
 
     public final static String DISABLE_IDENTITY = "disable";
@@ -211,4 +214,45 @@ public class Identities {
         queue.fireQueueStateChanged();
         return requestId;
     }
+    
+    /**
+	 * Implementation of identities/deleteidentity API. Parameters are;
+	 * 
+	 * @param engine handle to IdentitiesEngine
+	 * @param sns name of the identity to be deleted
+	 * @return request id generated for this request
+	 */
+	public static int deleteIdentity(BaseEngine engine, String sns, String networkId) {
+		if (LoginEngine.getSession() == null) {
+			LogUtils.logE("Identities.deleteIdentity() Invalid session, return -1");
+			return -1;
+		}
+		Request request = new Request(FUNCTION_DELETE_IDENTITY, Request.Type.COMMON,
+				engine.engineId(), false, Settings.API_REQUESTS_TIMEOUT_IDENTITIES);
+
+		Identity query = new Identity();
+
+		
+		//query.mIdentityId = base.mIdentityId;
+		if ((sns != null)&&(networkId != null)){
+			query.mNetwork = sns;
+			query.mIdentityId = networkId;
+		}else{
+			if(sns == null){
+			LogUtils.logD("Identities.deleteIdentity() - network name is null");
+			}else{
+				LogUtils.logD("Identities.deleteIdentity() - network id is null");
+			}
+			return -1;
+		}
+		
+		request.addData("network", query.mNetwork);
+		request.addData("identityid", query.mIdentityId);
+
+
+		QueueManager queue = QueueManager.getInstance();
+		int requestId = queue.addRequest(request);
+		queue.fireQueueStateChanged();
+		return requestId;
+	}
 }
