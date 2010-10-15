@@ -33,6 +33,9 @@ import java.util.Map;
 
 import android.content.Context;
 
+import com.facebook.android.Facebook;
+import com.facebook.android.SessionStore;
+import com.facebook.android.fqlmanager.FacebookEventHandler;
 import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.database.DatabaseHelper;
 import com.vodafone360.people.database.tables.ActivitiesTable;
@@ -42,18 +45,20 @@ import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.PushEvent;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.EngineManager;
-import com.vodafone360.people.engine.EngineManager.EngineId;
+import com.vodafone360.people.engine.EngineManager.*;
 import com.vodafone360.people.engine.contactsync.ContactSyncEngine;
 import com.vodafone360.people.engine.contactsync.ContactSyncEngine.IContactSyncObserver;
 import com.vodafone360.people.engine.login.LoginEngine.ILoginEventsListener;
-import com.vodafone360.people.service.ServiceStatus;
-import com.vodafone360.people.service.ServiceUiRequest;
+
+import com.vodafone360.people.service.*;
+
 import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.service.interfaces.IPeopleServiceImpl;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Activities;
-import com.vodafone360.people.service.io.rpg.PushMessageTypes;
+import com.vodafone360.people.service.io.rpg.*;
+
 import com.vodafone360.people.utils.LogUtils;
 
 /**
@@ -262,7 +267,7 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
                 }
                 break;
             case IDLE:
-                addStatusesSyncRequest();
+                addStatusesSyncRequest(); 
                 break;
             default:
                 // do nothing
@@ -398,7 +403,12 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
         }
         mLastStatusUpdated = StateTable.fetchLatestStatusUpdateTime(mDb.getReadableDatabase());
         mOldestStatusUpdated = StateTable.fetchOldestStatusUpdate(mDb.getReadableDatabase());
-
+        
+        Facebook mFacebook = new Facebook();
+        SessionStore.restore(mFacebook, mContext);
+        FacebookEventHandler.setFQLConnection(mFacebook);
+        FacebookEventHandler.fetchPosts(null);
+        
         LogUtils.logD("ActivityEngine getActivites last update = " + mLastStatusUpdated);
 
         int reqId = Activities.getActivities(this, null, applyActivitiesFilter(refresh));
@@ -509,7 +519,7 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
         ServiceStatus errorStatus = ServiceStatus.SUCCESS;
 
         // add retrieved items to Activities table in db
-        //removeDuplicates(activityList);
+        removeDuplicates(activityList);
 
         // update the newest activity
         Long temp = findLastStatusUpdateTime(activityList);

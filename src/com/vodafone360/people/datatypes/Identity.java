@@ -156,7 +156,17 @@ public class Identity extends BaseDataType implements Parcelable {
 
         @Override
         public int compare(Identity object1, Identity object2) {
-            return new Integer(object1.mOrder).compareTo(new Integer(object2.mOrder));
+            /**
+             * Put configured web account above to non configured account
+             */
+            if(object1.mActive && !object2.mActive){
+                return -1;
+            }else if(!object1.mActive && object2.mActive){
+                return 1;
+            }else{
+                return new Integer(object1.mOrder).compareTo(new Integer(object2.mOrder));
+            }
+            
         }
     }
 

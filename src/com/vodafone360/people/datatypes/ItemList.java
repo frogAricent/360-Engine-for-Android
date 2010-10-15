@@ -30,6 +30,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
+import com.vodafone360.people.utils.LogUtils;
+
 /**
  * BaseDataType encapsulating a list of Items associated with data decoded from
  * Hessian response data received from People server. Specifically associated
@@ -47,7 +49,8 @@ public class ItemList extends BaseDataType {
 		contact_group_relations,
 		long_value,
 		album,
-		friend_requests;
+		friend_requests,
+		group_id_list;
     }
 
     private Integer mItemsSize = null;
@@ -86,6 +89,7 @@ public class ItemList extends BaseDataType {
     public void populateFromHashtable(Hashtable<String, Object> hash) {
         final String itemList = "itemlist";
 
+        LogUtils.logD("ItemList.populateFromHashtable");
         @SuppressWarnings("unchecked")
         Vector<Hashtable<String, Object>> vect = (Vector<Hashtable<String, Object>>)hash
                 .get(itemList);
@@ -93,7 +97,7 @@ public class ItemList extends BaseDataType {
         mItemsSize = vect.size();
         switch (mType) {
             case group_privacy:
-                for (Hashtable<String, Object> msghash : vect) {
+            	for (Hashtable<String, Object> msghash : vect) {
                     GroupItem group = new GroupItem();
                     mItemList.add(group.createFromHashtable(msghash));
                 }
@@ -106,8 +110,23 @@ public class ItemList extends BaseDataType {
                 }
                 break;
                 
+            case long_value:
+            	//Vector<Long> groupIdVector = (Vector<Long>)vect;
+                /*for (Hashtable<String, Object> msghash : vect) {
+                	mItemList.add((Long)msghash);
+                }
+                this.mListSize = mLongList.size();*/
+            	break;
+            	
+            case group_id_list:
+            	for (Hashtable<String, Object> msghash : vect) {
+                    GroupIdListResponse group = new GroupIdListResponse();
+                    mItemList.add(group.createFromHashTable(msghash));
+                }
+            	break;
+                
             default:
-                // Do nothing.
+            	// Do nothing.
                 break;
         }
     }

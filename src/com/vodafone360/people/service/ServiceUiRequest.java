@@ -389,6 +389,12 @@ public enum ServiceUiRequest {
     DELETE_USER_GROUP,
     
     /**
+     * Add or delete a User Defined Group
+     */
+    
+    ADD_OR_DELETE_USER_GROUP,
+    
+    /**
      * Get groupPrivacysetting
      * 
      * @see com.vodafone360.people.engine.groups.GroupEngine
@@ -446,6 +452,24 @@ public enum ServiceUiRequest {
      * Remove Friendship
      */
     REMOVE_FRIEND,
+    
+    /**
+     * Downloadable Music
+     */
+    
+    DOWNLOADABLE_TRACKS,
+    
+    /**
+     * DD For Tracks
+     */
+    
+    DD_FOR_TRACK,
+    
+    /**
+     * Get Identities Text
+     */
+    GET_IDENTITIES_TEXT,
+
     /*
      * Do not handle this message.
      */

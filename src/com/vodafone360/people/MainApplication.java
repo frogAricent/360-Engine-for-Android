@@ -27,11 +27,15 @@ package com.vodafone360.people;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 
+import com.facebook.android.Facebook;
+import com.facebook.android.fqlmanager.FQLConnection;
 import com.vodafone360.people.database.DatabaseHelper;
 import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.service.PersistSettings;
+import com.vodafone360.people.service.RemoteService;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.PersistSettings.InternetAvail;
 import com.vodafone360.people.service.interfaces.IPeopleService;
@@ -50,10 +54,12 @@ public class MainApplication extends Application {
     private Handler mServiceLoadedHandler;
 
     private DatabaseHelper mDatabaseHelper;
-
+    
+    private FQLConnection mFQLConnection;
     private final ApplicationCache mApplicationCache = new ApplicationCache();
 
     private static Context ctx = null;
+    
     
     /**
      * Called when the Application is created.
@@ -61,13 +67,39 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        SettingsManager.loadProperties(this);
-        mDatabaseHelper = new DatabaseHelper(this);
-        mDatabaseHelper.start();
-        LoginPreferences.getCurrentLoginActivity(this);
+        System.out.println("MainApplication.onCreate()");
+//        handler.post(runnable);
+        
+        initout();
+        
         ctx = getApplicationContext();
+        //lets start the service before any other activity gets created
+        startService(new Intent(ctx, RemoteService.class ));
+        
+//        t = new Thread(runnable);
+//        t.start();
+        
     }
-
+    Thread t;
+    
+//    Handler handler = new Handler();
+    
+    Runnable runnable = new Runnable() {
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			initout();
+		}
+	};
+    public void initout(){
+    	System.out.println("MainApplication.initout()");
+    	SettingsManager.loadProperties(MainApplication.this);
+        mDatabaseHelper = new DatabaseHelper(MainApplication.this);
+        mDatabaseHelper.start();
+        LoginPreferences.getCurrentLoginActivity(MainApplication.this);
+      
+    }
     /**
      * Called when the Application is exited.
      */
@@ -216,4 +248,12 @@ public class MainApplication extends Application {
     public static Context getContext(){
 		return ctx;
 	}
+    
+    public void setFQLConnection (Facebook aFB){
+        mFQLConnection = new FQLConnection(aFB);
+    }
+
+    public FQLConnection getFQLConnection (){
+        return mFQLConnection;
+    }
 }

@@ -28,7 +28,10 @@ package com.vodafone360.people.service.utils.hessian;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
@@ -51,11 +54,15 @@ import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.Conversation;
 import com.vodafone360.people.datatypes.ExternalResponseObject;
 import com.vodafone360.people.datatypes.Group;
+import com.vodafone360.people.datatypes.GroupItem;
+import com.vodafone360.people.datatypes.IdentitiesTextResponse;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.ItemList;
 import com.vodafone360.people.datatypes.ListOfLong;
 import com.vodafone360.people.datatypes.LocationNudgeResult;
 import com.vodafone360.people.datatypes.LongGeocodeAddress;
+import com.vodafone360.people.datatypes.MusicDDForTrack;
+import com.vodafone360.people.datatypes.MusicDownloadableTrack;
 import com.vodafone360.people.datatypes.PresenceList;
 import com.vodafone360.people.datatypes.PrivacySetting;
 import com.vodafone360.people.datatypes.PrivacySettingList;
@@ -70,6 +77,7 @@ import com.vodafone360.people.datatypes.SimpleText;
 import com.vodafone360.people.datatypes.StatusMsg;
 import com.vodafone360.people.datatypes.SystemNotification;
 import com.vodafone360.people.datatypes.UserProfile;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.service.io.Request;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
@@ -124,6 +132,23 @@ public class HessianDecoder {
      */
     public DecodedResponse decodeHessianByteArray(int requestId, byte[] data, Request.Type type,
             boolean isZipped, EngineId engineId) throws IOException {
+    	if(engineId == EngineManager.EngineId.MUSIC_ENGINE){
+    		
+    		InputStream is = new ByteArrayInputStream(data);
+    		final char[] buffer = new char[0x10000]; 
+    		StringBuilder out = new StringBuilder(); 
+    		Reader in = new InputStreamReader(is, "UTF-8"); 
+    		int read; 
+    		do { 
+    		  read = in.read(buffer, 0, buffer.length); 
+    		  if (read>0) { 
+    		    out.append(buffer, 0, read); 
+    		  } 
+    		} while (read>=0); 
+
+    		
+    		
+    	}
         InputStream is = null;
         InputStream bis = null;
         
@@ -139,10 +164,11 @@ public class HessianDecoder {
 
         DecodedResponse response = null;
         mMicroHessianInput.init(is);
-
         LogUtils.logV("HessianDecoder.decodeHessianByteArray() Begin Hessian decode");
         try {
-            response = decodeResponse(is, requestId, type, isZipped, engineId);
+            
+        	response = decodeResponse(is, requestId, type, isZipped, engineId);
+        	
         } catch (IOException e) {
             LogUtils.logE("HessianDecoder.decodeHessianByteArray() "
                     + "IOException during decodeResponse", e);
@@ -190,12 +216,12 @@ public class HessianDecoder {
         boolean usesReplyTag = false;
         int responseType = DecodedResponse.ResponseType.UNKNOWN.ordinal();
         
-        
         List<BaseDataType> resultList = new ArrayList<BaseDataType>();
         mMicroHessianInput.init(is);
 
         // skip start
         int tag = is.read(); // initial map tag or fail
+        
 
         if (tag == 'r') { // reply / response
             is.read(); // read major and minor
@@ -208,7 +234,6 @@ public class HessianDecoder {
         if (tag == -1) {
             return null;
         }
-
         // check for fail
         // read reason string and throw exception
         if (tag == 'f') {
@@ -219,7 +244,6 @@ public class HessianDecoder {
             		DecodedResponse.ResponseType.SERVER_ERROR.ordinal());
             return decodedResponse;
         }
-
         // handle external response
         // this is not wrapped up in a hashtable
         if (type == Request.Type.EXTERNAL_RPG_RESPONSE) {
@@ -249,6 +273,8 @@ public class HessianDecoder {
             if (null == map) {
                 return null;
             }
+            
+            
 
             if (map.containsKey(KEY_SESSION)) {
                 AuthSessionHolder auth = new AuthSessionHolder();
@@ -276,6 +302,8 @@ public class HessianDecoder {
                 responseType = DecodedResponse.ResponseType.GETME_RESPONSE.ordinal();
             } else if ((map.containsKey(KEY_IDENTITY_LIST))	// we have identity items in the map which we can parse 
                     || (map.containsKey(KEY_AVAILABLE_IDENTITY_LIST))) {
+            	
+				
             	int identityType = 0;
                 Vector<Hashtable<String, Object>> idcap = null;
                 if (map.containsKey(KEY_IDENTITY_LIST)) {
@@ -294,7 +322,10 @@ public class HessianDecoder {
                 }
             } else if (type == Request.Type.GET_AVAILABLE_IDENTITIES) {	// we have an available identities response, but it is empty
                 responseType = DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal();
-            } else if (type == Request.Type.GET_MY_IDENTITIES) {	// we have a my identities response, but it is empty 
+            } else if (type == Request.Type.GET_MY_IDENTITIES) {	// we have a my identities response, but it is empty
+            	LogUtils.logD("HessainDecoder.decodeResponse - Empty response for get my identitites. Map size is "+map.size());
+            	
+            	
                 responseType = DecodedResponse.ResponseType.GET_MY_IDENTITIES_RESPONSE.ordinal();
             } else if (map.containsKey(KEY_ACTIVITY_LIST)) {
                 Vector<Hashtable<String, Object>> activityList = (Vector<Hashtable<String, Object>>)map
@@ -312,15 +343,17 @@ public class HessianDecoder {
             // "c0" which only contains a string - to fix
             Hashtable<String, Object> hash = (Hashtable<String, Object>)mMicroHessianInput
                     .decodeType(tag);
+            
+            
             responseType = decodeResponseByRequestType(resultList, hash, type);
+            
         }
-
+        
         if (usesReplyTag) {
             is.read(); // read the last 'z'
         }
         
         DecodedResponse decodedResponse = new DecodedResponse(requestId, resultList, engineId, responseType);
-
         return decodedResponse;
     }
 
@@ -369,6 +402,7 @@ public class HessianDecoder {
      */
     private int decodeResponseByRequestType(List<BaseDataType> clist,
             Hashtable<String, Object> hash, Request.Type type) throws IOException {
+    	//LogUtils.logE("Response:"+hash);
     	int responseType = DecodedResponse.ResponseType.UNKNOWN.ordinal();
     	
         switch (type) {
@@ -572,6 +606,13 @@ public class HessianDecoder {
                 responseType = DecodedResponse.ResponseType.ADD_CONTENT_RESPONSE.ordinal();
             	break;
             
+            case UPLOAD_CONTENT_AND_PUBLISH:
+            	ContentListResponse addContentAndPublishResp = new ContentListResponse();
+            	addContentResp = addContentAndPublishResp.createFromHashtable(hash);
+                clist.add(addContentAndPublishResp);
+                responseType = DecodedResponse.ResponseType.ADD_CONTENT_AND_PUBLISH_RESPONSE.ordinal();
+            	break;
+            	
             case GET_CONTENT:
             	ContentResponse mContentResponse = new ContentResponse();
             	mContentResponse = mContentResponse.createFromHashtable(hash);
@@ -608,17 +649,22 @@ public class HessianDecoder {
     			break;
 
     		case ADD_GROUP:
-    			Group grp = new Group();
+    			/*Group grp = new Group();
     			grp = grp.createFromHashtable(hash);
     			clist.add(grp);
-            	responseType = DecodedResponse.ResponseType.ADD_MY_GROUP_RESPONSE.ordinal();
+            	responseType = DecodedResponse.ResponseType.ADD_MY_GROUP_RESPONSE.ordinal();*/
+            	/*****************************/
+    			ItemList groupIdList = new ItemList(ItemList.Type.group_id_list);
+    			groupIdList.populateFromHashtable(hash);
+                clist.add(groupIdList);
+                responseType = DecodedResponse.ResponseType.UNKNOWN.ordinal();
     			break;
 
     		case DELETE_GROUP:
-    			ListOfLong grpIdList = new ListOfLong();
-    			grpIdList = grpIdList.createFromHashtable(hash);
-            	responseType = DecodedResponse.ResponseType.DELETE_MY_GROUP_RESPONSE.ordinal();
-    			clist.add(grpIdList);
+    			ListOfLong deletedIds = new ListOfLong();
+    			deletedIds = deletedIds.createFromHashtable(hash);
+    			clist.add(deletedIds);
+                responseType = DecodedResponse.ResponseType.UNKNOWN.ordinal();
     			
     		case GET_GROUP_PRIVACY:
     			PrivacySettingList list = new PrivacySettingList();
@@ -685,7 +731,31 @@ public class HessianDecoder {
     			clist.add(removedUserIdList);
     			responseType = DecodedResponse.ResponseType.REMOVE_FRIEND_RESPONSE.ordinal();
     			break;
+
+    		case DOWNLOADABLE_TRACK:
+    			MusicDownloadableTrack musicDownloadableTracks = new MusicDownloadableTrack();
+    			musicDownloadableTracks = musicDownloadableTracks.createFromHashtable(hash);
+    			clist.add(musicDownloadableTracks);
+    			responseType = DecodedResponse.ResponseType.DOWNLOADABLE_TRACK.ordinal();
+    			break;
+    		
+    		case DD_FOR_TRACK:
+    			MusicDDForTrack ddForTrack = new MusicDDForTrack();
+    			ddForTrack = ddForTrack.createFromHashtable(hash);
+    			clist.add(ddForTrack);
+    			responseType = DecodedResponse.ResponseType.DD_FOR_TRACK.ordinal();
+    			break;
     			
+    		case GET_IDENTITIES_TEXT:
+    			IdentitiesTextResponse textResponse = new IdentitiesTextResponse();
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()" + hash);
+    			textResponse = textResponse.createFromHashtable(hash);
+    			clist.add(textResponse);
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType() GetIdentityText" + textResponse.createHashtable().toString());
+    			responseType = DecodedResponse.ResponseType.GET_IDENTITIES_TEXT.ordinal();
+    			break;
+    			
+
     		default:
                 LogUtils.logE("HessianDecoder.decodeResponseByRequestType() Unhandled type["
                         + type.name() + "]");

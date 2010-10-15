@@ -508,6 +508,8 @@ public class TcpConnectionThread implements Runnable, IConnection {
         }
 
         mHeartbeatSender.setOutputStream(mOs);
+        
+        
         mResponseReader.setInputStream(mBufferedInputStream);
 
         if (!mHeartbeatSender.getIsActive()) {

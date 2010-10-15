@@ -99,7 +99,7 @@ public final class Settings {
 
     /** Trace output for transport (i.e. network IO) components. **/
 
-    public static final boolean ENABLED_TRANSPORT_TRACE = false;
+    public static final boolean ENABLED_TRANSPORT_TRACE = true;
 
     /** Trace output for contact synchronisation components. **/
     public static final boolean ENABLED_CONTACTS_SYNC_TRACE = false;
@@ -179,7 +179,24 @@ public final class Settings {
 
     /** Key for Hessian URL setting. **/
     public static final String SERVER_URL_HESSIAN_KEY = "hessian-url";
-
+    /*
+     * FB-PLUGIN code Starts
+     */
+    /** Maximum limit for fetching facebook feeds **/
+    public static final String FB_MAX_POSTS_KEY = "max-fb-posts";
+	/** facebook key for photo feeds **/
+    public static final String FB_PHOTO_APP_KEY = "fb-photo-feed-key";
+	/** facebook key for link feeds **/
+    public static final String FB_LINK_APP_KEY = "fb-link-feed-key";
+	/** facebook key for status feeds **/
+    public static final String FB_STATUS_APP_KEY = "fb-status-feed-key";
+    /** facebook http req timeout key **/
+    public static final String FB_HTTP_CONN_TIMEOUT = "fb-http-conn-timeout";
+   
+    public static final String FB_POST_SCHEDULE_TIME = "fb-post-schedule-time";
+    /*
+     * FB-PLUGIN code Ends
+     */   
 
     /*
      * Keys without defaults.
@@ -213,8 +230,26 @@ public final class Settings {
     /** Default for Hessian URL setting. **/
     protected static final String DEFAULT_SERVER_URL_HESSIAN
         = "http://api.vodafone360.com/services/hessian/";
-
-
+    /*
+     * FB-PLUGIN code Starts
+     */
+    
+    /** Maximum limit for fetching facebook feeds **/
+    protected static final String DEFAULT_FB_MAX_POSTS = "20";
+	/** facebook key for photo feeds **/
+    protected static final String FB_PHOTO_APP_KEY_VALUE = "app_2305272732";
+	/** facebook key for link feeds **/
+    protected static final String FB_LINK_APP_KEY_VALUE = "app_2309869772";
+	/** facebook key for STATUS feeds **/
+    protected static final String FB_STATUS_APP_KEY_VALUE = "app_2915120374";
+    
+    protected static final int DEFAULT_FB_HTTP_CONN_TIMEOUT_VALUE = 20000;
+    
+    protected static final String DEFAULT_FB_POST_SCHEDULE_TIME_VALUE = "300000";
+    /*
+     * FB-PLUGIN code Ends
+     */
+	
     /*
      * Request timeouts for all engines and requests, except for fire and
      * forget calls to RPG: SET_AVAILABILITY and SEND_CHAT_MSG.
@@ -223,7 +258,7 @@ public final class Settings {
     private static final long DONT_HANDLE_TIMEOUTS = -1;
 
     /** Generic timeout for requests. **/
-    private static final long ALL_ENGINES_REQUESTS_TIMEOUT = 60000;
+    private static final long ALL_ENGINES_REQUESTS_TIMEOUT = 2*60*1000;
 
     /** Timeout for all presence API requests. **/
     private static final long PRESENCE_ENGINE_REQUESTS_TIMEOUT = 120000;
@@ -234,7 +269,7 @@ public final class Settings {
     /** Timeout for request waiting in queue. **/
     public static final long REMOVE_REQUEST_FROM_QUEUE_MILLIS = 15 * 60 * 1000;
 
-
+    public static final long MUSIC_ENGINE_TIMEOUT = 1*60*1000;
     /*
      * The timeouts in milliseconds for the different APIs.
      */

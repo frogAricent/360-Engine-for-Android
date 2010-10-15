@@ -32,6 +32,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
+import com.vodafone360.people.utils.LogUtils;
+
 public class ListOfLong  extends BaseDataType{
 	
 	public List<Long> mLongList = new ArrayList<Long>();
@@ -44,6 +46,7 @@ public class ListOfLong  extends BaseDataType{
     public enum Tags {
     	ALBUM_ID_LIST("albumidlist"),
     	GROUP_ID_LIST("groupidlist"),
+    	ITEM_LIST("itemlist"),
     	USER_ID("userid"),
     	APPROVED_REQUESTS("approvedrequests"),
     	REJECTED_REQUESTS("rejectedrequests"),
@@ -103,7 +106,7 @@ public class ListOfLong  extends BaseDataType{
     @SuppressWarnings("unchecked")
 	private void setValue(Tags tag, Object value) {
         if (tag != null) {
-            
+            LogUtils.logD("ListOfLong.tag:"+tag.toString());
             switch (tag) {
                 
                 case ALBUM_ID_LIST:
@@ -115,6 +118,9 @@ public class ListOfLong  extends BaseDataType{
 	                 this.mListSize = mLongList.size();
 	 	            
                      break;
+                     
+                case ITEM_LIST:
+                	//fall through
                      
                 case GROUP_ID_LIST:
                 	Vector<Long> groupIdVector = (Vector<Long>)value;
@@ -157,12 +163,12 @@ public class ListOfLong  extends BaseDataType{
      * @return ActivityItem created from Hashtable
      */
     public ListOfLong createFromHashtable(Hashtable<String, Object> hash) {
+    	LogUtils.logD("listOfLong: createFromHashTable");
     	ListOfLong album = new ListOfLong();
         Enumeration<String> e = hash.keys();
         while (e.hasMoreElements()) {
             String key = e.nextElement();
             Object value = hash.get(key);
-            
             Tags tag = Tags.findTag(key);
             album.setValue(tag, value);
         }

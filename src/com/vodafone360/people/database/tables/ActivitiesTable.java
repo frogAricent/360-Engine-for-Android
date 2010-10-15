@@ -47,6 +47,7 @@ import com.vodafone360.people.database.SQLKeys;
 import com.vodafone360.people.database.utils.SqlUtils;
 import com.vodafone360.people.datatypes.ActivityContact;
 import com.vodafone360.people.datatypes.ActivityItem;
+import com.vodafone360.people.engine.meprofile.SyncMeDbUtils;
 import com.vodafone360.people.engine.presence.NetworkPresence.SocialNetwork;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.utils.CloseUtils;
@@ -63,15 +64,15 @@ public abstract class ActivitiesTable {
     /***
      * The name of the table as it appears in the database.
      */
-    private static final String TABLE_NAME = "Activities";
+    public static final String TABLE_NAME = "Activities";
     
     private static final String TABLE_INDEX_NAME = "ActivitiesIndex";
 
     /** Database cleanup will delete any activity older than X days. **/
-    private static final int CLEANUP_MAX_AGE_DAYS = 10;
+    private static final int CLEANUP_MAX_AGE_DAYS = 90;
 
     /** Database cleanup will delete older activities after the first X. **/
-    private static final int CLEANUP_MAX_QUANTITY = 200;
+    private static final int CLEANUP_MAX_QUANTITY = 2000;
 
     /***
      * An enumeration of all the field names in the database.
@@ -238,6 +239,8 @@ public abstract class ActivitiesTable {
         public String mContactAddress;
         /** Messages can be incoming and outgoing. **/
         public Type mIncoming;
+        
+        public boolean mIsUnread = false;
 
         /**
          * Returns a string describing the timeline summary item.
@@ -315,7 +318,7 @@ public abstract class ActivitiesTable {
         writeableDb.execSQL("CREATE TABLE " + TABLE_NAME + " ("
                 + Field.LOCAL_ACTIVITY_ID
                 + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + Field.ACTIVITY_ID + " TEXT, "
+                + Field.ACTIVITY_ID + " TEXT, "  /* FB-PLUGIN change */
                 + Field.TIMESTAMP + " LONG, "
                 + Field.TYPE + " TEXT, "
                 + Field.URI + " TEXT, "
@@ -490,6 +493,9 @@ public abstract class ActivitiesTable {
         
         activityItemValues.put(Field.TITLE.toString(), item.title);
         activityItemValues.put(Field.DESCRIPTION.toString(), item.description);
+        if (item.moreinfo != null) {
+        	activityItemValues.put(Field.MORE_INFO.toString(), item.moreinfo);
+        }
         if (item.previewUrl != null) {
             activityItemValues.put(Field.PREVIEW_URL.toString(),
                     item.previewUrl);
@@ -619,11 +625,15 @@ public abstract class ActivitiesTable {
                         int clistSize = activity.contactList.size();
                         for (int i = 0; i < clistSize; i++) {
                             final ActivityContact activityContact = activity.contactList.get(i);
-                            activityContact.mLocalContactId = 
-                                ContactsTable.fetchLocalFromServerId(
-                                        activityContact.mContactId,
-                                        statement);
-                            
+
+                            //Added by Darshit to fix the issue of my feeds
+                            if(activityContact.mLocalContactId != StateTable.fetchMeProfileId(writableDb))
+                            {
+                                activityContact.mLocalContactId = 
+                                    ContactsTable.fetchLocalFromServerId(
+                                            activityContact.mContactId,
+                                            statement);
+                            }
                             
                             
                             int latestStatusVal = removeContactGroup(
@@ -1327,6 +1337,7 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
             SqlUtils.setString(cursor, Field.CONTACT_ADDRESS.toString());
         item.mIncoming = SqlUtils.setTimelineSummaryItemType(cursor,
                 Field.INCOMING.toString());
+        item.mIsUnread = (SqlUtils.setInt(cursor, Field.FLAG.toString(),0) & ActivityItem.ALREADY_READ)==1?false:true;
         return item;
     }
 
@@ -1982,6 +1993,85 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
                 + " ORDER BY " + Field.TIMESTAMP + " DESC", null);
     }
 
-    
+    /**
+     * Fetches timeline events grouped by local contact ID, name or contact
+     * address. Events returned will be in reverse-chronological order. If a
+     * native type list is provided the result will be filtered by the list.
+     *
+     * @param minTimeStamp Only timeline events from this date will be returned
+     * @param nativeTypes A list of native types to filter the result, or null
+     *            to return all.
+     * @param readableDb Readable SQLite database
+     * @return A cursor containing the result. The
+     *         {@link #getTimelineData(Cursor)} method should be used for
+     *         reading the cursor.
+     *         @author Sumit saxena for chat list
+     */
+    public static Cursor fetchChatEventList(final Long minTimeStamp,
+            final TimelineNativeTypes[] nativeTypes,CharSequence constraint,
+            final SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "DatabaseHelper.fetchTimelineEventList() "
+                + "minTimeStamp[" + minTimeStamp + "]");
+        try {
+            int andVal = 1;
+            String typesQuery = " AND ";
+            if (nativeTypes != null) {
+                typesQuery += DatabaseHelper.createWhereClauseFromList(
+                        Field.NATIVE_ITEM_TYPE.toString(), nativeTypes, "OR");
+                typesQuery += " AND ";
+                andVal = 2;
+            }
+
+            String query = null;
+                        
+            
+            if(constraint != null)
+            {
+            final String dbSafeConstraint = DatabaseUtils.sqlEscapeString("%" + constraint + "%");
+             query = "SELECT " + Field.LOCAL_ACTIVITY_ID + ","
+                + Field.TIMESTAMP + "," + Field.CONTACT_NAME + ","
+                + Field.CONTACT_AVATAR_URL + "," + Field.LOCAL_CONTACT_ID + ","
+                + Field.TITLE + "," + Field.DESCRIPTION + ","
+                + Field.CONTACT_NETWORK + "," + Field.NATIVE_ITEM_TYPE + ","
+                + Field.NATIVE_ITEM_ID + "," + Field.TYPE + ","
+                + Field.CONTACT_ID + "," + Field.USER_ID + ","
+                + Field.NATIVE_THREAD_ID + "," + Field.CONTACT_ADDRESS + ","
+                + Field.INCOMING +","+ Field.FLAG+ " FROM " + TABLE_NAME + " WHERE ("
+                + Field.FLAG + "&" + ActivityItem.TIMELINE_ITEM + ")"
+                + typesQuery + Field.TIMESTAMP + " > " + minTimeStamp
+                + " AND ("
+                + Field.LATEST_CONTACT_STATUS + " & " + andVal
+                + ")"   
+                + " AND " + Field.TYPE + " = 'message_im_conversation'" 
+                +" AND " 
+                + Field.CONTACT_NAME + " LIKE " + dbSafeConstraint /*+ " OR "
+                + Field.DESCRIPTION+ " LIKE " + dbSafeConstraint*/ +	" ORDER BY " + Field.TIMESTAMP + " DESC";
+            } else
+            {
+                query = "SELECT " + Field.LOCAL_ACTIVITY_ID + ","
+                + Field.TIMESTAMP + "," + Field.CONTACT_NAME + ","
+                + Field.CONTACT_AVATAR_URL + "," + Field.LOCAL_CONTACT_ID + ","
+                + Field.TITLE + "," + Field.DESCRIPTION + ","
+                + Field.CONTACT_NETWORK + "," + Field.NATIVE_ITEM_TYPE + ","
+                + Field.NATIVE_ITEM_ID + "," + Field.TYPE + ","
+                + Field.CONTACT_ID + "," + Field.USER_ID + ","
+                + Field.NATIVE_THREAD_ID + "," + Field.CONTACT_ADDRESS + ","
+                + Field.INCOMING +","+ Field.FLAG+ " FROM " + TABLE_NAME + " WHERE ("
+                + Field.FLAG + "&" + ActivityItem.TIMELINE_ITEM + ")"
+                + typesQuery + Field.TIMESTAMP + " > " + minTimeStamp
+                + " AND " + Field.TYPE + " = 'message_im_conversation' " 
+                + " AND ("
+                + Field.LATEST_CONTACT_STATUS + " & " + andVal
+                + ") ORDER BY " + Field.TIMESTAMP + " DESC";
+           
+            }
+            return readableDb.rawQuery(query, null);
+        } catch (SQLiteException e) {
+            LogUtils.logE("ActivitiesTable.fetchLastUpdateTime() "
+                    + "Unable to fetch timeline event list", e);
+            return null;
+        }
+    }
+
     
 }

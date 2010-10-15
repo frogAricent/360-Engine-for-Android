@@ -277,17 +277,21 @@ public class GroupsEngine extends BaseEngine {
     private void requestFirstGroupsPage() {
         mPageNo = 0;
         mNoOfGroupsFetched = 0;
+        newState(State.GETTING_USER_GROUP);
         requestNextGroupsPage();
+        newState(GroupsEngine.State.GETTING_USER_GROUP);
     }
     
     /**
      * Requests the next page of groups from the server.
      */
     private void requestNextGroupsPage() {
+    	
         if (NetworkAgent.getAgentState() != NetworkAgent.AgentState.CONNECTED) {
             completeUiRequest(ServiceStatus.ERROR_COMMS);
             return;
         }
+        
         int reqId = GroupPrivacy.getGroups(this, mPageNo, MAX_DOWN_PAGE_SIZE);
         setReqId(reqId);
     }
@@ -412,7 +416,11 @@ public class GroupsEngine extends BaseEngine {
 			return;
 		}
 		newState(State.ADDING_USER_GROUP);
-		if (!setReqId(GroupPrivacy.addUserGroup(this, groupName))) {
+		ArrayList<GroupItem> grpList = new ArrayList<GroupItem>();
+		GroupItem grpItem = new GroupItem();
+		grpItem.mName = groupName;
+		grpList.add(grpItem);
+		if (!setReqId(GroupPrivacy.addUserGroup(this, grpList))) {
 			completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
 		}
 	}
@@ -435,7 +443,9 @@ public class GroupsEngine extends BaseEngine {
 			completeUiRequest(ServiceStatus.ERROR_NOT_FOUND);
 		}
 		newState(State.DELETING_USER_GROUP);
-		if (!setReqId(GroupPrivacy.deleteUserGroup(this, groupId))) {
+		ArrayList<Long> grpList = new ArrayList<Long>();
+		grpList.add(groupId);
+		if (!setReqId(GroupPrivacy.deleteUserGroup(this, grpList))) {
 			completeUiRequest(ServiceStatus.ERROR_BAD_SERVER_PARAMETER);
 		}
 	}

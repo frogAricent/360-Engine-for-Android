@@ -364,6 +364,9 @@ public class ContentEngine extends BaseEngine {
 		case DELETING_CONTENT:
 			handleDeleteContentResponse(resp.mDataTypes);
 			break;
+		case UPLOADING_AND_PUBLISHING:
+			handleUploadContentAndPublishResponse(resp.mDataTypes);
+			break;
 		default: // do nothing.
 			break;
 		}
@@ -411,6 +414,8 @@ public class ContentEngine extends BaseEngine {
 		case DELETE_CONTENT:
 			startDeleteContent((List<Long>) data);
 			break;
+		case UPLOAD_CONTENT_AND_PUBLISH:
+			startUploadContentAndPublish((List<Content>) data);
 		default:
 			completeUiRequest(ServiceStatus.ERROR_NOT_FOUND, null);
 			break;

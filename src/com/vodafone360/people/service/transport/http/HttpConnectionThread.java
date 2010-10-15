@@ -275,7 +275,6 @@ public class HttpConnectionThread implements Runnable, IConnection {
      */
     public HttpResponse postHTTPRequest(byte[] postData, URI uri, String contentType)
             throws Exception {
-        
         HttpResponse response = null;
 
         if (null == postData) {
@@ -289,6 +288,11 @@ public class HttpConnectionThread implements Runnable, IConnection {
             httpPost.addHeader("Content-Type", contentType);
             httpPost.addHeader("User-Agent", "PeopleRPGClient/1.0");
             httpPost.addHeader("Cache-Control", "no-cache");
+            
+//            httpPost.addHeader("x-use-header-msisdn", "true");
+//            httpPost.addHeader("x-up-calling-line-id", "+447700900999");
+//            httpPost.addHeader("x-override-cc","44");
+             
             httpPost.setEntity(new ByteArrayEntity(postData));
             try {
                 response = mHttpClient.execute(httpPost);

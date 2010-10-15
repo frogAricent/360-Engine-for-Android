@@ -115,7 +115,12 @@ public abstract class ContactDetailsTable {
             return null;
         }
     }
-    
+    /*
+     * FB-PLUGIN code Starts
+     */
+    /*
+     * fetchLocalFromFacebookId fetchs the local ID through facebook ID received
+     */
     public static Long fetchLocalFromFacebookId(Long facebookId, SQLiteStatement statement) {
         DatabaseHelper.trace(false, "ContactsDetailsTable.fetchLocalFromFacebookId() facebookId["
                 + facebookId + "]");
@@ -129,7 +134,9 @@ public abstract class ContactDetailsTable {
             return null;
         }
     }
-    
+    /*
+     * FB-PLUGIN code Ends
+     */    
     /**
      * SELECT 
      * DetailLocalId, Key, 

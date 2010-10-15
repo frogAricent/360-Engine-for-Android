@@ -640,4 +640,14 @@
 	<string name="Utils_sns_name_vodafone">Vodafone</string>
 	<string name="Utils_sns_name_studivz">StudiVZ</string>
 	
+
+
+	
+	<string name="request">Request!</string> 
+	  <string name="hello">Hello World!</string> 
+	  <string name="post">Wall Post!</string> 
+	  <string name="delete">Delete Post</string> 
+	
+
+	
 </resources>

@@ -28,6 +28,7 @@ package com.vodafone360.people.service.interfaces;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -53,6 +54,9 @@ import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.NetworkAgentState;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.utils.LogUtils;
+import com.facebook.android.Facebook;
+import com.facebook.android.fqlmanager.FacebookEventHandler;
+import com.facebook.android.listener.RequestCompleteCallback;
 
 
 /***
@@ -535,7 +539,17 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
 		Log.d("IPeopleServiceImpl", "uploadImage");
 	    EngineManager.getInstance().getContentEngine().addUiUploadContentRequest(contentlist);
 	}
-	  
+	
+	/***
+     * @see com.vodafone360.people.service.interfaces.IPeopleService#addContent(List)
+     */
+	@Override
+	public void addContentAndPublish(List<Content> contentlist) {
+		Log.d("IPeopleServiceImpl", "addContentAndPublish");
+		EngineManager.getInstance().getContentEngine()
+				.addUiUploadContentAndPublishRequest(contentlist);
+	}
+	
 	/***
      * @see com.vodafone360.people.service.interfaces.IPeopleService#getContent(Bundle)
      */
@@ -584,35 +598,35 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
 	    
 	    /***
 	     * @see com.vodafone360.people.service.interfaces.IPeopleService#addUserGroup()
-	     */
+	     *//*
 	    @Override
 	    public void addUserGroup(String groupName) {
 	    	EngineManager.getInstance().getGroupsEngine().addUiAddUserDefinedGroup(groupName);
 	    }
 	    
-	    /***
+	    *//***
 	     * @see com.vodafone360.people.service.interfaces.IPeopleService#deleteUserGroup()
-	     */
+	     *//*
 	    @Override
 	    public void deleteUserGroup(String groupName) {
 	    	EngineManager.getInstance().getGroupsEngine().addUiDeleteUserDefinedGroup(groupName);
 	    }
 	    
-	    /***
+	    *//***
 	     * @see com.vodafone360.people.service.interfaces.IPeopleService#getGroupPrivacySetting()
-	     */
+	     *//*
 	    @Override
 	    public void getGroupPrivacySetting(String groupName) {
 	    	EngineManager.getInstance().getGroupsEngine().addUiGetGroupPrivacySetting(groupName);
 	    }
 	    
-	    /***
+	    *//***
 	     * @see com.vodafone360.people.service.interfaces.IPeopleService#setGroupPrivacySetting()
-	     */
+	     *//*
 	    @Override
 	    public void setGroupPrivacySetting(String groupName, int contentType, int status) {
 	    	EngineManager.getInstance().getGroupsEngine().addUiSetGroupPrivacySetting(groupName, contentType, status);
-	    }
+	    }*/
 	    
 	    /**
 	     * @see com.vodafone360.people.service.interfaces.IPeopleService#shareAlbum()
@@ -691,5 +705,58 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
 	    public void deleteIdentity(Bundle bundle) {
 	        EngineManager.getInstance().getIdentityEngine().addUiDeleteIdentity(bundle);
 	    }
+	    /*
+	     * FB-PLUGIN code Starts
+	     */	    
 	    
+	  
+		 /**
+	     * @see com.facebook.android.fqlmanager#fetchPosts()
+	     */	    
+	    @Override
+	    public void downloadFbPosts(final RequestCompleteCallback callBack) {
+	    	FacebookEventHandler.fetchPosts(callBack);
+	    	
+	    }
+		 /**
+	     * @see com.facebook.android.fqlmanager#addComment()
+	     */	    
+	    @Override
+	    public void addCommentToFbPost(final String post_id, final String comment, 
+	    								final RequestCompleteCallback callBack) {
+    		FacebookEventHandler.addComment(post_id, comment, callBack);
+	    }
+		 /**
+	     * @see com.facebook.android.fqlmanager#addLike()
+	     */	    
+	    @Override
+	    public void addLikeToFbPost(final String post_id, final RequestCompleteCallback callBack) {
+    		FacebookEventHandler.addLike(post_id, callBack);
+	    }
+		 /**
+	     * @see com.facebook.android.fqlmanager#removeComment()
+	     */
+	    @Override
+	    public void removeCommentFromFbPost(final String comment_id, final RequestCompleteCallback callBack) {
+    		FacebookEventHandler.removeComment(comment_id, callBack);
+	    }
+	    /*
+	     * FB-PLUGIN code Ends
+	     */
+	    
+	    /**
+	    * @see com.vodafone360.people.service.interfaces.IPeopleService#musicRestored()
+	    **/
+	    @Override
+	    public void musicRestored() {
+	    	System.out.println("IPeopleServiceImpl.musicRestored()");
+	    	
+	    EngineManager.getInstance().getMusicEngine().addUiDownloadableTrackReq();   
+	    //EngineManager.getInstance().getMusicEngine().mobserver.onSyncStart();
+	    }
+
+		@Override
+		public void getIdentitiesText(String networkName) {
+			EngineManager.getInstance().getIdentityEngine().addUiGetIdentitiesTextReq(networkName);
+		}
 }

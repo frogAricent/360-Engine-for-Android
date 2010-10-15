@@ -204,4 +204,18 @@ public class ApiUtils {
         }
         return vector;
     }
+    /**
+     * Create vector from list of String. This vector is passed to the
+     * Hessian encoder for generation of Hessian encoded message body.
+     * 
+     * @param list List of String.
+     * @return New vector.
+     */
+    public static Vector<Object> createVectorOfString(List<String> list) {
+    	Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i));
+        }
+        return vector;
+    }
 }

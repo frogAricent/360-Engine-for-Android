@@ -37,12 +37,14 @@ import com.vodafone360.people.engine.BaseEngine.IEngineEventCallback;
 import com.vodafone360.people.engine.activities.ActivitiesEngine;
 import com.vodafone360.people.engine.comments.CommentsEngine;
 import com.vodafone360.people.engine.contactsync.ContactSyncEngine;
-import com.vodafone360.people.engine.groups.GroupsEngine;
 import com.vodafone360.people.engine.content.ContentEngine;
+import com.vodafone360.people.engine.groups.GroupSyncEngine;
+import com.vodafone360.people.engine.groups.GroupsEngine;
 import com.vodafone360.people.engine.identities.IdentityEngine;
 import com.vodafone360.people.engine.location.LocationEngine;
 import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.engine.meprofile.SyncMeEngine;
+import com.vodafone360.people.engine.music.MusicEngine;
 import com.vodafone360.people.engine.presence.PresenceEngine;
 import com.vodafone360.people.engine.share.ShareEngine;
 import com.vodafone360.people.engine.upgrade.UpgradeEngine;
@@ -78,6 +80,7 @@ public class EngineManager {
         CONTENTS_ENGINE,
         LOCATION_ENGINE,
         SHARE_ENGINE,
+        MUSIC_ENGINE,
         UNDEFINED
         // add ids as we progress
 
@@ -145,7 +148,7 @@ public class EngineManager {
     /**
      * @see GroupsEngine
      */
-    private GroupsEngine mGroupsEngine;
+    private GroupSyncEngine mGroupsEngine;
 
     /**
      * @see ContentEngine
@@ -156,6 +159,11 @@ public class EngineManager {
      * @see CommentsEngine
      */
     private CommentsEngine mCommentsEngine;
+    
+    /**
+     * @see MusicEnginebak
+     */
+    private MusicEngine mMusicEngine;
     
     /**
      * @see LocationEngine
@@ -271,6 +279,7 @@ public class EngineManager {
         createPresenceEngine();
         createContentEngine();
         createCommentsEngine();
+        createMusicEngine();
     }
 
     /**
@@ -423,7 +432,7 @@ public class EngineManager {
      * 
      * @return GroupEngine object
      */
-    public GroupsEngine getGroupsEngine() {
+    public GroupSyncEngine getGroupsEngine() {
         assert mGroupsEngine != null;
         return mGroupsEngine;
     }
@@ -434,7 +443,8 @@ public class EngineManager {
 
     private synchronized void createGroupsEngine() {
         final MainApplication app = (MainApplication)mService.getApplication();
-        mGroupsEngine = new GroupsEngine(mService, mUiEventCallback, app.getDatabase());
+        mGroupsEngine = new GroupSyncEngine(mService, mUiEventCallback, app.getDatabase());
+        //mGroupsEngine = new GroupsEngine(mService, mUiEventCallback, app.getDatabase());
         addEngine(mGroupsEngine);
     }
 
@@ -481,13 +491,34 @@ public class EngineManager {
     }
     
     /**
+     * Fetch Music engine, starting it if necessary.
+     * 
+     * @return CommentsEngine object
+     */
+    public synchronized MusicEngine getMusicEngine() {
+        if (mMusicEngine != null) {
+            return mMusicEngine;
+        }
+        createMusicEngine();
+        return mMusicEngine;
+    }
+    
+    /**
      * Create instance of CommentsEngine.
      */
     private synchronized void createCommentsEngine() {
         mCommentsEngine = new CommentsEngine(mUiEventCallback);
         addEngine(mCommentsEngine);
     }
-
+    
+    /**
+     * Create instance of MusicEnginebak.
+     */
+    private synchronized void createMusicEngine() {
+        mMusicEngine = new MusicEngine(mUiEventCallback);
+        addEngine(mMusicEngine);
+    }
+    
     /**
      * Fetch location engine, starting it if necessary.
      * 

@@ -246,7 +246,6 @@ public class PollThread implements Runnable {
      */
     private HttpResponse postHTTPRequest(byte[] postData, URI uri, String contentType)
             throws Exception {
-
         HttpResponse response = null;
 
         if (null == postData) {
@@ -257,6 +256,12 @@ public class PollThread implements Runnable {
             Log.d("POLLTIMETEST", "POLL Requesting URI " + uri.toString());
             HttpPost httpPost = new HttpPost(uri);
             httpPost.addHeader("Content-Type", contentType);
+            
+//            httpPost.addHeader("x-use-header-msisdn", "true");
+//            httpPost.addHeader("x-up-calling-line-id", "+447700900999");
+//            httpPost.addHeader("x-override-cc","44");
+            
+            
             httpPost.setEntity(new ByteArrayEntity(postData));
             Log.d("POLLTIMETEST", "POLL Requesting URI " + httpPost.getRequestLine());
             try {

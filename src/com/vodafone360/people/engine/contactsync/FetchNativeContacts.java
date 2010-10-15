@@ -132,7 +132,7 @@ public class FetchNativeContacts extends BaseSyncProcessor {
         if (total > 0) {
             setSyncStatus(new SyncStatus(progress, contactName,
                     Task.FETCH_NATIVE_CONTACTS,
-                    TaskStatus.RECEIVED_CONTACTS, processed, total));
+                    TaskStatus.RECEIVED_CONTACTS, processed, total, processed));
             
         } else {
             setSyncStatus(new SyncStatus(progress, contactName, Task.FETCH_NATIVE_CONTACTS));

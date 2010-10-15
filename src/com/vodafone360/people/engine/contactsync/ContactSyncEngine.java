@@ -173,6 +173,17 @@ public class ContactSyncEngine extends BaseEngine implements
 		 */
 		void onProgressEvent(State currentState, int percent);
 	}
+	
+	   /**
+     * Observer interface allowing interested parties to receive notification of
+     * changes in Contact sync state.
+     */
+    public static interface IContactSyncObserverForDownloaded {
+        void onProgressEvent(int contactsDownloadedSoFar);
+    }
+	
+	
+	
 
 	/**
 	 * Number of retries when first time sync fails
@@ -368,6 +379,11 @@ public class ContactSyncEngine extends BaseEngine implements
 	 * Maintains a list of contact sync observers
 	 */
 	private final ArrayList<IContactSyncObserver> mEventCallbackList = new ArrayList<IContactSyncObserver>();
+	
+	/**
+     * Maintains a list of contact sync observers
+     */
+    private final ArrayList<IContactSyncObserverForDownloaded> mEventCallbackListForDownloaded = new ArrayList<IContactSyncObserverForDownloaded>();
 
 	/**
 	 * Current progress value (used to check if the progress has changed)
@@ -603,6 +619,13 @@ public class ContactSyncEngine extends BaseEngine implements
 		}
 	}
 
+	   public synchronized void addEventCallback(IContactSyncObserverForDownloaded observer) {
+	        if (!mEventCallbackListForDownloaded.contains(observer)) {
+	            mEventCallbackListForDownloaded.add(observer);
+	        }
+	    }
+	
+	
 	/**
 	 * Starts a timer to trigger a server contact sync in a short while
 	 * (normally around 30 seconds).
@@ -1658,7 +1681,7 @@ public class ContactSyncEngine extends BaseEngine implements
 			mCurrentProgressPercent = syncStatus.getProgress();
 			LogUtils.logI("ContactSyncEngine: Task " + mState + " is "
 					+ syncStatus.getProgress() + "% complete");
-			fireProgressEvent(mState, syncStatus.getProgress());
+			fireProgressEvent(mState, syncStatus.getProgress(), syncStatus.getContactsDownloadedSoFar());
 		}
 	}
 
@@ -1832,14 +1855,24 @@ public class ContactSyncEngine extends BaseEngine implements
 	 * @param percent
 	 *            Progress of task (between 0 and 100 percent)
 	 */
-	private void fireProgressEvent(State currentState, int percent) {
-		ArrayList<IContactSyncObserver> tempList = new ArrayList<IContactSyncObserver>();
-		synchronized (this) {
-			tempList.addAll(mEventCallbackList);
-		}
-		for (IContactSyncObserver observer : tempList) {
-			observer.onProgressEvent(currentState, percent);
-		}
+	private void fireProgressEvent(State currentState, int percent, int contactsDownloadedSoFar) {
+	    ArrayList<IContactSyncObserver> tempList = new ArrayList<IContactSyncObserver>();
+	    synchronized (this) {
+	        tempList.addAll(mEventCallbackList);
+	    }
+	    ArrayList<IContactSyncObserverForDownloaded> tempListDownloaded = new ArrayList<IContactSyncObserverForDownloaded>();
+	    synchronized (this) {
+	        tempListDownloaded.addAll(mEventCallbackListForDownloaded);
+	    }
+
+	    for (IContactSyncObserver observer : tempList) {
+	        observer.onProgressEvent(currentState, percent);
+	    }
+
+
+	    for (IContactSyncObserverForDownloaded observer : tempListDownloaded) {
+	        observer.onProgressEvent(contactsDownloadedSoFar);
+	    }
 	}
 
 	/**

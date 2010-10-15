@@ -25,9 +25,11 @@
 
 package com.vodafone360.people.service.io.api;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import com.vodafone360.people.Settings;
 import com.vodafone360.people.datatypes.Identity;
@@ -54,6 +56,8 @@ public class Identities {
     private final static String FUNCTION_VALIDATE_IDENTITY_CREDENTIALS = "identities/validateidentitycredentials";
 
     private final static String FUNCTION_DELETE_IDENTITY = "identities/deleteidentity";
+    
+    private final static String FUNCTION_GET_IDENTITIES_TEXT = "identities/getidentitiestext";
     
     public final static String ENABLE_IDENTITY = "enable";
 
@@ -255,4 +259,38 @@ public class Identities {
 		queue.fireQueueStateChanged();
 		return requestId;
 	}
+	/**
+	 * Implementation of identities/getidentitiestext API. Parameters are;
+	 * 
+	 * @param engine handle to IdentitiesEngine
+	 * @param networklist The list of network codes 
+	 * @return
+	 */
+	public static int getTextIdentities(BaseEngine engine,
+			List <String> networklist) {
+		if (LoginEngine.getSession() == null) {
+			LogUtils.logE("Identities.getTextIdentities() Invalid session, return -1");
+			return -1;
+		}
+		if (engine == null) {
+			throw new NullPointerException("Auth.getPublicKey() engine cannot be NULL");
+		}
+		System.out.println("In Identities Service Io class getTextIdentities() function. " +
+				"Before posting the  request. EngineId: " + engine.engineId());
+		
+		Request request = new Request(FUNCTION_GET_IDENTITIES_TEXT,
+				Request.Type.GET_IDENTITIES_TEXT, engine.engineId(), false,
+				Settings.API_REQUESTS_TIMEOUT_AUTH);
+		
+		if (networklist != null) {
+            request.addData("networklist", ApiUtils.createVectorOfString(networklist));
+        }
+		QueueManager queue = QueueManager.getInstance();
+		int requestId = queue.addRequest(request);
+		queue.fireQueueStateChanged();
+		System.out.println("In Identities Service Io class getTextIdentities()function. " +
+		"After posting the  request. Request Id: " + requestId);
+		return requestId;
+	}
+
 }

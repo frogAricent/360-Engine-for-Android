@@ -89,7 +89,18 @@ public final class SettingsManager {
         sSettings.put(Settings.SERVER_URL_HESSIAN_KEY,
                 Settings.DEFAULT_SERVER_URL_HESSIAN);
         sSettings.put(Settings.DEACTIVATE_ENGINE_LIST_KEY, new String[] {});
-
+        /*
+         * FB-PLUGIN code Starts
+         */
+        sSettings.put(Settings.FB_MAX_POSTS_KEY, Settings.DEFAULT_FB_MAX_POSTS);
+        sSettings.put(Settings.FB_PHOTO_APP_KEY, Settings.FB_PHOTO_APP_KEY_VALUE);
+        sSettings.put(Settings.FB_LINK_APP_KEY, Settings.FB_LINK_APP_KEY_VALUE);
+        sSettings.put(Settings.FB_STATUS_APP_KEY, Settings.FB_STATUS_APP_KEY_VALUE);
+        sSettings.put(Settings.FB_HTTP_CONN_TIMEOUT, Settings.DEFAULT_FB_HTTP_CONN_TIMEOUT_VALUE);
+        sSettings.put(Settings.FB_POST_SCHEDULE_TIME, Settings.DEFAULT_FB_POST_SCHEDULE_TIME_VALUE);
+        /*
+         * FB-PLUGIN code Ends
+         */       
         InputStream mFile =
             context.getResources().openRawResource(R.raw.config);
         if (mFile == null) {

@@ -57,6 +57,23 @@ import com.vodafone360.people.utils.CloseUtils;
 import com.vodafone360.people.utils.LogUtils;
 import com.vodafone360.people.utils.StringBufferPool;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.MergeCursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteStatement;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.Map.Entry;
+
 /**
  * The ContactSummaryTable contains a summary of important contact details for
  * each contact such as name, status and Avatar availability. This data is
@@ -417,7 +434,14 @@ public abstract class ContactSummaryTable {
 
             ContactDetail altDetail = findAlternativeNameContactDetail(values, contact.details);
             updateAltValues(values, altDetail);
+            //put sns details in it 
+            //TODO: need to check on this
+            String sns = isIMAddresPresent(contact.details);
+            if(sns != null){    
+                values.put(Field.SNS.toString(),sns);
+            }
             
+
             addToPresenceMap(contact.localContactID);
 
             if (writableDb.insertOrThrow(TABLE_NAME, null, values) < 0) {
@@ -432,6 +456,21 @@ public abstract class ContactSummaryTable {
                     + "Unable to insert new contact summary", e);
             return ServiceStatus.ERROR_DATABASE_CORRUPT;
         }
+    }
+
+    private static String isIMAddresPresent(List<ContactDetail> details) {
+        int count = details.size() -1;
+        while(count >= 0){
+            ContactDetail detail = details.get(count);
+            if( detail.key == DetailKeys.VCARD_IMADDRESS){
+                if( detail.value != null){
+                   return detail.alt;
+                   }
+            }
+            count--;
+        }
+        return null;
+              
     }
 
     /**
@@ -916,6 +955,38 @@ public abstract class ContactSummaryTable {
         }
     }
     
+    /**
+     * Fetches the number of contacts in a group
+     * 
+     * @param groupFilterId The server group ID 
+     * @param meProfileId The current me profile Id which should be excluded
+     *            from the returned list.
+     * @param readableDb Readable SQLite database
+     * @return The number of contacts belonging to the group
+     */
+    
+    public static int getGroupContactListCount(Long groupFilterId, Long meProfileId, SQLiteDatabase readableDb)
+    {
+    	int groupCount = 0;
+    	if (groupFilterId != null) {
+    		Cursor c1 = null;
+    		try{
+    		c1 = readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+                + " FROM " + ContactSummaryTable.TABLE_NAME + getGroupConstraint(groupFilterId)
+                + " AND " + ContactSummaryTable.TABLE_NAME + "."
+                + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+                + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")", null);
+    		if(c1 != null)
+    			groupCount = c1.getCount();
+    		}
+    		finally {
+                CloseUtils.close(c1);
+                c1 = null;
+            }
+    	}    	
+    	return groupCount;
+    }
+    
     private static Cursor fetchContactList(CharSequence constraint, Long meProfileId,
             SQLiteDatabase readableDb) {
         if (Settings.ENABLED_DATABASE_TRACE) {
@@ -1094,8 +1165,8 @@ public abstract class ContactSummaryTable {
      * @return
      */
     public synchronized static ServiceStatus updateOnlineStatus(User user) {
-        sPresenceMap.put(user.getLocalContactId(), user.isOnline());
-        return ServiceStatus.SUCCESS;
+         sPresenceMap.put(user.getLocalContactId(), user.isOnline());
+         return ServiceStatus.SUCCESS;
     }
     
     /**
@@ -1228,11 +1299,13 @@ public abstract class ContactSummaryTable {
             if ((name = contact.getContactDetail(key)) != null) {
                 // Some contacts have only email but the name detail!=null
                 // (gmail for example)
-                if (key == ContactDetail.DetailKeys.VCARD_NAME && name.getName() == null)
-                    continue;
-                if (key != ContactDetail.DetailKeys.VCARD_NAME && isEmpty(name.getValue()))
-                    continue;
-                break;
+                if (key == ContactDetail.DetailKeys.VCARD_NAME && name.getName() == null){
+                	continue;
+                }
+                if (key != ContactDetail.DetailKeys.VCARD_NAME && isEmpty(name.getValue())){
+                	continue;
+                }
+            break;
             }
         }
 
@@ -1242,6 +1315,8 @@ public abstract class ContactSummaryTable {
             nameString = ContactDetail.UNKNOWN_NAME;
         if (name != null && name.key == ContactDetail.DetailKeys.VCARD_NAME)
             nameString = name.getName().toString();
+        
+        
 
         // Start updating the table
 
@@ -1425,4 +1500,174 @@ public abstract class ContactSummaryTable {
         }
     }
 
+    
+    /**
+     * Fetches a chat contact list cursor for a given filter and search constraint
+     * 
+     * @param constraint A search string or null to fetch without constraint
+     * @param meProfileId The current me profile Id which should be excluded
+     *            from the returned list.
+     * @param readableDb Readable SQLite database
+     * @param sns The chatable identities
+     * @return The cursor or null if an error occurred
+     * @see #getQueryData(Cursor)
+     */
+    public static Cursor openChatContactSummaryCursor(CharSequence constraint,
+            Long meProfileId,String sns, SQLiteDatabase readableDb,SQLiteDatabase writeableDb, int iOperationReq) 
+    {
+    	if (Settings.ENABLED_DATABASE_TRACE) 
+    	{
+    		DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() "
+    				+ " constraint[" + constraint + "]"
+    				+ " meProfileId[" + meProfileId + "]");
+    	}
+    	try 
+    	{
+    		if(iOperationReq == 0)
+    		{
+    			if (meProfileId == null) 
+    			{
+    				// Ensure that when the profile is not available the function
+    				// doesn't fail Since "Field <> null" always returns false
+    				meProfileId = -1L;
+    			}
+    			return openChatContactSummaryCursor( meProfileId,sns ,readableDb);
+    		}
+    		else 
+    		{
+    			final String  dbSafeConstraint = DatabaseUtils.sqlEscapeString("%" + constraint + "%");
+    			StringBuilder sBuilder = new StringBuilder();
+    			sBuilder.append("SELECT ");
+    			sBuilder.append(ContactSummaryTable.getFullQueryList());
+    			sBuilder.append(" FROM ");
+    			sBuilder.append(ContactSummaryTable.TABLE_NAME);
+    			sBuilder.append(" WHERE ");
+    			sBuilder.append(ContactSummaryTable.Field.DISPLAYNAME);
+    			sBuilder.append(" LIKE ");
+    			sBuilder.append(dbSafeConstraint);
+    			sBuilder.append(" AND ");
+    			sBuilder.append(ContactSummaryTable.TABLE_NAME);
+    			sBuilder.append(".");
+    			sBuilder.append(ContactSummaryTable.Field.LOCALCONTACTID);
+    			sBuilder.append("!=");
+    			sBuilder.append(meProfileId);
+    			sBuilder.append(" AND ");
+    			sBuilder.append(ContactSummaryTable.Field.SNS);
+    			sBuilder.append(" IN ");
+    			sBuilder.append(" ( ");
+    			sBuilder.append(sns);
+    			sBuilder.append(" ) ");
+    			sBuilder.append(" ORDER BY ");
+    			sBuilder.append("LOWER(");
+    			sBuilder.append(ContactSummaryTable.Field.DISPLAYNAME);
+    			sBuilder.append(") ");
+    			return readableDb.rawQuery(sBuilder.toString(), null);
+    		}
+    	} catch (SQLException e) {
+    		LogUtils.logE("ContactSummeryTable.fetchContactList() "
+    				+ "SQLException - Unable to fetch filtered summary cursor", e);
+    		return null;
+    	}
+    }
+
+    	/**
+    	 * Fetches a chat contact list cursor for a given filter
+    	 * 
+    	 * @param meProfileId The current me profile Id which should be excluded
+    	 *            from the returned list.
+    	 * @param readableDb Readable SQLite database
+    	 * @return The cursor or null if an error occurred
+    	 * @see #getQueryData(Cursor)
+    	 */
+    	private static Cursor openChatContactSummaryCursor(Long meProfileId,String sns,
+    			SQLiteDatabase readableDb) {
+    		if (Settings.ENABLED_DATABASE_TRACE) {
+    			DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() meProfileId[" + meProfileId + "]");
+    		}
+    		try {
+    				if(sPresenceMap.size() > 1){
+    				Cursor onlineCursor = null , offlineCursor = null, idleCursor = null;
+    				String online = getOnlineWhereClause(OnlineStatus.ONLINE)  ;
+    				if(online != null)
+    					onlineCursor =   readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+    							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
+    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " + online  
+    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    							+  sns + " )" + " ORDER BY " +
+    							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
+    				String offline = getOnlineWhereClause(OnlineStatus.OFFLINE)  ;
+    				if(offline != null)
+    					offlineCursor =    readableDb.rawQuery("SELECT  " + ContactSummaryTable.getFullQueryList()
+    							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
+    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " +  offline
+    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    							+  sns + " )" + " ORDER BY " +
+    							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
+    				String idle = getOnlineWhereClause(OnlineStatus.IDLE);  
+    				if(idle != null)
+    					idleCursor =    readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+    							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
+    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " +  idle
+    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    							+  sns + " )" + " ORDER BY " +
+    							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
+
+    				Cursor cursor[] = {onlineCursor,idleCursor,offlineCursor};
+    				MergeCursor mergeCursor = new MergeCursor(cursor);
+    				return mergeCursor;
+    			} else
+    			{
+    				return readableDb.rawQuery("SELECT  " + ContactSummaryTable.getFullQueryList()
+    						+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
+    						+ ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId + " AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    						+  sns + " )" + " ORDER BY (" + ContactSummaryTable.Field.ONLINESTATUS + ") DESC ," +
+    						"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
+
+    			}
+
+    		} catch (SQLException e) {
+    			LogUtils.logE("ContactSummeryTable.fetchContactList() "
+    					+ "SQLException - Unable to fetch filtered summary cursor", e);
+    			return null;
+    		}
+    	}
+   
+    	/**
+    	 * This API creates the string to be used in the IN clause when getting the list of all
+    	 * online contacts.
+    	 * @return The list of contacts in the proper format for the IN list
+    	 */
+    	private synchronized static String getOnlineWhereClause(OnlineStatus status) {
+
+    		Set<Entry<Long, Integer>> set = sPresenceMap.entrySet();
+    		Iterator<Entry<Long, Integer>> i = set.iterator();
+    		String inClause = "(";
+    		boolean isFirst = true;
+
+    		while (i.hasNext()) {
+    			Entry<Long, Integer> me = (Entry<Long, Integer>) i.next();
+    			Integer value = me.getValue();
+    			if (value != null && (value == status.ordinal())) {
+    				if (isFirst == false) {
+    					inClause = inClause.concat(",");
+    				} else {
+    					isFirst = false;
+    				}
+    				inClause = inClause.concat(String.valueOf(me.getKey()));
+    			}
+    		}
+    		if (isFirst == true) {
+    			inClause = null;
+    		} else {
+    			inClause = inClause.concat(")");
+    		}
+    		return inClause;
+    	}   
+
+    	public static int getPresenceMapCount()
+    	{
+    		return sPresenceMap.size();
+    	}
 }
+
+

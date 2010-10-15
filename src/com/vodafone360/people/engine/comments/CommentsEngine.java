@@ -49,20 +49,7 @@ import com.vodafone360.people.utils.LogUtils;
 /***
  * Comments engine for posting, getting, updating and deleting comments on
  * entities (album, contacts etc)
- * <p>
- * File Name : CommentsEngine.java
- * <p>
- * Description : This class extends BaseEngine and contain various overridden
- * methods.
- * <p>
- * Revision History
- * <p>
- * ------------------------------------------------------------------------
- * <p>
- * Date Author SPR-Id Version Comments
- * <p>
- * - - 0.01 Initial Release
- * <p>
+ * 
  */
 public class CommentsEngine extends BaseEngine {
 
@@ -84,20 +71,10 @@ public class CommentsEngine extends BaseEngine {
 
 	private CommentListResponse mCommentListResponse = new CommentListResponse();
 
-//	private Comment mCommentResponse = new Comment();
 	/** engine's current state **/
 
 	private State mState = State.IDLE;
 
-	// private boolean mRequestActivitiesRequired;
-	//
-	// private Context mContext;
-	//
-	// private Hashtable<Integer, String> mActiveRequests = new
-	// Hashtable<Integer, String>();
-	//
-	// private DatabaseHelper mDb;
-	//	   
 	/**
 	 * mutex for thread synchronization
 	 */
@@ -115,8 +92,6 @@ public class CommentsEngine extends BaseEngine {
 	public CommentsEngine(IEngineEventCallback eventCallback) {
 		super(eventCallback);
 		mEngineId = EngineId.COMMENTS_ENGINE;
-		// mDb = db;
-		// mContext = context;
 	}
 
 	/**

@@ -112,7 +112,10 @@ public class Request {
         APPROVE_FRIEND_REQUESTS,
         REJECT_FRIEND_REQUESTS,
         REMOVE_FRIEND, 
-        FRIENDSHIP_REQUEST_RECEIVED
+        FRIENDSHIP_REQUEST_RECEIVED,
+        DOWNLOADABLE_TRACK,
+        DD_FOR_TRACK,
+        GET_IDENTITIES_TEXT
         // response to external RPG request
     }
 

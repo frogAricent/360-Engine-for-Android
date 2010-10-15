@@ -176,7 +176,14 @@ public class ResponseQueue {
     		/** The response type of reject friend request*/
     		REJECT_FRIEND_RESPONSE,
     		/** The response type of remove friend request*/
-    		REMOVE_FRIEND_RESPONSE;
+    		REMOVE_FRIEND_RESPONSE,
+    		/** The response type of Purchased Music List*/
+    		DOWNLOADABLE_TRACK,
+    		/** The response type of Purchased Music List*/
+    		DD_FOR_TRACK,
+    		/** The response type of GET_IDENTITIES_TEXT*/
+    		GET_IDENTITIES_TEXT;
+;
     		// TODO add more types here and remove them from the BaseDataType. Having them in ONE location is better than in dozens!!!
     	}
     	

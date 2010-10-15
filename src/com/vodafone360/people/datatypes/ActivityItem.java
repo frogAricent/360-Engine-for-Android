@@ -219,7 +219,8 @@ public class ActivityItem extends BaseDataType {
         ACTIVITY_PHOTO_FEED("photo_feed"),
         ACTIVITY_LINK_FEED("link_feed"),
         ACTIVITY_COMMENT_FEED("comment_feed"),
-        ACTIVITY_LIKE_FEED("like_feed");
+        ACTIVITY_LIKE_FEED("like_feed"),
+        ACTIVITY_STATUS_UPDATE_FEED("status_update_feed");
 
         private String mTypeCode;
 
@@ -414,6 +415,8 @@ public class ActivityItem extends BaseDataType {
     /** Long text description of the activity. */
     public String description = null;
 
+    /** moreinfo of the activity. */
+    public String moreinfo = null;
     /**
      * Defines a binary preview for the activity. The preview can be a small
      * thumbnail of the activity. The type of the binary data is defined into
@@ -506,7 +509,6 @@ public class ActivityItem extends BaseDataType {
         if (tag != null) {
             switch (tag) {
                 case ACTIVITY_ID:
-                	System.out.println("Test Code");
                 	activityId = value.toString();
                 	//activityId = (String)value;
                 	
@@ -548,7 +550,7 @@ public class ActivityItem extends BaseDataType {
                     break;
 
                 case MORE_INFO:
-                    // Not currently handled.
+                    moreinfo = (String)value;
                     break;
 
                 case PARENT_ACTIVITY:
@@ -679,6 +681,7 @@ public class ActivityItem extends BaseDataType {
         sb.append("\n\tUri = "); sb.append(uri);
         sb.append("\n\tTitle = "); sb.append(title);
         sb.append("\n\tDescription = "); sb.append(description);
+        sb.append("\n\tMoreInfo = "); sb.append(moreinfo);
         if (preview != null) {
             sb.append("\n\tPreview = "); sb.append(String.valueOf(preview));
         }

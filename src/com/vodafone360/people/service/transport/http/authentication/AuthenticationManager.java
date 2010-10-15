@@ -123,6 +123,8 @@ public class AuthenticationManager extends Thread implements IConnection {
                 HttpConnectionThread.logI("AuthenticationManager.handleAuthRequest()", "Request: "
                         + request.getRequestId());
 
+                
+                
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 request.writeToOutputStream(baos, false);
                 byte[] payload = baos.toByteArray();
@@ -133,7 +135,7 @@ public class AuthenticationManager extends Thread implements IConnection {
                                     + HessianUtils.getInHessian(new ByteArrayInputStream(payload),
                                             true));
                 }
-
+                
                 HttpResponse resp = mHttpConnection.postHTTPRequest(payload, mApiUrl,
                         Settings.HTTP_HEADER_CONTENT_TYPE);
                 mHttpConnection.handleApiResponse(resp, reqIds);

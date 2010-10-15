@@ -133,12 +133,7 @@ public class ChatDbUtils {
         // localContactId for outgoing msgs
         item.mLocalContactId = msg.getLocalContactId();
         if (item.mLocalContactId != null && item.mLocalContactId != -1) {
-            ContactDetail cd = ContactDetailsTable.fetchDetail(item.mLocalContactId,
-                    DetailKeys.VCARD_NAME, databaseHelper.getReadableDatabase());
-            if (cd == null || cd.getName() == null) {
-                // if we don't get any details, we have to check the summary
-                // table because gtalk contacts
-                // without name will be otherwise show as unknown
+           
                 ContactSummary contactSummary = new ContactSummary();
                 ServiceStatus error = ContactSummaryTable.fetchSummaryItem(item.mLocalContactId,
                         contactSummary, databaseHelper.getReadableDatabase());
@@ -148,11 +143,7 @@ public class ChatDbUtils {
                 } else {
                     item.mContactName = ContactDetail.UNKNOWN_NAME;
                 }
-            } else {
-                /** Get name from contact details. **/
-                VCardHelper.Name name = cd.getName();
-                item.mContactName = (name != null) ? name.toString() : ContactDetail.UNKNOWN_NAME;
-            }
+            
         }
         item.mIncoming = incoming;
         item.mContactNetwork = SocialNetwork.getChatValue(msg.getNetworkId()).toString();

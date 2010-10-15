@@ -28,6 +28,8 @@ package com.vodafone360.people.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 
+import java.util.Comparator;
+
 import com.vodafone360.people.R;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.utils.LogUtils;
@@ -141,6 +143,9 @@ public class ThirdPartyAccount {
      * @return true if this is a Vodafone sns
      */
     public static boolean isVodafone(String sns) {
+        if(sns == null){
+            return false;
+        }
         String snsLower = sns.toLowerCase();
         return (snsLower.contains(SNS_TYPE_VODAFONE) || snsLower.contains(SNS_TYPE_NOWPLUS) || snsLower
                 .contains(SNS_TYPE_ZYB));
@@ -270,6 +275,28 @@ public class ThirdPartyAccount {
      */
     public boolean isShouldBeProcessed() {
         return mShouldBeProcessed;
+    }
+    
+    /**
+     * Comparator class used to compare ThirdPartyAccount retrieved from server to
+     * remove duplicates from list passed to People client UI.
+     */
+    public static class ThirdPartyAccountComparator implements Comparator<ThirdPartyAccount> {
+
+        @Override
+        public int compare(ThirdPartyAccount object1, ThirdPartyAccount object2) {
+            /**
+             * Put configured web account above to non configured account
+             */
+            if(object1.getIdentity().mActive && !object2.getIdentity().mActive){
+                return -1;
+            }else if(!object1.getIdentity().mActive && object2.getIdentity().mActive){
+                return 1;
+            }else{
+                return new Integer(object1.getIdentity().mOrder).compareTo(new Integer(object2.getIdentity().mOrder));
+            }
+            
+        }
     }
 
 }

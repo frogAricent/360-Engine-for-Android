@@ -75,6 +75,9 @@ public class SyncStatus {
 
     /** Current task total (e.g. Sent 25 of X contacts). **/
     private int mTaskStatusTotal;
+    
+    //TODO: comment for OOBE UI
+    private int mContactsDownloadedSoFar;
 
     /**
      * Construct with only the ServiceStatus of the Contacts sync engine.
@@ -94,17 +97,21 @@ public class SyncStatus {
      * @param taskStatus Current task status (e.g. Sent 25 of 500 contacts).
      * @param taskStatusDone Current task done (e.g. Sent X of 500 contacts).
      * @param taskStatusTotal Current task total (e.g. Sent 25 of X contacts).
+     * 
+     * TODO: add comment
      */
     public SyncStatus(final int progress,
             final String textContact, final Task task,
             final TaskStatus taskStatus, final int taskStatusDone,
-            final int taskStatusTotal) {
+            final int taskStatusTotal,
+            final int contactsDonwloadedSoFar) {
         mProgress = progress;
         mTextContact = textContact;
         mTask = task;
         mTaskStatus = taskStatus;
         mTaskStatusDone = taskStatusDone;
         mTaskStatusTotal = taskStatusTotal;
+        mContactsDownloadedSoFar = contactsDonwloadedSoFar;
     }
 
     /**
@@ -187,4 +194,10 @@ public class SyncStatus {
     public final int getTaskStatusTotal() {
         return mTaskStatusTotal;
     }
+
+    public int getContactsDownloadedSoFar() {
+        return mContactsDownloadedSoFar;
+    }
+    
+    
 }

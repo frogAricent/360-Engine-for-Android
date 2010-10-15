@@ -682,7 +682,12 @@ public abstract class ContactsTable {
             return null;
         }
     }
-    
+    /*
+     * FB-PLUGIN code Starts
+     */
+    /*
+     * fetchServerFromLocalId fetchs the server ID through local ID received
+     */    
     public static Long fetchServerFromLocalId(Long localId, SQLiteStatement statement) {
         DatabaseHelper.trace(false, "ContactsTable.fetchServerFromLocalId() localId["
                 + localId + "]");
@@ -696,7 +701,9 @@ public abstract class ContactsTable {
             return null;
         }
     }
-
+    /*
+     * FB-PLUGIN code Ends
+     */
     /**
      * Updates the server and user IDs for a list of contacts. Also prepares a
      * list of duplicates which will be filled with the Ids for contacts already

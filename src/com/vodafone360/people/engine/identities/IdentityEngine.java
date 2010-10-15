@@ -34,8 +34,10 @@ import android.os.Bundle;
 
 import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.datatypes.BaseDataType;
+import com.vodafone360.people.datatypes.IdentitiesTextResponse;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.IdentityCapability;
+import com.vodafone360.people.datatypes.IdentityText;
 import com.vodafone360.people.datatypes.PushEvent;
 import com.vodafone360.people.datatypes.StatusMsg;
 import com.vodafone360.people.engine.BaseEngine;
@@ -44,6 +46,7 @@ import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.engine.presence.NetworkPresence.SocialNetwork;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.ServiceUiRequest;
+import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.service.io.ResponseQueue.DecodedResponse;
 import com.vodafone360.people.service.io.api.Identities;
@@ -71,13 +74,22 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         SETTING_IDENTITY_STATUS,
         GETTING_MY_IDENTITIES,
         GETTING_MY_CHATABLE_IDENTITIES,
-        DELETING_IDENTITIES
+        DELETING_IDENTITIES,
+        GET_IDENTITIES_TEXT
+
     }
 
     /**
      * Mutex for thread synchronisation
      */
     private final Object mMutex = new Object();
+	/**
+	 * Contain the Network List
+	 */
+	private List<String> mNetworkList = new ArrayList<String>();
+	
+	public List<IdentityText> mIdentityTextResponse = new ArrayList<IdentityText>();
+
 
     /**
      * Container class for Identity Capability Status request. Consists of a
@@ -204,7 +216,7 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
      * 
      */
     public ArrayList<Identity> getMyThirdPartyIdentities() {
-    	if ((mMyIdentityList.size() == 0) && (
+    	if ((mMyIdentityList.size() == 0) || (
     			(System.currentTimeMillis() - mLastMyIdentitiesRequestTimestamp)
     				> MIN_REQUEST_INTERVAL)) {
     		sendGetMyIdentitiesRequest();
@@ -296,7 +308,7 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
      * @param identityStatus True if identity should be enabled, false otherwise.
      */
     public void addUiSetIdentityStatus(String network, String identityId, boolean identityStatus) {
-        LogUtils.logD("IdentityEngine.addUiSetIdentityCapabilityStatus()");
+        LogUtils.logD("IdentityEngine.addUiSetIdentityCapabilityStatus() "+network +" "+identityId);
         IdentityStatusRequest data = new IdentityStatusRequest();
         data.mIdentityId = identityId;
         data.mNetwork = network;
@@ -343,6 +355,17 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
     }
 
     /**
+	 * Method to retrieve Identities Texts like Terms and conditions etc
+	 * 
+	 * @param list The list of network codes 
+	 */
+	public void addUiGetIdentitiesTextReq(String networklist) {
+		mNetworkList.add(networklist);
+		LogUtils.logD("IdentityEngine.addUiGetIdentityList");
+		addUiRequestToQueue(ServiceUiRequest.GET_IDENTITIES_TEXT, mNetworkList);
+	}
+
+    /**
      * Issue any outstanding UI request.
      * 
      * @param requestType Request to be issued.
@@ -361,6 +384,9 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
             case DELETE_IDENTITIES:
             	startDeleteIdentity(data);
             	break;
+            case GET_IDENTITIES_TEXT:
+    			startGetIdentityText(mNetworkList);
+    			break;
             default:
                 completeUiRequest(ServiceStatus.ERROR_NOT_FOUND, null);
                 break;
@@ -445,6 +471,9 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
 	        	case BaseDataType.DELETE_IDENTITY:
 	            	handleDeletionOfIdentitiesResponse(resp.mDataTypes);
 	            	break;
+	        	case BaseDataType.GET_IDENTITIES_TEXT_RESPONSE:
+					handleGetIdentitiesTextResponse(resp.mDataTypes);
+					break;
 	            default:
 	                LogUtils.logW("IdentityEngine.processCommsResponse DEFAULT should never happened.");
 	                break;
@@ -453,7 +482,12 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         	LogUtils.logW("IdentityEngine.processCommsResponse List was empty!");
         	
         	if (resp.getResponseType() == DecodedResponse.ResponseType.GET_MY_IDENTITIES_RESPONSE.ordinal()) {
-        		pushIdentitiesToUi(ServiceUiRequest.GET_MY_IDENTITIES);
+        	    /**
+        	     * Changed the call from pushIdentitiesToUi to handleGetMyIdentitiesResponse because in case we have deleted 
+        	     * the last configured account then it was not updating the cache data
+        	     */
+//        		pushIdentitiesToUi(ServiceUiRequest.GET_MY_IDENTITIES);
+        		handleGetMyIdentitiesResponse(resp.mDataTypes);
         	} else if (resp.getResponseType() == DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()) {
         		pushIdentitiesToUi(ServiceUiRequest.GET_AVAILABLE_IDENTITIES);
         	}        	
@@ -474,6 +508,10 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
             case IDENTITY_CHANGE:
             	EngineManager.getInstance().getPresenceEngine().setMyAvailability();
                 sendGetMyIdentitiesRequest();
+                if(mActiveUiRequest == ServiceUiRequest.DELETE_IDENTITIES){
+                    completeUiRequest(ServiceStatus.SUCCESS, null);
+                    newState(State.IDLE);
+                }
                 mEventCallback.kickWorkerThread();
             	break;
             default:
@@ -553,7 +591,7 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
      * 
      * @param data List of BaseDataTypes generated from Server response.
      */
-    private void handleGetMyIdentitiesResponse(List<BaseDataType> data) {    	
+    private void handleGetMyIdentitiesResponse(List<BaseDataType> data) {
         LogUtils.logD("IdentityEngine: handleGetMyIdentitiesResponse");
         ServiceStatus errorStatus = getResponseStatus(BaseDataType.MY_IDENTITY_DATA_TYPE, data);
         
@@ -601,6 +639,11 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
                 LogUtils.logW("Status list sould have one item. It has " + mStatusList.size());
                 bu.putParcelableArrayList(KEY_DATA, mStatusList);
             }
+            /**
+             * Added Clear function clear the identity list on successful login
+             */
+            mMyIdentityList.clear();
+            mAvailableIdentityList.clear();            
         }
         completeUiRequest(errorStatus, bu);
 
@@ -618,6 +661,7 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
      * @param data List of BaseDataTypes generated from Server response.
      */
     private void handleSetIdentityStatus(List<BaseDataType> data) {
+        LogUtils.logV("*********in handleSetIdentityStatus");
         Bundle bu = null;
         ServiceStatus errorStatus = getResponseStatus(BaseDataType.STATUS_MSG_DATA_TYPE, data);
         if (errorStatus == ServiceStatus.SUCCESS) {
@@ -657,6 +701,32 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         completeUiRequest(errorStatus, bu);
         newState(State.IDLE);
     }
+
+    /**
+	 * Handle Server response to request for fetching T&C for Identities.
+	 * 
+	 * @param data
+	 *            List of BaseDataTypes generated from Server response.
+	 */
+	private void handleGetIdentitiesTextResponse(List<BaseDataType> data) {
+        LogUtils.logD("IdentityEngine: handleGetIdentitiesTextResponse");
+        ServiceStatus errorStatus = getResponseStatus(BaseDataType.GET_IDENTITIES_TEXT_RESPONSE, data);
+        String tcTxt = null;
+        if (errorStatus == ServiceStatus.SUCCESS) {
+            LogUtils.logE("IdentityEngine: server returned SUCCESS for handleGetIdentitiesTextResponse().");
+            if(data.size() > 0 && ((IdentitiesTextResponse)data.get(0)).identityTextList.size()> 0){
+               tcTxt = ((IdentitiesTextResponse)data.get(0)).identityTextList.get(0).mText;
+            }
+        }
+        else 
+        {
+        	LogUtils.logE("IdentityEngine: server returned FAILURE for handleGetIdentitiesTextResponse()");
+        }
+        LogUtils.logD("IdentityEngine: handleGetIdentitiesTextResponse completw UI req");
+        completeUiRequest(errorStatus, tcTxt);
+        newState(State.IDLE);
+    }
+
 
     /**
      * 
@@ -811,6 +881,20 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         super.onReset();
     }
     
+    private void startGetIdentityText(List<String> networkList) {
+		LogUtils.logD("IdentitiesEngine.startGetIdentitiesText()");
+		if (NetworkAgent.getAgentState() != NetworkAgent.AgentState.CONNECTED) {
+			completeUiRequest(ServiceStatus.ERROR_COMMS, null);
+			return;
+		}
+		newState(State.GET_IDENTITIES_TEXT);
+		if (!setReqId(Identities.getTextIdentities(this, networkList))) {
+			completeUiRequest(ServiceStatus.ERROR_COMMS, null);
+			return;
+		}
+	}
+
+
     /**
      * Issue request to retrieve available Identities. (Request is not issued if
      * there is currently no connectivity).

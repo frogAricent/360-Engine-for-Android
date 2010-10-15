@@ -22,7 +22,6 @@
  * Copyright 2010 Vodafone Sales & Services Ltd.  All rights reserved.
  * Use is subject to license terms.
  */
-
 package com.vodafone360.people.database.tables;
 
 import java.nio.ByteBuffer;
@@ -93,7 +92,8 @@ public abstract class GroupsTable {
         NAME("Name"),
         IMAGEMIMETYPE("ImageMimeType"),
         IMAGEBYTES("ImageBytes"),
-        COLOR("Color");
+        COLOR("Color"),
+        DISPPLAYORDER("DisplayOrder");
 
         /**
          * The name of the field as it appears in the database
@@ -133,7 +133,7 @@ public abstract class GroupsTable {
                 + Field.REQUIRESLOCALISATION + " BOOLEAN, " + Field.ISSYSTEMGROUP + " BOOLEAN, "
                 + Field.ISSMARTGROUP + " BOOLEAN, " + Field.USERID + " LONG, " + Field.NAME
                 + " TEXT, " + Field.IMAGEMIMETYPE + " TEXT, " + Field.IMAGEBYTES + " BINARY, "
-                + Field.COLOR + " TEXT);");
+                + Field.COLOR + " TEXT, "+ Field.DISPPLAYORDER+" INTEGER);");
         populateSystemGroups(context, writableDb);
     }
 
@@ -149,7 +149,7 @@ public abstract class GroupsTable {
         return Field.LOCALGROUPID + ", " + Field.SERVERGROUPID + ", " + Field.GROUPTYPE + ", "
                 + Field.ISREADONLY + ", " + Field.REQUIRESLOCALISATION + ", " + Field.ISSYSTEMGROUP
                 + ", " + Field.ISSMARTGROUP + ", " + Field.USERID + ", " + Field.NAME + ", "
-                + Field.IMAGEMIMETYPE + ", " + Field.IMAGEBYTES + ", " + Field.COLOR;
+                + Field.IMAGEMIMETYPE + ", " + Field.IMAGEBYTES + ", " + Field.COLOR  +","+Field.DISPPLAYORDER;
     }
 
     /**
@@ -197,6 +197,10 @@ public abstract class GroupsTable {
     private static final int IMAGEBYTES = 10;
 
     private static final int COLOR = 11;
+    
+    private static final int DISPLAYORDER = 12;
+    
+
 
     /**
      * Fetches the group data from the current record of the given cursor.
@@ -243,6 +247,9 @@ public abstract class GroupsTable {
         }
         if (!c.isNull(COLOR)) {
             group.mColor = c.getString(COLOR);
+        }
+        if (!c.isNull(DISPLAYORDER)) {
+            group.mDisplayOrder = c.getInt(DISPLAYORDER);
         }
         return group;
     }
@@ -295,6 +302,9 @@ public abstract class GroupsTable {
         if (group.mColor != null) {
             contactDetailValues.put(Field.COLOR.toString(), group.mColor);
         }
+        if (group.mDisplayOrder != null) {
+            contactDetailValues.put(Field.DISPPLAYORDER.toString(), group.mDisplayOrder);
+        }
         return contactDetailValues;
     }
 
@@ -343,6 +353,7 @@ public abstract class GroupsTable {
                 }
                 mGroupItem.mLocalGroupId = writableDb.insertOrThrow(TABLE_NAME, null,
                         fillUpdateData(mGroupItem));
+                
                 if (mGroupItem.mLocalGroupId < 0) {
                     LogUtils.logE("GroupsTable.addGroupList() Unable to add group - mName["
                             + mGroupItem.mName + "");
@@ -354,6 +365,120 @@ public abstract class GroupsTable {
 
         } catch (SQLException e) {
             LogUtils.logE("GroupsTable.addGroupList() SQLException - Unable to add group", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+
+        } finally {
+            if (writableDb != null) {
+                writableDb.endTransaction();
+            }
+        }
+
+        return ServiceStatus.SUCCESS;
+    }
+    
+    /**
+     * Edits list of group names in the table
+     * 
+     * @param groupList The list to add
+     * @param writableDb Writable SQLite database
+     * @return SUCCESS or a suitable error code
+     */
+    public static ServiceStatus updateGroupNames(List<GroupItem> groupList, SQLiteDatabase writableDb) {
+        try {
+        	writableDb.beginTransaction();
+        	String[] whereArgs = new String[1];
+        	for(GroupItem grp: groupList){
+        		if (Settings.ENABLED_DATABASE_TRACE) {
+                    DatabaseHelper.trace(true, "GroupsTable.updateGroupList() mName["
+                            + grp.mName + "]");
+                }
+        		writableDb.execSQL("UPDATE "+TABLE_NAME+" SET "+Field.NAME+"='"+grp.mName+"' WHERE "+Field.SERVERGROUPID+"="+grp.mId);
+        	}
+            writableDb.setTransactionSuccessful();
+
+        } catch (SQLException e) {
+            LogUtils.logE("GroupsTable.addGroupList() SQLException - Unable to update group", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+
+        } finally {
+            if (writableDb != null) {
+                writableDb.endTransaction();
+            }
+        }
+
+        return ServiceStatus.SUCCESS;
+    }
+    
+    /**
+     * Updates list of group Ids in the table
+     * Used for Add User Groups
+     * @param groupList The list to add
+     * @param writableDb Writable SQLite database
+     * @return SUCCESS or a suitable error code
+     */
+    public static ServiceStatus updateGroupIds(List<GroupItem> groupList, SQLiteDatabase writableDb) {
+        try {
+        	writableDb.beginTransaction();
+        	String[] whereArgs = new String[1];
+        	for(GroupItem grp: groupList){
+        		if (Settings.ENABLED_DATABASE_TRACE) {
+                    DatabaseHelper.trace(true, "GroupsTable.updateGroupList() mName["
+                            + grp.mName + "]");
+                }
+        		/*whereArgs[0] = Long.toString(grp.mId);
+        		if(writableDb.update(TABLE_NAME, fillUpdateData(grp), Field.SERVERGROUPID.toString(), whereArgs) < 0){
+        			LogUtils.logE("GroupsTable.addGroupList() Unable to update group - mName["
+                            + grp.mName + "");
+                    writableDb.endTransaction();
+                    return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        		}*/
+        		writableDb.execSQL("UPDATE "+TABLE_NAME+" SET "+Field.SERVERGROUPID+"='"+grp.mId+"' WHERE "+Field.NAME+"='"+grp.mName+"'");
+        	}
+            writableDb.setTransactionSuccessful();
+
+        } catch (SQLException e) {
+            LogUtils.logE("GroupsTable.addGroupList() SQLException - Unable to update group", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+
+        } finally {
+            if (writableDb != null) {
+                writableDb.endTransaction();
+            }
+        }
+
+        return ServiceStatus.SUCCESS;
+    }
+    
+    /**
+     * deletes list of groups in the table
+     * 
+     * @param groupList The list to add
+     * @param writableDb Writable SQLite database
+     * @return SUCCESS or a suitable error code
+     */
+    public static ServiceStatus deleteGroupList(List<Long> groupList, SQLiteDatabase writableDb) {
+    	LogUtils.logD("GroupsTable.deleteGroupList");
+        try {
+        	writableDb.beginTransaction();
+        	String[] whereArgs = new String[1];
+        	for(Long grp: groupList){
+        		if (Settings.ENABLED_DATABASE_TRACE) {
+                    DatabaseHelper.trace(true, "GroupsTable.deleteGroupList() mId["
+                            + grp + "]");
+                }
+        		/*whereArgs[0] = Long.toString(grp);
+        		if(writableDb.delete(TABLE_NAME,  Field.SERVERGROUPID.toString(), whereArgs) < 0){
+        			LogUtils.logE("GroupsTable.addGroupList() Unable to update group - mId["
+                            + grp + "");
+                    writableDb.endTransaction();
+                    return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        		}*/
+        		writableDb.execSQL("DELETE FROM "+TABLE_NAME+" WHERE "+Field.SERVERGROUPID+"="+grp);
+        	}
+            writableDb.setTransactionSuccessful();
+
+        } catch (SQLException e) {
+            LogUtils.logE("GroupsTable.addGroupList() SQLException - Unable to update group", e);
             return ServiceStatus.ERROR_DATABASE_CORRUPT;
 
         } finally {
@@ -451,19 +576,147 @@ public abstract class GroupsTable {
         all.mName = context.getString(R.string.ContactListActivity_group_all);
         all.mIsReadOnly = true;
         all.mId = GROUP_ALL;
+        all.mDisplayOrder = 0;
         groupList.add(all);
 
-        GroupItem online = new GroupItem();
+        /*GroupItem online = new GroupItem();
         online.mName = context.getString(R.string.ContactListActivity_group_online);
         online.mIsReadOnly = true;
         online.mId = GROUP_ONLINE;
-        groupList.add(online);
+        groupList.add(online);*/
 
-        GroupItem phonebook = new GroupItem();
+        /*GroupItem phonebook = new GroupItem();
         phonebook.mName = context.getString(R.string.ContactListActivity_group_phonebook);
         phonebook.mIsReadOnly = true;
         phonebook.mId = GROUP_PHONEBOOK;
-        groupList.add(phonebook);
+        groupList.add(phonebook);*/
         return addGroupList(groupList, writableDb);
+    }
+    
+    /**
+     * Fetches a list of all the available groups.
+     * 
+     * @param groupList A list that will be populated with the result.
+     * @param readableDb Readable SQLite database
+     * @return SUCCESS or a suitable error
+     */
+    public static ServiceStatus fetchGroupListInOrder(ArrayList<GroupItem> groupList,
+            SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "GroupsTable.fetchGroupList()");
+        groupList.clear();
+        Cursor c = null;
+        try {
+            String query = "SELECT " + getFullQueryList() + " FROM " + TABLE_NAME+" ORDER BY "+ Field.DISPPLAYORDER;
+            c = readableDb.rawQuery(query, null);
+            while (c.moveToNext()) {
+                groupList.add(getQueryData(c));
+            }
+        } catch (SQLiteException e) {
+            LogUtils.logE("GroupsTable.fetchGroupList() Exception - Unable to fetch group list", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        } finally {
+        	
+            CloseUtils.close(c);
+            c = null;
+        }
+        for(int i = 0; i < groupList.size(); i++){
+        	LogUtils.logD(""+groupList.get(i).toString());
+        }
+        return ServiceStatus.SUCCESS;
+    }
+    
+    /***
+     * Changes the order of the group list to be shown to the user.
+     */
+    public static ServiceStatus updateOrder(ArrayList<GroupItem> groupList,
+            SQLiteDatabase readableDb, SQLiteDatabase writableDb){
+    	
+    	ArrayList<GroupItem> dbGroupList = new ArrayList<GroupItem>();
+    	ArrayList<GroupItem> newGroupList = new ArrayList<GroupItem>();
+    	newGroupList.clear();
+    	fetchGroupListInOrder(dbGroupList, readableDb);
+    	if(dbGroupList.size() != 0){
+    		for(GroupItem grpItem: dbGroupList){
+    			for(GroupItem receivedItem : groupList){
+    				if(grpItem.mId.equals(receivedItem.mId)){
+    					grpItem.mDisplayOrder = receivedItem.mDisplayOrder;
+    					newGroupList.add(grpItem);
+    				}
+    			}
+    		}
+    		if(dbGroupList.size() > newGroupList.size() ){
+    			LogUtils.logE("Ideally should never happen. List sizes are different. List received has less groups than in database");
+    			return ServiceStatus.ERROR_DATABASE_CORRUPT;
+    		}else{
+    			deleteAllGroups(writableDb);
+    			addGroupList(newGroupList, writableDb);
+    			return ServiceStatus.SUCCESS;
+    		}
+    	}else{
+    		LogUtils.logE("GroupsTable.updtaeOrder - No groups in database");
+    		return ServiceStatus.ERROR_DATABASE_CORRUPT;
+    	}
+    }
+    
+    /**
+     * This method returns the groupItem of the group id passed
+     * 
+     * @param groupId The id of the group to be returned.
+     * @param readableDb The readable database
+     * @return The GroupItem object or null of no match for the group is found.
+     */
+    public static GroupItem getGroupItem(Long groupId, SQLiteDatabase readableDb){
+    	GroupItem group = null;
+    	Cursor c = null;
+    	try {
+            String query = "SELECT " + getFullQueryList() + " FROM " + TABLE_NAME+" WHERE "+ Field.SERVERGROUPID+"='"+groupId+"'";
+            c = readableDb.rawQuery(query, null);
+            if((c != null)&&(c.getCount() == 1)) {
+            	c.moveToFirst();
+            	group = new GroupItem();
+            	group = getQueryData(c);
+            }else{
+            	LogUtils.logD("No match found");
+            }
+        } catch (SQLiteException e) {
+            LogUtils.logE("GroupsTable.getGroupItem() Exception - Unable to fetch group", e);
+        } finally {
+            CloseUtils.close(c);
+            c = null;
+        }
+    	return group;
+    }
+
+
+    /**
+     * Update the server Id if the Group name is already present
+     */
+    public static ServiceStatus updateByGroupName(List<GroupItem> groups,  SQLiteDatabase writableDb){
+    	LogUtils.logD("GroupsTable.updateServerIdForGroupname");
+    	try {
+    		writableDb.beginTransaction();
+        	for (GroupItem item : groups) {
+				if (Settings.ENABLED_DATABASE_TRACE) {
+					DatabaseHelper.trace(true,
+							"GroupsTable.updateServerIdForGroupname() Name["
+									+ item.mName + "]");
+				}
+				writableDb.execSQL("UPDATE " + TABLE_NAME + " SET "
+						+ Field.SERVERGROUPID + "='" + item.mId + "', "+Field.DISPPLAYORDER+"='"+item.mDisplayOrder+"' WHERE "
+						+ Field.NAME + "=" + item.mName);
+			}
+			writableDb.setTransactionSuccessful();
+
+        } catch (SQLException e) {
+            LogUtils.logE("GroupsTable.updateServerIdForGroupname() SQLException - Unable to update group", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+
+        } finally {
+            if (writableDb != null) {
+                writableDb.endTransaction();
+            }
+        }
+
+        return ServiceStatus.SUCCESS;
     }
 }

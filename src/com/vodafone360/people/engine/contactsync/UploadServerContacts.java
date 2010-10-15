@@ -1146,7 +1146,7 @@ public class UploadServerContacts extends BaseSyncProcessor {
         if (mTotalNoOfItems > 0) {
             setSyncStatus(new SyncStatus((int)(mItemsDone * MAX_PROGESS / mTotalNoOfItems), "",
                     Task.UPDATE_SERVER_CONTACTS, TaskStatus.SENT_CONTACTS, mItemsDone,
-                    mTotalNoOfItems));
+                    mTotalNoOfItems, mItemsDone));
 
         } else {
             setSyncStatus(new SyncStatus(0, "", SyncStatus.Task.UPDATE_SERVER_CONTACTS));

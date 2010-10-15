@@ -293,6 +293,7 @@ public class DownloadServerContacts extends BaseSyncProcessor {
      * @return SUCCESS or a suitable error code.
      */
     private ServiceStatus fetchFirstBatch() {
+    	System.out.println("DownloadServerContacts.fetchFirstBatch()");
         if (NetworkAgent.getAgentState() != NetworkAgent.AgentState.CONNECTED) {
             return ServiceStatus.ERROR_COMMS;
         }
@@ -352,6 +353,11 @@ public class DownloadServerContacts extends BaseSyncProcessor {
      */
     @Override
     public void processCommsResponse(DecodedResponse resp) {
+    	/*System.out.println("DownloadServerContacts.processCommsResponse()");
+    	System.out.println("DownloadServerContacts.processCommsResponse()"+resp);
+    	System.out.println("DownloadServerContacts.processCommsResponse()"+resp.mReqId);
+    	System.out.println("DownloadServerContacts.processCommsResponse()"+resp.getResponseType());
+    	System.out.println("DownloadServerContacts.processCommsResponse()"+resp.mDataTypes.toString());*/
         Integer pageNo = 0;
         if (mInternalState == InternalState.FETCHING_NEXT_BATCH) {
             pageNo = mPageReqIds.remove(resp.mReqId);
@@ -446,11 +452,13 @@ public class DownloadServerContacts extends BaseSyncProcessor {
         }
 
         int progress = (incOfCurrentPage + (mNoOfPagesDone * MAX_DOWN_PAGE_SIZE))*100 / totalNumberOfContacts;
+        
+        int contactsDownloadedSoFar = incOfCurrentPage + (mNoOfPagesDone * MAX_DOWN_PAGE_SIZE) ;
         setSyncStatus(new SyncStatus(progress, name,
                 Task.DOWNLOAD_SERVER_CONTACTS,
                 TaskStatus.RECEIVED_CONTACTS,
                 incOfCurrentPage + mNoOfPagesDone * MAX_DOWN_PAGE_SIZE,
-                totalNumberOfContacts));
+                totalNumberOfContacts, contactsDownloadedSoFar));
     }
 
     /**

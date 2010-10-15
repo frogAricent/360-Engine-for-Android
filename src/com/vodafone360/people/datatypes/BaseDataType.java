@@ -232,5 +232,26 @@ abstract public class BaseDataType {
      * Delete Identity Response
      */
     public static final int DELETE_IDENTITY = 44;
+    
+    /**
+     * Purchased Music Track Datatype
+     */
+    public static final int DOWNLOADABLE_MUSIC = 50;
 
+    /**
+     * Purchased Music List Datatype
+     */
+    public static final int DD_FOR_TRACKS = 51;
+    /**
+     * Get Identity Text Datatype 
+     */
+    public static final int GET_IDENTITIES_TEXT_RESPONSE = 52;
+    /**
+     * Identity Text Datatype 
+     */
+    public static final int IDENTITY_TEXT_RESPONSE = 53;
+    /**
+     * Group id list data type
+     */
+    public static final int GROUP_ID_LIST_DATATYPE = 54;
 }

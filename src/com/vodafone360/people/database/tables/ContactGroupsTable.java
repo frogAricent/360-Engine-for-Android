@@ -298,4 +298,45 @@ public abstract class ContactGroupsTable {
 
         return ServiceStatus.SUCCESS;
     }
+    
+    
+    /**
+     * Fetches all the contacts associated with a given group.
+     * 
+     * @param groupId The group Id 
+     * @param contactIds A list that will be populated with the result.
+     * @param readableDb A readable SQLite database
+     * @return true if successful, false otherwise
+     */
+    public static ServiceStatus fetchGroupContacts(Long groupId, List<Long> contactIds,
+            SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "ContactGroupsTable.fetchGroupContacts() groupId["
+                + groupId + "]");
+        String[] args = {
+            String.format("%d", groupId)
+        };
+        Cursor c1 = null;
+        contactIds.clear();
+        try {
+            c1 = readableDb.rawQuery("SELECT " + Field.LOCALCONTACTID + " FROM " + TABLE_NAME
+                    + " WHERE " + Field.ZYBGROUPID + " = ?", args);
+
+            while (c1.moveToNext()) {
+                if (!c1.isNull(0)) {
+                	contactIds.add(c1.getLong(0));
+                }
+            }
+            c1.close();
+
+        } catch (SQLiteException e) {
+            LogUtils.logE("ContactGroupsTable.fetchGroupContacts()"
+                    + " Exception - Unable to fetch group contacts", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        } finally {
+            CloseUtils.close(c1);
+            c1 = null;
+        }
+
+        return ServiceStatus.SUCCESS;
+    }
 }

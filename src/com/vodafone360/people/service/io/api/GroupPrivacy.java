@@ -183,75 +183,66 @@ public class GroupPrivacy {
 	}
 
 	/**
-	 * Implementation of groupprivacy/creategroups API. Parameters are; [auth],
-	 * String name
-	 * 
-	 * @param engine
-	 *            Handle to Groups engine
-	 * @param name
-	 *            of the group
-	 * @return request id generated for this request.
-	 */
-	public static int addUserGroup(BaseEngine engine, String name) {
-		if (LoginEngine.getSession() == null) {
-			LogUtils.logE("Contacts.addUserGroup() Invalid session, return -1");
-			return -1;
-		}
-		if (name == null) {
-			LogUtils.logE("Contacts.addUserGroup() Group name cannot be NULL");
-			return -1;
-		}
+     * Implementation of groupprivacy/creategroups API. Parameters are; [auth],
+     * String name
+     * 
+     * @param engine Handle to ContactSync engine
+     * @param name of the group
+     * @return request id generated for this request.
+     */
+    public static int addUserGroup(BaseEngine engine, List<GroupItem> group) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("GroupsEngine.addUserGroup() Invalid session, return -1");
+            return -1;
+        }
+        if (group.size() == 0) {
+            LogUtils.logE("GroupsEngine.addUserGroup() Group size cannot be 0");
+            return -1;
+        }
 
-		List<GroupItem> input = new ArrayList<GroupItem>();
-		GroupItem group = new GroupItem();
-		group.mName = name;
-		Request request = new Request(FUNCTION_CREATE_GROUPS,
-				Request.Type.ADD_GROUP, engine.engineId(), false,
-				Settings.API_REQUESTS_TIMEOUT_CONTACTS);
-		input.add(group);
-		request.addData("grouplist", ApiUtils.createVectorOfGroup(input));
+        Request request = new Request(FUNCTION_CREATE_GROUPS, Request.Type.ADD_GROUP, engine
+                .engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        request.addData("grouplist", ApiUtils.createVectorOfGroup(group));
+        
 
-		QueueManager queue = QueueManager.getInstance();
-		int requestId = queue.addRequest(request);
-		queue.fireQueueStateChanged();
-		return requestId;
-	}
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
 
-	/**
-	 * Implementation of groupprivacy/deletegroups API. Parameters are; [auth],
-	 * Long groupId
-	 * 
-	 * @param engine
-	 *            Handle to Groups engine
-	 * @param groupId
-	 *            Id of the group
-	 * @return request id generated for this request.
-	 */
-	public static int deleteUserGroup(BaseEngine engine, Long groupId) {
-		if (LoginEngine.getSession() == null) {
-			LogUtils
-					.logE("GroupPrivacy.deleteUserGroup() Invalid session, return -1");
-			return -1;
-		}
-		if (groupId == null) {
-			LogUtils
-					.logE("GroupPrivacy.deleteUserGroup() Group ID cannot be NULL");
-			return -1;
-		}
+    /**
+     * Implementation of groupprivacy/deletegroups API. Parameters are; [auth],
+     * Long groupId
+     * 
+     * @param engine Handle to ContactSync engine
+     * @param Id of the group
+     * @return request id generated for this request.
+     */
+    public static int deleteUserGroup(BaseEngine engine, List<Long> groupIdList) {
+        if (LoginEngine.getSession() == null) {
+            LogUtils.logE("GroupPrivacy.deleteUserGroup() Invalid session, return -1");
+            return -1;
+        }
+        if (groupIdList == null) {
+            LogUtils.logE("GroupPrivacy.deleteUserGroup() Group ID list cannot be NULL");
+            return -1;
+        }
+        if(groupIdList.size() == 0){
+        	LogUtils.logE("GroupPrivacy.deleteUserGroup() Group ID list cannot be zero");
+            return -1;
+        }
 
-		List<Long> input = new ArrayList<Long>();
-		input.add(groupId);
-
-		Request request = new Request(FUNCTION_DELETE_GROUPS,
-				Request.Type.DELETE_GROUP, engine.engineId(), false,
-				Settings.API_REQUESTS_TIMEOUT_CONTACTS);
-		request.addData("groupidlist", ApiUtils.createVectorOfLong(input));
-
-		QueueManager queue = QueueManager.getInstance();
-		int requestId = queue.addRequest(request);
-		queue.fireQueueStateChanged();
-		return requestId;
-	}
+        
+        Request request = new Request(FUNCTION_DELETE_GROUPS, Request.Type.DELETE_GROUP, engine
+                .engineId(), false, Settings.API_REQUESTS_TIMEOUT_CONTACTS);
+        request.addData("groupidlist", ApiUtils.createVectorOfLong(groupIdList));
+        
+        QueueManager queue = QueueManager.getInstance();
+        int requestId = queue.addRequest(request);
+        queue.fireQueueStateChanged();
+        return requestId;
+    }
 
 	/**
 	 * Implementation of groupprivacy/getprivacysettings API. Parameters are;

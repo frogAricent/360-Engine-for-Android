@@ -119,6 +119,7 @@ public class Auth {
      */
     public static int getSessionByCredentials(BaseEngine engine, String username, String password,
             Map<String, List<String>> more) {
+    	System.out.println("Auth.getSessionByCredentials()");
         if (engine == null) {
             throw new NullPointerException("Auth.getSessionByCredentials() engine cannot be NULL");
         }

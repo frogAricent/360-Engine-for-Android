@@ -303,5 +303,27 @@ public abstract class ConversationsTable {
         return writableDb.delete(TABLE_NAME, Field.LOCALCONTACT_ID + "=\"" + localContactId
                 + "\" AND " + Field.NETWORK_ID + "=" + network, null);
     }
+    
+    public static boolean isLocalContactExist(Long contactId,SQLiteDatabase writableDb )throws SQLException, NullPointerException{
+        
+        if (writableDb == null) {
+            throw new NullPointerException(DEFAULT_ERROR_MESSAGE);
+        }
+        boolean exists = false;
+        Cursor c = null;
+        try {
+            c = writableDb.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE "
+                    + Field.LOCALCONTACT_ID + "=\"" + contactId + "\"", null);
+            if (c == null)
+                return false;
+            exists = c.getCount() > 0;
+        } finally {
+            CloseUtils.close(c);
+            c = null;
+        }
+        return exists;
+    }
+    
+    
    
 }

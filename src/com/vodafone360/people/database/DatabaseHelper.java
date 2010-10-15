@@ -59,6 +59,7 @@ import com.vodafone360.people.database.tables.ContactSourceTable;
 import com.vodafone360.people.database.tables.ContactSummaryTable;
 import com.vodafone360.people.database.tables.ContactsTable;
 import com.vodafone360.people.database.tables.ConversationsTable;
+import com.vodafone360.people.database.tables.GroupsChangeLogTable;
 import com.vodafone360.people.database.tables.GroupsTable;
 import com.vodafone360.people.database.tables.NativeChangeLogTable;
 import com.vodafone360.people.database.tables.PresenceTable;
@@ -70,6 +71,7 @@ import com.vodafone360.people.datatypes.ActivityItem;
 import com.vodafone360.people.datatypes.Contact;
 import com.vodafone360.people.datatypes.ContactDetail;
 import com.vodafone360.people.datatypes.ContactSummary;
+import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.PublicKeyDetails;
 import com.vodafone360.people.datatypes.VCardHelper;
@@ -134,6 +136,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * event queue (esp. during first time sync).
      */
     private static final long DATABASE_EVENT_DELAY = 1000; // ms
+    
+    /**
+     * Variable for temporary Id's for newly added groups
+     */
+    private static Long mTempGroupId = -1L;
     
     /**
      * Timer to implement a wait before sending database change events to the UI in
@@ -219,7 +226,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         CONTACTS,
         ACTIVITIES,
         ME_PROFILE,
-        ME_PROFILE_PRESENCE_TEXT
+        ME_PROFILE_PRESENCE_TEXT,
+        USER_GROUP
     }
 
     /***
@@ -267,7 +275,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ContactGroupsTable.create(db);
             ContactSourceTable.create(db);
             ActivitiesTable.create(db);
-
+            GroupsChangeLogTable.create(db);
             ConversationsTable.create(db);
 
         } catch (SQLException e) {
@@ -669,6 +677,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @see #fetchOption(com.vodafone360.people.service.PersistSettings.Option)
      */
     public ServiceStatus setOption(PersistSettings setting) {
+    	LogUtils.logD("DatabaseHelper.setOption");
         ServiceStatus mStatus = StateTable.setOption(setting, getWritableDatabase());
         if (ServiceStatus.SUCCESS == mStatus) {
             fireSettingChangedEvent(setting);
@@ -1304,6 +1313,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return null;
 	}
+    
+    
     
 
     
@@ -2467,14 +2478,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Contact contact = new Contact();
         ServiceStatus status = fetchBaseContact(localContactId, contact, writableDatabase);
         if (ServiceStatus.SUCCESS != status) {
-            return status;
+        	return status;
         }
         status = ContactDetailsTable.fetchContactDetails(localContactId, contact.details,
                 writableDatabase);
         if (ServiceStatus.SUCCESS != status) {
-            return status;
+        	return status;
         }
-
+        
         return ContactSummaryTable.updateContactDisplayName(contact, writableDatabase);
     }
 
@@ -2485,6 +2496,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
           return ContactSummaryTable.fetchContactList(null, null, mMeProfileId,
                 getReadableDatabase());
     }
+    
+  
 
     /**
      * Adds a native contact to the people database and makes sure that the
@@ -2717,8 +2730,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
             cursor = readableDb.rawQuery(QUERY_NATIVE_SYNCABLE_CONTACTS_LOCAL_IDS, null);
 
-            if (cursor.getCount() > 0) {
-
+            /*if (cursor != null) {
+				LogUtils
+						.logD("DatabaseHelper.getNativeSyncableContactsLocalIds:"
+								+ cursor.getCount()
+								+ " contacts can be synced back to the native DB");
+			}else{
+				LogUtils.logD("Cursor is null");
+			}*/
+			if (cursor.getCount() > 0) {
+            	
                 int i = 0;
                 ids = new long[cursor.getCount()];
 
@@ -2806,5 +2827,155 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static boolean isNullOrBlank(String input) {
         return input == null || input.length() == 0;
     }
+    
+    /**
+	 * Add a user defined group to the GroupTableNew.
+	 * 
+	 * @param activityList contains the list of activity item
+	 * @return SUCCESS or a suitable error code
+	 * @see #deleteActivities(Integer)
+	 * @see #addTimelineEvents(ArrayList, boolean)
+	 */
+	public ServiceStatus addGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
+		
+		//ServiceStatus mStatus = GroupsChangeLogTable.addGroup(group, contactList, writableDb);
+		group.mId = mTempGroupId;
+		mTempGroupId--;
+		if(mTempGroupId < -50){
+			mTempGroupId = -1L;
+		}
+		group.mDisplayOrder = (GroupsTable
+				.getGroupCursor(getReadableDatabase())
+				.getCount());
+		
+		List<GroupItem> groupList = new ArrayList<GroupItem>();
+		groupList.add(group);
+		ServiceStatus mStatus = GroupsTable.addGroupList(groupList, writableDb);
+		LogUtils.logD("Group local id:"+group.mLocalGroupId);
+		if (mStatus == ServiceStatus.SUCCESS) {
+			group.mId = null;
+			GroupsChangeLogTable.addGroup(group, contactList, writableDb);
+			if (group.mLocalGroupId < 0) {
+				LogUtils
+						.logD("DatabaseHelper.addGroups - Group not added to change log database");
+				return ServiceStatus.ERROR_DATABASE_CORRUPT;
+			}
+		}else{
+			LogUtils.logE("DatabaseHelper.addGroup - Group could not be added. Database error");
+		}
+		LogUtils.logD("DatabaseHelper.addGroup:"+group.toString());
+		
+		LogUtils.logD("DatabaseHelper.addGroup - All groups");
+		GroupsTable.fetchGroupListInOrder(new ArrayList<GroupItem>(), getReadableDatabase());
+		fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
+		//return mStatus;
+		return ServiceStatus.SUCCESS;
+	}
+	
+	/**
+	 * Add a user defined group to the GroupTableNew.
+	 * 
+	 * @param activityList contains the list of activity item
+	 * @return SUCCESS or a suitable error code
+	 * @see #deleteActivities(Integer)
+	 * @see #addTimelineEvents(ArrayList, boolean)
+	 */
+	public ServiceStatus editGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
+		LogUtils.logD("Editing group:"+group.toString());
+		ServiceStatus mStatus = GroupsChangeLogTable.editGroup(group, contactList, writableDb);
+		if(mStatus != ServiceStatus.SUCCESS){
+			return ServiceStatus.ERROR_DATABASE_CORRUPT;
+		}
+		ArrayList<Long> oldContactList = new ArrayList<Long>();
+		mStatus = ContactGroupsTable.fetchGroupContacts(group.mId, oldContactList, getReadableDatabase());
+		if(mStatus != ServiceStatus.SUCCESS){
+			return ServiceStatus.ERROR_DATABASE_CORRUPT;
+		}
+		if(oldContactList.size() != 0){
+			for(Long id : oldContactList){
+				deleteContactFromGroup(id, group.mId);
+			}
+		}
+		if (contactList != null) {
+			for (Long contId : contactList) {
+				addContactToGroup(contId, group.mId);
+			}
+		}
+		fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
+		return mStatus;
+	}
+	
+	/**
+	 * Delete a user defined group from the GroupTable.
+	 * 
+	 * @param activityList contains the list of activity item
+	 * @return SUCCESS or a suitable error code
+	 * @see #deleteActivities(Integer)
+	 * @see #addTimelineEvents(ArrayList, boolean)
+	 */
+	public void deleteGroup(List<Long> groupId,SQLiteDatabase writableDb) {
+		LogUtils.logD("DatabaseHelper.deleteGroup");
+		for (Long id:groupId) {
+			GroupItem grp = new GroupItem();
+			grp.mId = id;
+			GroupsChangeLogTable.deleteGroup(grp, writableDb);
+		}
+		GroupsTable.deleteGroupList(groupId, writableDb);
+		fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
+	}
+    
+    
+    /***
+     * Fetches a cursor which can be used to iterate through the chat contact
+     * list.
+     * <p>
+     * The ContactSummaryTable.getQueryData static method can be used on the
+     * cursor returned by this method to create a ContactSummary object.
+     * 
+     * @param groupFilterId The local ID of a group to filter, or null if no
+     *            filter is required
+     * @param constraint A search string to filter the contact name, or null if
+     *            no filter is required
+     * @param sns The chatable identities
+     * @return The cursor result
+     */
+    public synchronized Cursor openChatContactSummaryCursor(CharSequence constraint, String sns, int iOperationReq) 
+    {
+        return ContactSummaryTable.openChatContactSummaryCursor(constraint,
+                SyncMeDbUtils.getMeProfileLocalContactId(this),sns, getReadableDatabase(), getWritableDatabase(), iOperationReq);
+    }
+    
+
+    /***
+     * Fetches timeline events from a given time.
+     * 
+     * @param timeStamp The oldest time that should be included in the list
+     * @param types A list of required timeline types (or an empty list for all)
+     * @return SUCCESS or a suitable error code
+     * @see #addTimelineEvents(ArrayList, boolean)
+     * @see #fetchActivitiesIds(List, Long)
+     */
+    public synchronized Cursor fetchChatTimelineEvents(Long timeStamp,
+            ActivitiesTable.TimelineNativeTypes[] types, CharSequence constraint ) {
+        return ActivitiesTable.fetchChatEventList(timeStamp, types, constraint,getReadableDatabase());
+    }
+    
+    /**
+	 * Add a user defined group to the GroupTableNew.
+	 * 
+	 * @param activityList contains the list of activity item
+	 * @return SUCCESS or a suitable error code
+	 * @see #deleteActivities(Integer)
+	 * @see #addTimelineEvents(ArrayList, boolean)
+	 *//*
+	public ServiceStatus addGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
+		ServiceStatus mStatus = GroupsChangeLogTable.addGroup(group, contactList, writableDb);
+		List<GroupItem> groupList = new ArrayList<GroupItem>();
+		groupList.add(group);
+		//mStatus = GroupsTable.addGroupList(groupList, writableDb);
+		fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
+		return mStatus;
+	}*/
+
 }
 

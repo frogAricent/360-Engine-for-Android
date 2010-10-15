@@ -28,12 +28,14 @@ package com.vodafone360.people.service.transport;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.PushEvent;
 import com.vodafone360.people.datatypes.ServerError;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.service.io.QueueManager;
 import com.vodafone360.people.service.io.Request;
@@ -95,8 +97,31 @@ public class DecoderThread implements Runnable {
             mIsPushMessage = isPushMessage;
             mTimeStamp = System.currentTimeMillis();
         }
+        
+      /* @Override
+        public String toString() {
+        	
+        	StringBuilder out=null;
+        	try {
+        		InputStream is = new ByteArrayInputStream(mData);
+        		out = new StringBuilder(); 
+        		InputStreamReader in = new InputStreamReader(is, "UTF-8"); 
+        		int c = 0; 
+
+        		while((c = in.read())!=-1){
+        			out.append(c);
+        		}
+        	} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        	
+        	return ""+ mReqId + "," + mIsCompressed + "," + mIsPushMessage + "," + mTimeStamp + "," + out.toString();
+        	
+        };*/
     }
 
+   
     /**
      * Start decoder thread
      */
@@ -151,11 +176,14 @@ public class DecoderThread implements Runnable {
                 if (mResponses.size() > 0) {
                     LogUtils.logI("DecoderThread.run() Decoding [" + mResponses.size()
                             + "x] responses");
-
+                    
                     // Decode first entry in queue
                     RawResponse decode = mResponses.get(0);
+                    
+                                      
+                    
                     reqId = decode.mReqId;
-
+                    
                     if (!decode.mIsPushMessage) {
                         // Attempt to get type from request
                         Request request = QueueManager.getInstance().getRequest(reqId);
@@ -170,9 +198,7 @@ public class DecoderThread implements Runnable {
                             type = Type.COMMON;
                         }
                     }
-                    
                     DecodedResponse response = mHessianDecoder.decodeHessianByteArray(reqId, decode.mData, type, decode.mIsCompressed, engineId);
-
                     // if we have a push message let's try to find out to which engine it should be routed
                     if ((response.getResponseType() == DecodedResponse.ResponseType.PUSH_MESSAGE.ordinal()) && (response.mDataTypes.get(0) != null)) {
                     	// for push messages we have to override the engine id as it is parsed inside the hessian decoder 

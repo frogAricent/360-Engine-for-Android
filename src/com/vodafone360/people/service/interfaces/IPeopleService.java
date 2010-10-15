@@ -31,12 +31,11 @@ import java.util.List;
 import android.os.Bundle;
 import android.os.Handler;
 
-import com.vodafone360.people.ApplicationCache;
+import com.facebook.android.listener.RequestCompleteCallback;
 import com.vodafone360.people.datatypes.Album;
 import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Content;
 import com.vodafone360.people.datatypes.EntityKey;
-import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
@@ -393,6 +392,7 @@ public interface IPeopleService {
      * @param commentsList Provide a list of comments to be updated.
      */
     void updateComment(List<Comment> commentsList);
+    
     /**
      * Adds a list of Albums to the platform
      * 
@@ -453,6 +453,13 @@ public interface IPeopleService {
     void addContent(List<Content> contentlist);
 
     /**
+     * Adds a list of content to the platform and publishes to facebook
+     * 
+     * @param contentlist The list of contents to be added
+     */
+    void addContentAndPublish(List<Content> contentlist);
+    
+    /**
      * Gets a list of contents from the platform
      * 
      * @param data Bundle containing the list of Content Ids
@@ -492,27 +499,27 @@ public interface IPeopleService {
 	 /**
      * This method should be called to add user defined groups
      * 
-     */
+     *//*
     void addUserGroup(String groupName);
        
-    /**
+    *//**
      * This method should be called to delete user defined groups
      * 
-     */
+     *//*
     void deleteUserGroup(String groupName);
     
-    /**
+    *//**
      * This method should be called to get group privacy setting
      * 
-     */
+     *//*
     void getGroupPrivacySetting(String groupName);
     
-    /**
+    *//**
      * This method should be called to set group privacy setting
      * 
-     */
+     *//*
     void setGroupPrivacySetting(String groupName, int contentType, int status);
-
+*/
     /**
      * Method to Share an Album with a group 
      */
@@ -566,4 +573,42 @@ public interface IPeopleService {
      * @param Bundle filter the kind of identities to return.
      */
     void deleteIdentity(Bundle bundle);
-  }
+    /*
+     * FB-PLUGIN code Starts
+     */   
+    /**
+     * This method should be called to download the link and photofeeds from facebook.
+     */
+    void downloadFbPosts(RequestCompleteCallback callBack);
+    
+    /**
+     * This method should be called to add comment to facebook post.
+     */
+    void addCommentToFbPost(String post_id, String comment, RequestCompleteCallback callBack);
+    
+    /**
+     * This method should be called to add like to facebook comment.
+     */
+    void addLikeToFbPost(String post_id, RequestCompleteCallback callBack);
+    
+    /**
+     * This method should be called to remove comment from facebook post.
+     */
+    void removeCommentFromFbPost(String comment_id, RequestCompleteCallback callBack);
+    /*
+     * FB-PLUGIN code Ends
+     */   
+    /**
+     * Method to Restore Music
+     */
+    void musicRestored();
+    /**
+     * Method to retrieve Identities Texts like Terms and conditions etc.
+     * The input contains List of Network Ids for which Terms and Condition 
+     * text is requested. For example: for facebook the network id is 
+     * "facebook.com"
+     */
+    void getIdentitiesText(String networkList);
+
+
+}

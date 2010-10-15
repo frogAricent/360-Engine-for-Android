@@ -232,7 +232,10 @@ public class LoginEngine extends BaseEngine {
     public void onCreate() {
         LogUtils.logD("LoginEngine.OnCreate()");
         mState = State.NOT_INITIALISED;
+        
         mCurrentSubscriberId = mTelephonyManager.getSubscriberId();
+        System.out.println("mCurrentSubscriberId - phone number "+mCurrentSubscriberId);
+//        mCurrentSubscriberId = "+491720451024";
         IntentFilter filter = new IntentFilter(SmsBroadcastReceiver.ACTION_ACTIVATION_CODE);
         mContext.registerReceiver(mEventReceiver, filter);
         mIsRegistrationComplete = StateTable.isRegistrationComplete(mDb.getReadableDatabase());
@@ -506,6 +509,7 @@ public class LoginEngine extends BaseEngine {
      */
     @Override
     protected void processCommsResponse(ResponseQueue.DecodedResponse resp) {
+//    	System.out.println("LoginEngine.processCommsResponse()"+resp.mDataTypes.toString());
         LogUtils.logD("LoginEngine.processCommsResponse() - resp = " + resp);
         switch (mState) {
             case SIGNING_UP:
@@ -821,6 +825,7 @@ public class LoginEngine extends BaseEngine {
      */
     private void startManualLoginProcess(LoginDetails details) {
         LogUtils.logD("LoginEngine.startManualLoginProcess()");
+        System.out.println("LoginEngine.startManualLoginProcess() loginedetails" + details.toString());
         setRegistrationComplete(false);
         setActivatedSession(null);
         if (details == null) {

@@ -29,6 +29,8 @@ import java.nio.ByteBuffer;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import com.vodafone360.people.utils.LogUtils;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -111,6 +113,8 @@ public class GroupItem extends BaseDataType implements Parcelable {
     public ByteBuffer mImageBytes = null;
 
     public String mColor = null;
+    
+    public Integer mDisplayOrder = null;
 
     /** {@inheritDoc} */
     @Override
@@ -130,8 +134,9 @@ public class GroupItem extends BaseDataType implements Parcelable {
             String key = e.nextElement();
             Object value = hash.get(key);
             Tags tag = Tags.findTag(key);
-            if (tag != null)
-                setValue(tag, value);
+            if (tag != null){
+            	setValue(tag, value);
+            }
         }
 
         return this;
@@ -201,6 +206,7 @@ public class GroupItem extends BaseDataType implements Parcelable {
         sb.append("\n\tIs system group:"); sb.append(mIsSystemGroup);
         sb.append("\n\tIs smart group:"); sb.append(mIsSmartGroup);
         sb.append("\n\tColor:"); sb.append(mColor);
+        sb.append("\n\tDisplay Order:"); sb.append(mDisplayOrder);
         return sb.toString();
     }
 

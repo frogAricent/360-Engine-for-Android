@@ -55,6 +55,8 @@ public class LoginDetails implements Parcelable {
         sb.append("\nRemember Me: ");  sb.append(mRememberMe);
         sb.append("\nAuto Connect: "); sb.append(mAutoConnect); 
         sb.append("\nSubscriber ID: "); sb.append(mSubscriberId);
+        
+        System.out.println("LoginDetails.toString()"+sb.toString());
         return sb.toString();
     }
 
