@@ -1,4 +1,3 @@
-config.properties
 tests/bin/*
 bin
 gen
@@ -10,4 +9,3 @@ gen
 /res/drawable-mdpi
 /res/drawable-hdpi
 /res/drawable-ldpi
-/res/raw
