@@ -5,3 +5,9 @@ gen
 .classpath
 .project
 
+
+/assets
+/res/drawable-mdpi
+/res/drawable-hdpi
+/res/drawable-ldpi
+/res/raw
