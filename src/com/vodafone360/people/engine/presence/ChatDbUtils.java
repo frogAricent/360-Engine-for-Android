@@ -72,8 +72,17 @@ public class ChatDbUtils {
         msg.setUserId(userId);
         int networkId = msg.getNetworkId();
         if (networkId == SocialNetwork.VODAFONE.ordinal()) {
+            try{
             msg.setLocalContactId(ContactsTable.fetchLocalIdFromUserId(Long
                     .valueOf(msg.getUserId()), databaseHelper.getReadableDatabase()));
+            }catch (NumberFormatException e){
+                LogUtils.logE("Exception");
+                msg
+                .setLocalContactId(ContactDetailsTable.findLocalContactIdByKey(SocialNetwork
+                        .getChatValue(networkId).toString(), msg.getUserId(),
+                        ContactDetail.DetailKeys.VCARD_IMADDRESS, databaseHelper
+                                .getReadableDatabase()));
+            }
         } else {
             msg
                     .setLocalContactId(ContactDetailsTable.findLocalContactIdByKey(SocialNetwork

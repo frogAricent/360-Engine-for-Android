@@ -101,7 +101,12 @@ public class GroupSyncEngine extends BaseEngine{
 	 * List of deleted user groups that have not yet been synced with the server
 	 */
 	private ArrayList<Long> mDeletedGroups = new ArrayList<Long>();
+		
 
+	/**
+	 * Boolean variable to keep a track of retrying
+	 */
+	private boolean isRetry = false;
 	/**
 	 * Timeout for syncing the groups
 	 */
@@ -503,6 +508,13 @@ public class GroupSyncEngine extends BaseEngine{
 			LogUtils.logD("GroupSyncEngine.handleGetGroupsRequest - No new relations to be added.");
 		}
 	}
+	
+	private static GroupIdsUpdateListener mGroupIdsUpdateListener;
+	
+	public static void setGroupIdsUpdateListener(GroupIdsUpdateListener listener)
+	{
+		mGroupIdsUpdateListener = listener;
+	}
 
 	/**
 	 * Handle response received from server to add a User Group
@@ -516,6 +528,7 @@ public class GroupSyncEngine extends BaseEngine{
 		ServiceStatus errorStatus = BaseEngine.getResponseStatus(BaseDataType.ITEM_LIST_DATA_TYPE,
 				resp.mDataTypes);
 		if(errorStatus == ServiceStatus.SUCCESS){
+			isRetry = false;
 			LogUtils.logD("GroupSyncEngine.handleAddUserGroupResponse() - User Groups Added.");
 			//Store data in DB as required by UI
 			List<GroupIdListResponse> tempGroupList = new ArrayList<GroupIdListResponse>();
@@ -577,8 +590,19 @@ public class GroupSyncEngine extends BaseEngine{
 			
 			//Update db if new groups were added
 			if (newlyAddedGroupList.size() != 0) {
+				
+				List<Long> tempGroupIds = new ArrayList<Long>();
+				
 				ServiceStatus status = GroupsTable.updateGroupIds(
-						newlyAddedGroupList, mDb.getWritableDatabase());
+						newlyAddedGroupList,tempGroupIds, mDb.getReadableDatabase(), mDb.getWritableDatabase());
+
+				
+				if(mGroupIdsUpdateListener != null)
+				{
+					mGroupIdsUpdateListener.updateGroupIds(tempGroupIds, newlyAddedGroupList);
+				}				
+				
+
 				if (ServiceStatus.SUCCESS != status) {
 					LogUtils
 							.logE("GroupsSyncEngine.handleAddUserGroupResponse - Could not add groups to Groups Table");
@@ -589,7 +613,7 @@ public class GroupSyncEngine extends BaseEngine{
 				}
 				addContactsToNewGroups(newlyAddedGroupList);
 				for(GroupItem grp : newlyAddedGroupList){
-					GroupsChangeLogTable.deleteGroup(grp, mDb.getWritableDatabase());
+					GroupsChangeLogTable.removeGroupFromTable(grp, mDb.getWritableDatabase());
 				}
 			}
 			
@@ -601,12 +625,13 @@ public class GroupSyncEngine extends BaseEngine{
 					LogUtils
 							.logE("GroupsSyncEngine.handleAddUserGroupResponse - Could not update groups in Groups Table");
 
-				} else {
+				}  else {
 					LogUtils
 							.logE("GroupsSyncEngine.handleAddUserGroupResponse - Groups updtaed in Groups Table");
+					mDb.fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
 				}
 				for(GroupItem grp : editedAddedGroupList){
-					GroupsChangeLogTable.deleteGroup(grp, mDb.getWritableDatabase());
+					GroupsChangeLogTable.removeGroupFromTable(grp, mDb.getWritableDatabase());
 				}
 			}
 
@@ -614,7 +639,26 @@ public class GroupSyncEngine extends BaseEngine{
 			LogUtils.logE("GroupsEngine.handleAddUserGroupResponse() - Bad Server Parameter");
 		}else{
 			LogUtils.logE("GroupsEngine.handleAddUserGroupResponse() - Failure");
+			if(!isRetry){
+			isRetry = true;
 			addGroups();
+			}else{
+				isRetry = false;
+				mDb.fireDatabaseChangedEvent(DatabaseChangeType.COMMS_ERROR, true);
+				completeUiRequest(ServiceStatus.ERROR_COMMS);
+				List<Long> grpList = new ArrayList<Long>();
+				for(GroupItem item : mAddedGroups){
+					grpList.add(item.mId);
+				}
+				GroupsTable.deleteGroupList(grpList, mDb.getWritableDatabase());
+				for(GroupItem grp : newlyAddedGroupList){
+					GroupsChangeLogTable.removeGroupFromTable(grp, mDb.getWritableDatabase());
+				}
+				for(GroupItem grp : editedAddedGroupList){
+					GroupsChangeLogTable.removeGroupFromTable(grp, mDb.getWritableDatabase());
+				}
+				return;
+			}
 		}
 
 		/**********************/
@@ -843,6 +887,10 @@ public class GroupSyncEngine extends BaseEngine{
 		return false;
 	}
 
-
+	public static interface GroupIdsUpdateListener
+	{
+		public void updateGroupIds(List<Long> tempGroupIds,  List<GroupItem> newGroupIds);
+	}
+	
 
 }

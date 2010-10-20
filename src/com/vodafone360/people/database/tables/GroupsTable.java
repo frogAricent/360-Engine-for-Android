@@ -410,13 +410,15 @@ public abstract class GroupsTable {
     }
     
     /**
-     * Updates list of group Ids in the table
+     * Updates list of group Ids in the table, also updating the list of tempId's passed
      * Used for Add User Groups
      * @param groupList The list to add
      * @param writableDb Writable SQLite database
      * @return SUCCESS or a suitable error code
      */
-    public static ServiceStatus updateGroupIds(List<GroupItem> groupList, SQLiteDatabase writableDb) {
+    public static ServiceStatus updateGroupIds(List<GroupItem> groupList, List<Long> tempIdList,SQLiteDatabase readableDb, SQLiteDatabase writableDb) {
+    	tempIdList.clear();
+    	Cursor c = null;
         try {
         	writableDb.beginTransaction();
         	String[] whereArgs = new String[1];
@@ -425,13 +427,16 @@ public abstract class GroupsTable {
                     DatabaseHelper.trace(true, "GroupsTable.updateGroupList() mName["
                             + grp.mName + "]");
                 }
-        		/*whereArgs[0] = Long.toString(grp.mId);
-        		if(writableDb.update(TABLE_NAME, fillUpdateData(grp), Field.SERVERGROUPID.toString(), whereArgs) < 0){
-        			LogUtils.logE("GroupsTable.addGroupList() Unable to update group - mName["
-                            + grp.mName + "");
-                    writableDb.endTransaction();
-                    return ServiceStatus.ERROR_DATABASE_CORRUPT;
-        		}*/
+        		//Get the existing temporary id and store it in the list
+        		String query = "SELECT " + Field.SERVERGROUPID + " FROM " + TABLE_NAME +" WHERE "+Field.NAME+"='"+grp.mName+"'";
+                c = readableDb.rawQuery(query, null);
+                c.moveToFirst();
+                if(c != null && c.getCount()>0){
+                	LogUtils.logD("Temp id col:"+c.getColumnIndex(Field.SERVERGROUPID.toString())+" Temp id:"+c.getLong(c.getColumnIndex(Field.SERVERGROUPID.toString())) + " Group:"+grp.mName);
+                	tempIdList.add(c.getLong(0));
+                }else{
+                	LogUtils.logE("No temp id found for "+ grp.mName);
+                }
         		writableDb.execSQL("UPDATE "+TABLE_NAME+" SET "+Field.SERVERGROUPID+"='"+grp.mId+"' WHERE "+Field.NAME+"='"+grp.mName+"'");
         	}
             writableDb.setTransactionSuccessful();
@@ -719,4 +724,31 @@ public abstract class GroupsTable {
 
         return ServiceStatus.SUCCESS;
     }
+    
+    /**
+     * Searches the database for the given group
+     * 
+     * @param groupName Name of a group to search
+     * @param readableDb Readable SQLite database
+     * @return SUCCESS or a suitable error
+     */
+    /*public static boolean isGroupAlreadyPresent(String groupName,
+            SQLiteDatabase readableDb) {
+        DatabaseHelper.trace(false, "GroupsTable.isGroupAlreadyPresent()");
+        Cursor c = null;
+        try {
+            String query = "SELECT " + getFullQueryList() + " FROM " + TABLE_NAME + " WHERE "+ Field.NAME + "='" + groupName+"'";
+            c = readableDb.rawQuery(query, null);
+            while (c.moveToNext()) {
+                groupList.add(getQueryData(c));
+            }
+        } catch (SQLiteException e) {
+            LogUtils.logE("GroupsTable.fetchGroupList() Exception - Unable to fetch group list", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        } finally {
+            CloseUtils.close(c);
+            c = null;
+        }
+        return ServiceStatus.SUCCESS;
+    }*/
 }

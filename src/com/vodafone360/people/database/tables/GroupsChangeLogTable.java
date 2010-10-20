@@ -166,6 +166,8 @@ public class GroupsChangeLogTable {
 		if (!c.isNull(GROUPID)) {
 			if(c.getLong(GROUPID) > 50)
 				group.mId = c.getLong(GROUPID);
+			else
+				group.mId = null;
 		}
 		if (!c.isNull(NAME)) {
             group.mName = c.getString(NAME);
@@ -329,7 +331,7 @@ public class GroupsChangeLogTable {
     }
     
     /**
-     * Adds list of groups to the table
+     * Adds list of groups to delete to the change log table
      * 
      * @param groupList The list to add
      * @param writableDb Writable SQLite database
@@ -365,6 +367,8 @@ public class GroupsChangeLogTable {
         }
         return ServiceStatus.SUCCESS;
     }
+    
+    
     
     /**
      * Removes all groups from the table. The
@@ -514,6 +518,32 @@ public class GroupsChangeLogTable {
 		}
 		return ServiceStatus.SUCCESS;
 	}
+	
+	
+	/**
+     * Delete a group from the change log table
+     * @param groupItem The group to delete
+     * @param writableDb Writable SQLite database
+     * @return SUCCESS or a suitable error code
+     */
+    public static ServiceStatus removeGroupFromTable(GroupItem groupItem, SQLiteDatabase writableDb) {
+    	LogUtils.logD("GroupsChangeLogTable.removeGroupFromTable");
+        try {
+            writableDb.beginTransaction();
+            	LogUtils.logD("Deleting group:"+groupItem.toString());
+            	writableDb.execSQL("DELETE FROM "+TABLE_NAME+" WHERE "+Field.NAME+"='"+groupItem.mName+"'");
+                
+            writableDb.setTransactionSuccessful();
+        } catch (SQLException e) {
+            LogUtils.logE("GroupsTable.removeGroupFromTable() SQLException - Unable to delete group", e);
+            return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        } finally {
+            if (writableDb != null) {
+                writableDb.endTransaction();
+            }
+        }
+        return ServiceStatus.SUCCESS;
+    }
     
 
 }

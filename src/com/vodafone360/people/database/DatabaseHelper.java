@@ -140,7 +140,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /**
      * Variable for temporary Id's for newly added groups
      */
-    private static Long mTempGroupId = -1L;
+    private static Long mTempGroupId = 1L;
     
     /**
      * Timer to implement a wait before sending database change events to the UI in
@@ -227,7 +227,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ACTIVITIES,
         ME_PROFILE,
         ME_PROFILE_PRESENCE_TEXT,
-        USER_GROUP
+        USER_GROUP,
+        COMMS_ERROR
     }
 
     /***
@@ -2837,13 +2838,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	 * @see #addTimelineEvents(ArrayList, boolean)
 	 */
 	public ServiceStatus addGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
-		
+		LogUtils.logD("DatabaseHelper.addGroup");
 		//ServiceStatus mStatus = GroupsChangeLogTable.addGroup(group, contactList, writableDb);
 		group.mId = mTempGroupId;
-		mTempGroupId--;
-		if(mTempGroupId < -50){
-			mTempGroupId = -1L;
-		}
+		mTempGroupId++;
+		/*if(mTempGroupId > 50){
+			mTempGroupId = 1L;
+		}*/
 		group.mDisplayOrder = (GroupsTable
 				.getGroupCursor(getReadableDatabase())
 				.getCount());
@@ -2853,7 +2854,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		ServiceStatus mStatus = GroupsTable.addGroupList(groupList, writableDb);
 		LogUtils.logD("Group local id:"+group.mLocalGroupId);
 		if (mStatus == ServiceStatus.SUCCESS) {
-			group.mId = null;
 			GroupsChangeLogTable.addGroup(group, contactList, writableDb);
 			if (group.mLocalGroupId < 0) {
 				LogUtils
@@ -2961,21 +2961,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
     
     /**
-	 * Add a user defined group to the GroupTableNew.
+	 * Get groups contacts count
 	 * 
-	 * @param activityList contains the list of activity item
+	 * @param group Id of the group
 	 * @return SUCCESS or a suitable error code
 	 * @see #deleteActivities(Integer)
 	 * @see #addTimelineEvents(ArrayList, boolean)
-	 *//*
-	public ServiceStatus addGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
-		ServiceStatus mStatus = GroupsChangeLogTable.addGroup(group, contactList, writableDb);
-		List<GroupItem> groupList = new ArrayList<GroupItem>();
-		groupList.add(group);
-		//mStatus = GroupsTable.addGroupList(groupList, writableDb);
-		fireDatabaseChangedEvent(DatabaseChangeType.USER_GROUP, true);
-		return mStatus;
-	}*/
+	 */
+	public static int getGroupContactCount(GroupItem group, SQLiteDatabase readableDb) {
+		List<Long> contIds = new ArrayList<Long>();
+		contIds.clear();
+		ContactGroupsTable.fetchGroupContacts(group.mId,
+				contIds, readableDb);
+		return contIds.size();
+	}
 
 }
 
