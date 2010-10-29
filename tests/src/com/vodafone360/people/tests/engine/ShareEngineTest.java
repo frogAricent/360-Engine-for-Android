@@ -17,7 +17,6 @@ import java.util.List;
 import android.app.Instrumentation;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.vodafone360.people.MainApplication;
@@ -25,7 +24,9 @@ import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.ListOfLong;
 import com.vodafone360.people.datatypes.ServerError;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
+import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.engine.share.ShareEngine;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.agent.NetworkAgent;
@@ -72,6 +73,8 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	private MainApplication mApplication = null;
 	private ShareState mState = ShareState.IDLE;
 	TestModule mTestModule = new TestModule();
+	EngineManager mEngineManager = null;
+	LoginEngine mLoginEngine = null;
 
 
 	/**
@@ -85,13 +88,19 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		mEngineTester = new EngineTestFramework(this);
+		mEng = new ShareEngine(mEngineTester);
+
 		mApplication = (MainApplication) Instrumentation.newApplication(
 				MainApplication.class, getInstrumentation().getTargetContext());
-		mApplication.onCreate();
-		mEngineTester = new EngineTestFramework(this);
-	    mEng = new ShareEngine(mEngineTester);
-	    mEngineTester.setEngine(mEng);
-	    mState = ShareState.IDLE;
+		
+		mEngineTester.setEngine(mEng);
+		mState = ShareState.IDLE;
+	        
+		mEngineManager= EngineManager.createEngineManagerForTest(null ,mEngineTester);
+        mEngineManager.addEngineForTest(mEng);
+                     
+        mEng.setTestMode(true);
 	}
 
 	/**
@@ -143,9 +152,7 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Takes to long
 	public void testShareAlbum() {
-		boolean testPass = true;
 		mState = ShareState.SHARING_ALBUM;
 		Long groupId = null;
     	EntityKey entityKey = new EntityKey();
@@ -158,14 +165,11 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 		try {
 			mEng.addUiShareAlbum(groupId, entityKey);
 		} catch (Exception e) {
-			testPass = false;
+			e.printStackTrace();
 		}
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
-		 LogUtils.logI("**** test Share Album Test (SUCCESS) ****\n");
+		LogUtils.logI("**** test Share Album Test (SUCCESS) ****\n");
 	}
 
 
@@ -178,15 +182,16 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Breaks tests.
 	public void testShareAlbumFail() {
 		mState = ShareState.SHARING_ALBUM_FAIL;
-		String grpName = null;
+		Long grpId =  new Long(1L);
+		EntityKey entityKey = new EntityKey();
+		entityKey.setEntityId(new Long(1L));
+    	entityKey.setUserId(null);
+    	entityKey.setEntityType("CONTENT");
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		
-		mEng.addUiShareAlbum(null, null);
-
-		// mEng.run();
+		mEng.addUiShareAlbum(grpId, entityKey);
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 		Object data = mEngineTester.data();
@@ -203,29 +208,23 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Takes to long
 	public void testGetAlbumsSharedWith() {
-		boolean testPass = true;
+		
 		mState = ShareState.GETTING_ALBUM_SHARED_WITH;
 		EntityKey entityKey = new EntityKey();
     	entityKey.setEntityId(new Long(1124934));
     	entityKey.setUserId(null);
-    	entityKey.setEntityType("album");
-
+    	entityKey.setEntityType("CONTENT");
+    	
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		try {
-		
 			mEng.addUiSharedWith(entityKey);
 		} catch (Exception e) {
-			testPass = false;
+			e.printStackTrace();
 		}
-
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
-		 LogUtils.logI("**** test getting all the groups for shared albums (SUCCESS) ****\n");
+		LogUtils.logI("**** test getting all the groups for shared albums (SUCCESS) ****\n");
 	}
 
 
@@ -238,13 +237,11 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Breaks tests.
 	public void testGetAlbumsSharedWithFail() {
 		mState = ShareState.GETTING_ALBUM_SHARED_WITH_FAIL;
 		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiSharedWith(null);
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 
@@ -260,10 +257,9 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 * @return : null
 	 ******************************************************************* 
 	 */
+
 	@MediumTest
-	@Suppress // Takes to long
 	public void testAllowGroup() {
-		boolean testPass = true;
 		mState = ShareState.ALLOWING_GROUP;
 		Long grpId = null;
     	EntityKey entityKey = new EntityKey();
@@ -276,13 +272,11 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 		try {
 			mEng.addUiAllowGroup(grpId, entityKey);
 		} catch (Exception e) {
-			testPass = false;
+			e.printStackTrace();
 		}
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		 LogUtils.logI("**** test allow group(SUCCESS) ****\n");
 	}
 
@@ -294,12 +288,10 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 * @return : null
 	 ******************************************************************* 
 	 */
+
 	@MediumTest
-	@Suppress // Breaks tests.
 	public void testAllowGroupFail() {
 		mState = ShareState.ALLOWING_GROUP_FAIL;
-		String grpName = null;
-
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiAllowGroup(null, null);
 		// mEng.run();
@@ -317,12 +309,11 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 * @return : null
 	 ******************************************************************* 
 	 */
+
 	@MediumTest
-	@Suppress // Takes to long
 	public void testDenyGroup() {
-		boolean testPass = true;
 		mState = ShareState.DENYING_GROUP;
-		Long groupId = null;
+		Long groupId = new Long(1245672);
     	EntityKey entityKey = new EntityKey();
     	entityKey.setEntityId(new Long(1096489));
     	entityKey.setUserId(null);
@@ -333,13 +324,11 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 		try {
 			mEng.addUiDenyGroup(groupId, entityKey);
 		} catch (Exception e) {
-			testPass = false;
+			e.printStackTrace();
 		}
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Deny group (SUCCESS) ****\n");
 	}
 
@@ -352,9 +341,9 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 	 * @return : null
 	 ******************************************************************* 
 	 */
+
 	@MediumTest
-	@Suppress // Breaks tests.
-	public void testSetPrivacySettingsFail() {
+	public void testSetDenyGroupFail() {
 		mState = ShareState.DENYING_GROUP_FAIL;
 		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
@@ -363,11 +352,8 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 		mEng.addUiDenyGroup(null,null);
 		}catch(Exception e)
 		{
-		 e.printStackTrace();
-			
+			e.printStackTrace();
 		}
-		
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 		Object data = mEngineTester.data();
@@ -391,33 +377,34 @@ public class ShareEngineTest extends InstrumentationTestCase implements
 			LogUtils.logD("TAG ShareEngineTest.reportBackToEngine");
 			ListOfLong groupIds = new ListOfLong();
 			data.add(groupIds);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.SHARE_ALBUM_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.SHARE_ALBUM_RESPONSE.ordinal()));
 			LogUtils.logD("TAG GroupsEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
-			
-		case SHARING_ALBUM_FAIL:
 		case ALLOWING_GROUP_FAIL:
 		case DENYING_GROUP_FAIL:
-			err.errorDescription = "Fail";
-            data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
-            mEng.onCommsInMessage();
-            break;
-
+		case SHARING_ALBUM_FAIL:
+			err.errorDescription = "Wrong Input Parameters";
+			data.add(err);
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId,
+					data, engine, DecodedResponse.ResponseType.SERVER_ERROR
+							.ordinal()));
+			mEng.onCommsInMessage();
+             break;
 		case GETTING_ALBUM_SHARED_WITH:
 			LogUtils.logD("TAG ShareEngineTest.reportBackToEngine");
 			ListOfLong groupId = new ListOfLong();
 			data.add(groupId);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_GROUPS_SHARED_WITH_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_GROUPS_SHARED_WITH_RESPONSE.ordinal()));
 			LogUtils.logD("TAG GroupsEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
+
 			
 		case GETTING_ALBUM_SHARED_WITH_FAIL:
 			err.errorDescription = "Wrong Input Parameters";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
 			break;
 		

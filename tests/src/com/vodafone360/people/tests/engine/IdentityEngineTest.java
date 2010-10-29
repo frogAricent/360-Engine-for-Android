@@ -27,21 +27,28 @@ package com.vodafone360.people.tests.engine;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
+import android.app.Instrumentation;
 import android.os.Bundle;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import com.vodafone360.people.MainApplication;
 import com.vodafone360.people.datatypes.BaseDataType;
+import com.vodafone360.people.datatypes.IdentitiesTextResponse;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.IdentityCapability;
+import com.vodafone360.people.datatypes.IdentityText;
 import com.vodafone360.people.datatypes.ServerError;
 import com.vodafone360.people.datatypes.StatusMsg;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.engine.identities.IdentityEngine;
+import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.service.ServiceStatus;
 import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.io.ResponseQueue;
@@ -54,7 +61,10 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
      * States for test harness
      */
     enum IdentityTestState {
-        IDLE, FETCH_IDENTITIES, GET_MY_IDENTITIES, FETCH_IDENTITIES_FAIL, FETCH_IDENTITIES_POPULATED, GET_CHATABLE_IDENTITIES, SET_IDENTITY_CAPABILTY, VALIDATE_ID_CREDENTIALS_SUCCESS, VALIDATE_ID_CREDENTIALS_FAIL, GET_NEXT_RUNTIME
+        IDLE, FETCH_IDENTITIES, GET_MY_IDENTITIES, FETCH_IDENTITIES_FAIL, GET_IDENTITY_TEXT_SUCCESS,
+        GET_IDENTITY_TEXT_FAILURE, FETCH_IDENTITIES_POPULATED, GET_CHATABLE_IDENTITIES, SET_IDENTITY_CAPABILTY,
+        VALIDATE_ID_CREDENTIALS_SUCCESS, VALIDATE_ID_CREDENTIALS_FAIL,DELETE_IDENTITIES,GET_NEXT_RUNTIME
+        
     }
 
     EngineTestFramework mEngineTester = null;
@@ -62,20 +72,34 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
     IdentityEngine mEng = null;
 
     IdentityTestState mState = IdentityTestState.IDLE;
+    
+    EngineManager mEngineManager = null;
+    LoginEngine mLoginEngine = null;
+    MainApplication mApplication = null;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        
+        mApplication = (MainApplication)Instrumentation.newApplication(MainApplication.class,
+                getInstrumentation().getTargetContext());
+        mApplication.onCreate();
+
         mEngineTester = new EngineTestFramework(this);
         mEng = new IdentityEngine(mEngineTester);
         mEngineTester.setEngine(mEng);
         mState = IdentityTestState.IDLE;
+        
+        mEngineManager = EngineManager.createEngineManagerForTest(null ,mEngineTester);
+        mEngineManager.addEngineForTest(mEng);
+        
+        mEng.setTestMode(true);
     }
 
     @Override
     protected void tearDown() throws Exception {
-
-        // stop our dummy thread?
+    	
+    	// stop our dummy thread?
         mEngineTester.stopEventThread();
         mEngineTester = null;
         mEng = null;
@@ -84,7 +108,6 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
         super.tearDown();
     }
 
-    @Suppress // Takes too long
     @MediumTest
     public void testFetchIdentities() {
 
@@ -106,9 +129,8 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
         }
 
     }
-
+  
     @MediumTest
-    @Suppress // Takes too long.
     public void testAddUiGetMyIdentities() {
         mState = IdentityTestState.GET_MY_IDENTITIES;
 
@@ -129,7 +151,6 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
     }
 
     @MediumTest
-    @Suppress // Takes to long
     public void testFetchIdentitiesFail() {
         mState = IdentityTestState.FETCH_IDENTITIES_FAIL;
 
@@ -144,7 +165,6 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
     }
 
     @MediumTest
-    @Suppress // Breaks tests.
     public void testFetchIdentitiesPopulated() {
         mState = IdentityTestState.FETCH_IDENTITIES_POPULATED;
 
@@ -158,7 +178,6 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
     }
 
     @MediumTest
-    @Suppress // Breaks tests.
     public void testSetIdentityCapability() {
         mState = IdentityTestState.SET_IDENTITY_CAPABILTY;
 
@@ -182,9 +201,8 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
             throw (new RuntimeException("Expected identity list with 1 item"));
         }
     }
-
+    
     @MediumTest
-    @Suppress // Breaks tests.
     public void testValidateIDCredentialsSuccess() {
         mState = IdentityTestState.VALIDATE_ID_CREDENTIALS_SUCCESS;
 
@@ -196,13 +214,13 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
         assertTrue(data != null);
     }
 
-    @MediumTest
-    @Suppress // Breaks tests.
-    public void testGetMyChatableIdentities() {
-        mState = IdentityTestState.GET_CHATABLE_IDENTITIES;
-
+  public void testGetIdenityTextSuccess() {
+    	
+        mState = IdentityTestState.GET_IDENTITY_TEXT_SUCCESS;
+        String network = "facebook.com";
         NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-        mEng.getMy360AndThirdPartyChattableIdentities();
+        // AA mEng.addUiSetIdentityCapabilityStatus(network, identityId, fbund);
+        mEng.addUiGetIdentitiesTextReq(network);
         ServiceStatus status = mEngineTester.waitForEvent();
         assertEquals(ServiceStatus.SUCCESS, status);
 
@@ -210,8 +228,27 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
         assertTrue(data != null);
     }
 
+
     @MediumTest
-    @Suppress // Breaks tests.
+    public void testGetMyChatableIdentities() {
+        mState = IdentityTestState.GET_CHATABLE_IDENTITIES;
+
+        NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
+        mEng.getMy360AndThirdPartyChattableIdentities();
+        
+        ServiceStatus status = mEngineTester.waitForEvent();
+        assertEquals(ServiceStatus.SUCCESS, status);
+
+        /*Object data = mEngineTester.data();
+        assertTrue(data != null);*/
+        
+        ArrayList<Identity> chatableIdentities = mEng.getMy360AndThirdPartyChattableIdentities();
+    	assertTrue(chatableIdentities != null);
+    	assertTrue(chatableIdentities.size() == 1);
+    }
+
+ 
+    @MediumTest
     public void testValidateIDCredentialsFail() {
         mState = IdentityTestState.VALIDATE_ID_CREDENTIALS_FAIL;
 
@@ -223,6 +260,20 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
         assertFalse(ServiceStatus.SUCCESS == status);
         Object data = mEngineTester.data();
         assertTrue(data == null);
+    }
+    
+    @MediumTest
+    public void testGetIdenityTextFailure() {
+        mState = IdentityTestState.GET_IDENTITY_TEXT_FAILURE;
+        String network = null;
+        NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
+        mEng.addUiGetIdentitiesTextReq(network);
+        ServiceStatus status = mEngineTester.waitForEvent();
+        assertFalse(ServiceStatus.SUCCESS == status);
+        
+        Object data = mEngineTester.data();
+       	assertNull(data);
+
     }
 
     @MediumTest
@@ -242,25 +293,32 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
                 break;
             case FETCH_IDENTITIES:
                 Log.d("TAG", "IdentityEngineTest.reportBackToEngine FETCH ids");
-                Identity id = new Identity();
-                data.add(id);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
+                Identity id = new Identity(BaseDataType.MY_IDENTITY_DATA_TYPE);
+                Hashtable<String, Object> hash = new Hashtable<String, Object>();
+        		hash.put("name", "Google");
+                Identity newId = id.createFromHashtable(hash);
+                data.add(newId);
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
                 Log.d("TAG", "IdentityEngineTest.reportBackToEngine add to Q");
+                
                 mEng.onCommsInMessage();
                 break;
             case GET_MY_IDENTITIES:
                 Log.d("TAG", "IdentityEngineTest.reportBackToEngine Get ids");
-                Identity myId = new Identity();
-                data.add(myId);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
-                Log.d("TAG", "IdentityEngineTest.reportBackToEngine add to Q");
+                Identity myId = new Identity(BaseDataType.MY_IDENTITY_DATA_TYPE);
+                Hashtable<String, Object> hash1 = new Hashtable<String, Object>();
+        		hash1.put("name", "Google");
+                Identity newId1 = myId.createFromHashtable(hash1);
+                data.add(newId1);
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
+                Log.d("TAG", "IdentityEngineTest.reportBackToEngine add to Q "+mEng);
                 mEng.onCommsInMessage();
                 break;
             case FETCH_IDENTITIES_FAIL:
                 ServerError err = new ServerError("Catastrophe");
                 err.errorDescription = "Fail";
                 data.add(err);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
                 mEng.onCommsInMessage();
                 break;
             case SET_IDENTITY_CAPABILTY:
@@ -269,7 +327,7 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
                 msg.mDryRun = false;
                 msg.mStatus = true;
                 data.add(msg);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SET_IDENTITY_CAPABILITY_RESPONSE.ordinal()));
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SET_IDENTITY_CAPABILITY_RESPONSE.ordinal()));
                 mEng.onCommsInMessage();
                 break;
             case VALIDATE_ID_CREDENTIALS_SUCCESS:
@@ -278,21 +336,48 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
                 msg2.mDryRun = false;
                 msg2.mStatus = true;
                 data.add(msg2);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.VALIDATE_IDENTITY_CREDENTIALS_RESPONSE.ordinal()));
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.VALIDATE_IDENTITY_CREDENTIALS_RESPONSE.ordinal()));
                 mEng.onCommsInMessage();
                 break;
+            case GET_IDENTITY_TEXT_SUCCESS:
+            	IdentitiesTextResponse textResponse = new IdentitiesTextResponse();
+            	
+            	List<IdentityText> identityTextList = new ArrayList<IdentityText>();
+            	IdentityText identityText = new IdentityText();
+            	identityText.mNetwork = "facebook";
+            	identityText.mText = "Terms and condition";
+            	identityTextList.add(identityText);
+            	textResponse.identityTextList = identityTextList;
+            	textResponse.items = 1;
+            	textResponse.updated = 0L;
+            	
+                data.add(textResponse);
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_IDENTITIES_TEXT.ordinal()));
+                mEng.onCommsInMessage();
+            	break;
+
             case VALIDATE_ID_CREDENTIALS_FAIL:
                 ServerError err2 = new ServerError("Catastrophe");
                 err2.errorDescription = "Fail";
                 data.add(err2);
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
                 mEng.onCommsInMessage();
                 break;
             case GET_NEXT_RUNTIME:
                 break;
+                
+            case GET_IDENTITY_TEXT_FAILURE:
+            	ServerError err3 = new ServerError("Catastrophe");
+            	err3.errorDescription = "Fail";
+                data.add(err3);
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+                mEng.onCommsInMessage();
+                
+                break;
+
             case GET_CHATABLE_IDENTITIES:
             case FETCH_IDENTITIES_POPULATED:
-                Identity id2 = new Identity();
+                Identity id2 = new Identity(BaseDataType.AVAILABLE_IDENTITY_DATA_TYPE);
                 id2.mActive = true;
                 id2.mAuthType = "auth";
                 List<String> clist = new ArrayList<String>();
@@ -333,7 +418,7 @@ public class IdentityEngineTest extends InstrumentationTestCase implements
                 id2.mCapabilities = capList;
                 data.add(id2);
 
-                respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
+                respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.GET_AVAILABLE_IDENTITIES_RESPONSE.ordinal()));
                 Log.d("TAG", "IdentityEngineTest.reportBackToEngine add to Q");
                 mEng.onCommsInMessage();
                 break;

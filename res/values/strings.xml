@@ -557,7 +557,7 @@
 
 	<!-- .ui.startup.login.LoginAccountDetailsActivity -->
 	<string name="text_login">Login</string>
-	<string name="forgot_credentials">Forgot credentials</string> 
+	<string name="forgot_credentials">Retrieve credentials</string> 
 	<string name="forgot_credentials_info">Please go to Vodafone 360 on the web to retrieve your credentials\n</string>
 	<string name="forgot_credentials_info_web_link">http://www.vodafone360.com</string>
 	<string name="forgot_credentials_info_web_link_text"><u>Vodafone 360 People</u></string>

@@ -64,6 +64,8 @@ public class CommentsEngine extends BaseEngine {
 	public static final String GETTING_COMMENT = "getting_comment";
 
 	public static final String UPDATING_COMMENT = "updating_comment";
+	
+	public boolean mJUnitTestMode = false ;
 
 	private ArrayList<Comment> mComment = new ArrayList<Comment>();
 
@@ -513,7 +515,13 @@ public class CommentsEngine extends BaseEngine {
 			break;
 		default: // do nothing.
 			break;
-		}
-		
+		}	
 	}
+	 /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }	
 }

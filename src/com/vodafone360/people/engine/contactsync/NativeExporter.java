@@ -134,6 +134,7 @@ public class NativeExporter {
             if (accounts != null) {
                 
                 mAccount = accounts[0];
+
             }
         }
     }
@@ -267,7 +268,7 @@ public class NativeExporter {
             
             case ContactChange.TYPE_ADD_CONTACT:
                 // add the contact on Native side
-                
+
                 //the account can be null (theoretically)
                 if (mAccount != null) {
                     nativeResponse = mNativeContactsApi.addContact(mAccount, changes);

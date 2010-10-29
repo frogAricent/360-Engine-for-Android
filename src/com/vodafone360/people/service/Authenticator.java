@@ -52,7 +52,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
      * regarding only one 360 People account being supported.
      */
     public static final String ACTION_ONE_ACCOUNT_ONLY_INTENT = 
-        "com.vodafone360.people.android.account.ONE_ONLY";
+        "com.tesla.people.android.account.ONE_ONLY";
 
     
     /**
@@ -76,7 +76,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
         // In order to not use the UI package we define the class as a String
         // FIXME: Change this not to depend on the hardcoded String. Maybe use intent filter on StartActivity
         intent.setClassName(mApplication.getApplicationContext(), 
-                "com.vodafone360.people.ui.StartActivity");
+                "com.tesla.people.ui.StartActivity");
         if(NativeContactsApi.getInstance().isPeopleAccountCreated()) {
             intent.setAction(ACTION_ONE_ACCOUNT_ONLY_INTENT);                
         } 

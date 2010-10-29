@@ -37,6 +37,7 @@ import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Content;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.Identity;
+import com.vodafone360.people.datatypes.ItemBlockRequest;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
 import com.vodafone360.people.datatypes.ContactSummary.OnlineStatus;
@@ -602,6 +603,12 @@ public interface IPeopleService {
      * Method to Restore Music
      */
     void musicRestored();
+    
+    /**
+     * Method to get Recommended Tracks for the Widget
+     */
+    void getRecommendedMusicTracks();
+    
     /**
      * Method to retrieve Identities Texts like Terms and conditions etc.
      * The input contains List of Network Ids for which Terms and Condition 
@@ -610,5 +617,13 @@ public interface IPeopleService {
      */
     void getIdentitiesText(String networkList);
 
-
+    /**
+     * Method to get Top 20 Tracks for displaying on to the Widgets
+     */
+	void getTop20MusicTracks();
+	
+	/**
+	 * Method that allows to retrieve a list of itemblocks
+	 */
+	void getItemBlocks(List<ItemBlockRequest> blockrequestlist);
 }

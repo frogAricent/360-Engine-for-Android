@@ -115,7 +115,10 @@ public class Request {
         FRIENDSHIP_REQUEST_RECEIVED,
         DOWNLOADABLE_TRACK,
         DD_FOR_TRACK,
-        GET_IDENTITIES_TEXT
+        GET_IDENTITIES_TEXT,
+        RECOMMENDED_TRACK,
+        TOP_ANONYMOUS_TRACK,
+        GET_ITEM_BLOCK
         // response to external RPG request
     }
 

@@ -470,6 +470,19 @@ public enum ServiceUiRequest {
      */
     GET_IDENTITIES_TEXT,
 
+    /**
+     * Get Recommended Tracks
+     */
+    RECOMMENDED_TRACKS,
+    
+    /**
+     * Get TOP ANONYMOUS TRACKS
+     */
+    TOP_ANONYMOUS_TRACKS,
+    /**
+     * GET ITEM BLOCKS
+     */
+    GET_ITEM_BLOCK,
     /*
      * Do not handle this message.
      */

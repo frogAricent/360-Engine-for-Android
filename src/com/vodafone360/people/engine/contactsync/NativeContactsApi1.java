@@ -406,6 +406,31 @@ public class NativeContactsApi1 extends NativeContactsApi {
     }
 
     /**
+     * @see NativeContactsApi#setSyncAutomatically(boolean)
+     */
+    @Override
+    public void setSyncAutomatically(boolean syncAutomatically) {
+        // Nothing to do
+    }
+
+    /**
+     * @see NativeContactsApi#isKeySupported(int)
+     */
+    @Override
+    public boolean getMasterSyncAutomatically() {
+        // Always true in 1.X
+        return true;
+    }
+    
+    /**
+     * @see NativeContactsApi#setSyncable(boolean)
+     */        
+    @Override
+    public void setSyncable(boolean syncable) {
+        // Nothing to do
+    }
+
+    /**
      * @see NativeContactsApi#isKeySupported(int)
      */
     @Override

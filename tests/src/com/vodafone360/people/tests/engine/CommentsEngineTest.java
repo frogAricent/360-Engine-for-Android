@@ -45,6 +45,7 @@ import com.vodafone360.people.datatypes.CommentListResponse;
 import com.vodafone360.people.datatypes.CommentsResponse;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.ServerError;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.engine.comments.CommentsEngine;
 import com.vodafone360.people.service.ServiceStatus;
@@ -95,6 +96,7 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	private MainApplication mApplication = null;
 	private CommentsState mState = CommentsState.IDLE;
 	private static DatabaseHelper mDatabaseHelper = null;
+	EngineManager mEngineManager = null;
 
 	/**
 	 ******************************************************************  
@@ -112,8 +114,14 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 
 		mApplication = (MainApplication) Instrumentation.newApplication(
 				MainApplication.class, getInstrumentation().getTargetContext());
+		
 		mEngineTester.setEngine(mEng);
 		mState = CommentsState.IDLE;
+		
+		mEngineManager= EngineManager.createEngineManagerForTest(null ,mEngineTester);
+        mEngineManager.addEngineForTest(mEng);
+        
+        mEng.setTestMode(true);
 	}
 
 	/**
@@ -145,11 +153,10 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
     public void testGetNextRuntime() {
         boolean testPass = true;
         mState = CommentsState.GET_NEXT_RUNTIME;
-        long runtime = mEng.getNextRunTime();
+        long runtime = mEng.getNextRunTimeForTest();
         if (runtime != -1) {
             testPass = false;
         }
-
         assertTrue("testGetNextRuntime() failed", testPass);
         LogUtils.logI("**** testGetNextRuntime (SUCCESS) ****\n");
     }
@@ -163,9 +170,7 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Takes to long
 	public void testPostComment() {
-		boolean testPass = true;
 		mState = CommentsState.POST_COMMENT;
 		List<Comment> commentsList = new ArrayList<Comment>();
 		Comment comment = new Comment();
@@ -183,13 +188,10 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 		try {
 			mEng.addUiPostCommentRequest(commentsList);
 		} catch (Exception e) {
-			testPass = false;
+			e.printStackTrace();
 		}
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** testPostCommment (SUCCESS) ****\n");
 	}
 
@@ -202,13 +204,23 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Breaks tests.
 	public void testPostCommentFail() {
 		mState = CommentsState.POST_COMMENT_FAIL;
 
+		List<Comment> commentsList = new ArrayList<Comment>();
+		Comment comment = new Comment();
+		comment.mCommentId = null;
+		comment.mInappropriate = false;
+		comment.mText = "Test Comment On Albums";
+
+		EntityKey entityKey = new EntityKey();
+		entityKey.mEntityId = new Long(0L);
+		entityKey.mEntityType = "album";
+		comment.mEntityKey = null;
+		commentsList.add(comment);
+		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiPostCommentRequest(null);
-		// mEng.run();
+		mEng.addUiPostCommentRequest(commentsList);
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 
@@ -225,29 +237,22 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Takes to long
+ // Takes to long
 	public void testGetComment() {
-		boolean testPass = true;
 		mState = CommentsState.GET_COMMENT;
 		List<EntityKey> entitykeylist = new ArrayList<EntityKey>();
 		EntityKey entityKey = new EntityKey();
 		entityKey.mEntityId = new Long(1101033);
 		entityKey.mEntityType = "album";
-
 		entitykeylist.add(entityKey);
-
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		try {
 			mEng.addUiGetCommentRequest(entitykeylist);
 		} catch (Exception e) {
 			e.printStackTrace();
-			testPass = false;
 		}
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** testGetComments (SUCCESS) ****\n");
 	}
 
@@ -261,16 +266,20 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Breaks tests.
+// Breaks tests.
 	public void testGetCommentFail() {
 		mState = CommentsState.GET_COMMENT_FAIL;
 
+		List<EntityKey> entitykeylist = new ArrayList<EntityKey>();
+		EntityKey entityKey = new EntityKey();
+		entityKey.mEntityId = new Long(0L);
+		entityKey.mEntityType = "album";
+
+		entitykeylist.add(entityKey);
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiGetCommentRequest(null);
-		// mEng.run();
+		mEng.addUiGetCommentRequest(entitykeylist);
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -285,14 +294,10 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Takes to long
 	public void testDeleteComment() {
-		mDatabaseHelper = mApplication.getDatabase();
-		boolean testPass = true;
-
 		mState = CommentsState.DELETE_COMMENT;
 
-		Long ownerId = StateTable.fetchMeProfileId(mDatabaseHelper.getReadableDatabase());
+		Long ownerId = new Long(123456);
 		long[] commentsList = new long[1];
 		commentsList[0] = new Long(122327);
 		Bundle bundle = new Bundle();
@@ -304,13 +309,9 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 			mEng.addUiDeleteCommentRequest(bundle);
 		} catch (Exception e) {
 			e.printStackTrace();
-			testPass = false;
 		}
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** DeleteComment (SUCCESS) ****\n");
 	}
 
@@ -323,16 +324,21 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Breaks tests.
+	// Breaks tests.
 	public void testDeleteCommentFail() {
 		mState = CommentsState.DELETE_COMMENT_FAIL;
 
+		Long ownerId = new Long(0L);
+		long[] commentsList = new long[1];
+		commentsList[0] = new Long(0L);
+		Bundle bundle = new Bundle();
+		bundle.putLongArray("commentidlist", commentsList);
+		bundle.putLong("ownerid", ownerId);
+		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiDeleteCommentRequest(null);
-		// mEng.run();
+		mEng.addUiDeleteCommentRequest(bundle);
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -346,38 +352,29 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Takes to long
+ // Takes to long
 	public void testUpdateComment() {
-		mDatabaseHelper = mApplication.getDatabase();
-		boolean testPass = true;
-
 		mState = CommentsState.UPDATE_COMMENT;
-
 		List<Comment> commentsList = new ArrayList<Comment>();
-    	Comment comment = new Comment();
-    	comment.mCommentId = new Long(122547);
-    	comment.mInappropriate = false;
-    	comment.mText = "Update comment";
-    	
-    	EntityKey entityKey = new EntityKey();
-	    	//entityKey.mEntityId = new Long(1089443);
-    		entityKey.mEntityId = new Long(1101033);
-	    	entityKey.mEntityType = "album";
-	    	comment.mEntityKey = entityKey;
-	    	commentsList.add(comment);
+		Comment comment = new Comment();
+		comment.mCommentId = new Long(122547);
+		comment.mInappropriate = false;
+		comment.mText = "Update comment";
+
+		EntityKey entityKey = new EntityKey();
+		entityKey.mEntityId = new Long(1101033);
+		entityKey.mEntityType = "album";
+		comment.mEntityKey = entityKey;
+		commentsList.add(comment);
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		try {
-			mEng.addUiDeleteCommentRequest(commentsList);
+			mEng.addUiUpdateCommentRequest(commentsList);
 		} catch (Exception e) {
 			e.printStackTrace();
-			testPass = false;
 		}
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** UpdateComment (SUCCESS) ****\n");
 	}
 
@@ -390,16 +387,26 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */	
 	@MediumTest
-	@Suppress // Breaks tests.
+	// Breaks tests.
 	public void testUpdateCommentFail() {
 		mState = CommentsState.UPDATE_COMMENT_FAIL;
 
+		List<Comment> commentsList = new ArrayList<Comment>();
+		Comment comment = new Comment();
+		comment.mCommentId = new Long(0L);
+		comment.mInappropriate = false;
+		comment.mText = "Update comment";
+
+		EntityKey entityKey = new EntityKey();
+		entityKey.mEntityId = new Long(0L);
+		entityKey.mEntityType = "album";
+		comment.mEntityKey = entityKey;
+		commentsList.add(comment);
+		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiDeleteCommentRequest(null);
-		// mEng.run();
+		mEng.addUiUpdateCommentRequest(commentsList);
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -419,35 +426,38 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 		case POST_COMMENT:
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine Post Comment");
 			data.add(mCommentsResponse);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.POST_COMMENTS_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.POST_COMMENTS_RESPONSE.ordinal()));
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
 
 		case POST_COMMENT_FAIL:
-			err.errorDescription = "Fail";
-            data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
-            mEng.onCommsInMessage();
-
+			 ServerError err2 = new ServerError("Catastrophe");
+             err2.errorDescription = "Fail";
+             data.add(err2);
+             respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+             mEng.onCommsInMessage();
+             break;
+             
 		case GET_COMMENT:
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine Get comments");
 			CommentListResponse mComment1 = new CommentListResponse();
 			data.add(mComment1);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_COMMENTS_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_COMMENTS_RESPONSE.ordinal()));
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine add to Q");
-		mEng.onCommsInMessage();
+			mEng.onCommsInMessage();
 			break;
 
 		case GET_COMMENT_FAIL:
 			err.errorDescription = "Fail";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
+            break;
 		case DELETE_COMMENT:
 			Log.d("TAG","CommentsEngineTest.reportBackToEngine Delete comments");
 			data.add(mCommentsResponse);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.DELETE_COMMENTS_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.DELETE_COMMENTS_RESPONSE.ordinal()));
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
@@ -455,12 +465,13 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 		case DELETE_COMMENT_FAIL:
 			err.errorDescription = "Fail";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
+            break;
 		case UPDATE_COMMENT:
 			Log.d("TAG","CommentsEngineTest.reportBackToEngine Delete comments");
 			data.add(mCommentsResponse);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.UPDATE_COMMENTS_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.UPDATE_COMMENTS_RESPONSE.ordinal()));
 			Log.d("TAG", "CommentsEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
@@ -468,10 +479,11 @@ public class CommentsEngineTest extends InstrumentationTestCase implements
 		case UPDATE_COMMENT_FAIL:
 			err.errorDescription = "Fail";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
+            break;
 		default:
-		
+			break;
 		}
 
 	}

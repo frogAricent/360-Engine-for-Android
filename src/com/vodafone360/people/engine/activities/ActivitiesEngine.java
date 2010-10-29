@@ -83,6 +83,8 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
     private static final String FILTER_UPDATED = "f.updated";
 
     private static final String FILTER_GT = ">";
+    
+    public boolean mJUnitTestMode = false;
 
     /** Identifier for filtering against local ids (LIDs) */
     private static final String FILTER_LIDS = "lids";
@@ -861,5 +863,29 @@ public class ActivitiesEngine extends BaseEngine implements IContactSyncObserver
     public void setTimelinesUpdated(boolean timelinesUpdated) {
         this.mTimelinesUpdated = timelinesUpdated;
     }
+    /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }
+    /** Used only by JUnit
+     * Return next run time for ActivitiesEngine. Determined by whether we have
+     * a request we wish to issue, or there is a response that needs processing.
+     */    
+    public long getNextRunTimeForTest() {
+        
+         if (isCommsResponseOutstanding()) {
+             return 0;
+         }
+         if (isUiRequestOutstanding()) {
+             return 0;
+         }
+         if (mRequestActivitiesRequired && checkConnectivity()) {
+             return 0;
+         }
+         return getCurrentTimeout();
 
+     }
 }

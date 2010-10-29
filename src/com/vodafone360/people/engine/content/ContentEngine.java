@@ -135,6 +135,7 @@ public class ContentEngine extends BaseEngine {
 	 */
 	private DatabaseHelper mDbHelper;
 
+	public boolean mJUnitTestMode = false ;
 	/**
 	 * Hashtable to match requests to ContentObjects.
 	 */
@@ -1425,4 +1426,12 @@ public class ContentEngine extends BaseEngine {
 	public boolean isDownloadingContent() {
 		return mState == State.GETTING_CONTENT;
 	}
+	/**
+	 * Sets the test mode flag. Used to bypass dependency with other modules
+	 * while unit testing
+	 */
+	public void setTestMode(boolean mode) {
+		mJUnitTestMode = mode;
+	}
+
 }

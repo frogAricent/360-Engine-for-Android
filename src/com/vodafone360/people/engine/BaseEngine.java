@@ -592,4 +592,11 @@ public abstract class BaseEngine {
     void clearReset() {
         setReset(false);
     }
+    /**
+     * To be used only by JUnit test
+     */
+    public long getNextRunTimeForTest(){
+    	long testRuntime = 0;
+    	return testRuntime;
+    };
 }

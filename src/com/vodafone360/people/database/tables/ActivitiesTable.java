@@ -413,6 +413,8 @@ public abstract class ActivitiesTable {
             SqlUtils.setString(cursor, Field.TITLE.toString());
         activityItem.description =
             SqlUtils.setString(cursor, Field.DESCRIPTION.toString());
+        activityItem.moreinfo =
+            SqlUtils.setString(cursor, Field.MORE_INFO.toString());
         activityItem.previewUrl =
             SqlUtils.setString(cursor, Field.PREVIEW_URL.toString());
         activityItem.store =

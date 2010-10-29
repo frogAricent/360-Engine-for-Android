@@ -41,6 +41,7 @@ import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.LocationNudgeResult;
 import com.vodafone360.people.datatypes.LongGeocodeAddress;
 import com.vodafone360.people.datatypes.ServerError;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.engine.location.LocationEngine;
 import com.vodafone360.people.service.RemoteService;
@@ -84,6 +85,7 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 	private LocationEngine mEng = null;
 	private MainApplication mApplication = null;
 	private LocationState mState = LocationState.IDLE;
+	EngineManager mEngineManager = null;
 
 
 	/**
@@ -102,8 +104,14 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 		mEng = new LocationEngine(mEngineTester);
 		mApplication = (MainApplication) Instrumentation.newApplication(
 				MainApplication.class, getInstrumentation().getTargetContext());
+		
 		mEngineTester.setEngine(mEng);
 		mState = LocationState.IDLE;
+		
+		mEngineManager = EngineManager.createEngineManagerForTest(null ,mEngineTester);
+        mEngineManager.addEngineForTest(mEng);
+        
+        mEng.setTestMode(true);
 	}
 
 
@@ -156,7 +164,7 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Takes to long
+	
 	public void testSendLocationNudge() {
 		boolean testPass = true;
 		mState = LocationState.SEND_LOCATION_NUDGE;
@@ -177,8 +185,6 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 		//mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** testSendLocationNudge (SUCCESS) ****\n");
 	}
 
@@ -192,13 +198,13 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Breaks test
 	public void testSendLocationNudgeFail() {
 		mState = LocationState.SEND_LOCATION_NUDGE_FAIL;
-		Bundle getbundle = null;
+		Bundle getbundle = new Bundle();
+		getbundle.putString("latitude", "");
+		getbundle.putString("longitude", "");
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiSendLocationNudge(getbundle);
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 
@@ -216,7 +222,7 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Takes to long
+	
 	public void testGetGeoCodeInput() {
 		boolean testPass = true;
 		mState = LocationState.GET_GEOCODE_ADDRESS;
@@ -250,16 +256,18 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress // Breaks test
 	public void testGetGeoCodeInputFail() {
 		mState = LocationState.GET_GEOCODE_ADDRESS_FAIL;
-		Bundle getbundle = null;
+		
+		Bundle getbundle = new Bundle();
+		getbundle.putString("countrycode", "");
+		getbundle.putString("cityname", "");
+		
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiGetMyLocation(getbundle);
-	// mEng.run();
+		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -279,14 +287,14 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 			LogUtils.logD("TAG LocationEngineTest.reportBackToEngine Get location nudge");
 			LongGeocodeAddress mGeoCode = new LongGeocodeAddress();
 			data.add(mGeoCode);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.SEND_LOCATION_NUDGE_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.SEND_LOCATION_NUDGE_RESPONSE.ordinal()));
 			mEng.onCommsInMessage();
 			break;
 
 		case GET_GEOCODE_ADDRESS_FAIL:
 			err.errorDescription = "Wrong Input Parameters";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
 			break;
 
@@ -294,7 +302,7 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 			LogUtils.logD("TAG LocationEngineTest.reportBackToEngine Add new Album");
 			LocationNudgeResult mNudge = new LocationNudgeResult();
 			data.add(mNudge);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_LOCATION_RESPONSE.ordinal()));
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,engine,DecodedResponse.ResponseType.GET_LOCATION_RESPONSE.ordinal()));
 			LogUtils.logD("TAG LocationEngineTest.reportBackToEngine add to Q");
 			mEng.onCommsInMessage();
 			break;
@@ -302,7 +310,7 @@ public class LocationEngineTest extends InstrumentationTestCase implements
 		case SEND_LOCATION_NUDGE_FAIL:
 			err.errorDescription = "Wrong Input Parameters";
             data.add(err);
-            respQueue.addToResponseQueue(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+            respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
             mEng.onCommsInMessage();
 			break;
 

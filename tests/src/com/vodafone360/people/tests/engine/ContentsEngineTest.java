@@ -35,7 +35,6 @@ import android.app.Instrumentation;
 import android.os.Bundle;
 import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.vodafone360.people.MainApplication;
@@ -48,6 +47,7 @@ import com.vodafone360.people.datatypes.ContentListResponse;
 import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.ServerError;
+import com.vodafone360.people.engine.EngineManager;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.engine.content.ContentEngine;
 import com.vodafone360.people.service.ServiceStatus;
@@ -79,7 +79,35 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 */
 
 	private enum ContentsState {
-		IDLE, ADDING_ALBUM, ADDING_ALBUM_FAIL, UPDATING_ALBUM, UPDATING_ALBUM_FAIL, DELETING_ALBUM, DELETING_ALBUM_FAIL, GETTING_ALBUM, GETTING_ALBUM_FAIL, PUBLISHING_ALBUM, PUBLISHING_ALBUM_FAIL, ADDING_CONTENT_TO_ALBUM, ADDING_CONTENT_TO_ALBUM_FAIL, DELETING_CONTENT_FROM_ALBUM, DELETING_CONTENT_FROM_ALBUM_FAIL, GETTING_CONTENT, GETTING_CONTENT_FAIL, UPLOADING_CONTENT, UPLOADING_CONTENT_FAIL, UPLOADING_AND_PUBLISHING, UPLOADING_AND_PUBLISHING_FAIL, DOWNLOADING_CONTENT, DOWNLOADING_CONTENT_FAIL, PUBLISHING_CONTENT, PUBLISHING_CONTENT_FAIL, DELETING_CONTENT, DELETING_CONTENT_FAIL, GET_NEXT_RUNTIME
+		IDLE, 
+		ADDING_ALBUM,
+		ADDING_ALBUM_FAIL,
+		UPDATING_ALBUM, 
+		UPDATING_ALBUM_FAIL,
+		DELETING_ALBUM,
+		DELETING_ALBUM_FAIL,
+		GETTING_ALBUM,
+		GETTING_ALBUM_FAIL,
+		PUBLISHING_ALBUM,
+		PUBLISHING_ALBUM_FAIL,
+		ADDING_CONTENT_TO_ALBUM,
+		ADDING_CONTENT_TO_ALBUM_FAIL,
+		DELETING_CONTENT_FROM_ALBUM, 
+		DELETING_CONTENT_FROM_ALBUM_FAIL,
+		GETTING_CONTENT,
+		GETTING_CONTENT_FAIL,
+		UPLOADING_CONTENT,
+		UPLOADING_CONTENT_FAIL,
+		UPLOADING_AND_PUBLISHING, 
+		UPLOADING_AND_PUBLISHING_FAIL,
+		DOWNLOADING_CONTENT,
+		DOWNLOADING_CONTENT_FAIL, 
+		PUBLISHING_CONTENT,
+		PUBLISHING_CONTENT_FAIL,
+		DELETING_CONTENT,
+		DELETING_CONTENT_FAIL,
+		GET_NEXT_RUNTIME,
+		
 	}
 
 	private Object mObjectLock = new Object();
@@ -89,6 +117,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	private ContentEngine mEng = null;
 	private MainApplication mApplication = null;
 	private ContentsState mState = ContentsState.IDLE;
+	EngineManager mEngineManager = null;
 
 	/**
 	 ******************************************************************* 
@@ -108,6 +137,11 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		mEng = new ContentEngine(mEngineTester, mApplication.getDatabase());
 		mEngineTester.setEngine(mEng);
 		mState = ContentsState.IDLE;
+		
+		mEngineManager= EngineManager.createEngineManagerForTest(null ,mEngineTester);
+        mEngineManager.addEngineForTest(mEng);
+                     
+		mEng.setTestMode(true);
 	}
 
 	/**
@@ -160,18 +194,13 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
 	// Takes to long
 	public void testGetAlbums() {
 		mState = ContentsState.GETTING_ALBUM;
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiGetAlbumRequest(null);
-
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** testGetAlbum (SUCCESS) ****\n");
 	}
 
@@ -185,14 +214,13 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Breaks tests.
 	public void testGetAlbumsFail() {
 		mState = ContentsState.GETTING_ALBUM_FAIL;
-		Bundle getbundle = new Bundle();
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiGetAlbumRequest(getbundle); // mEng.run();
+		List<Long> albumList = new ArrayList<Long>();
+		albumList.add(new Long(0L));
+		mEng.addUiGetAlbumRequest(albumList); // mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
 
@@ -209,25 +237,23 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 * ******************************************************************
 	 */
 	@MediumTest
-	@Suppress
-	// Takes to long
 	public void testAddAlbums() {
-		Object data = null;
-		boolean testPass = true;
 		mState = ContentsState.ADDING_ALBUM;
 
 		List<Album> albumlist = new ArrayList<Album>();
 		Album album = new Album();
 		ArrayList<GroupItem> allGroupList = new ArrayList<GroupItem>();
+		
 		GroupItem grpItem = new GroupItem();
 		grpItem.mId = Long.parseLong("10273123");
 		grpItem.mUserId = Long.parseLong("12212916");
 		grpItem.mName = "Friends";
 		grpItem.mImageMimeType = null;
 		grpItem.mColor = null;
-
-		album.mGrouplist = new ArrayList<GroupItem>();
-		album.mGrouplist.add(grpItem);
+		allGroupList.add(grpItem);
+		
+		album.mGrouplist = allGroupList;
+		//album.mGrouplist.add(grpItem);
 		album.mCreated = new Long(System.currentTimeMillis());
 		album.mUpdated = new Long(System.currentTimeMillis());
 		album.mTitle = "Test album";
@@ -240,15 +266,11 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			testPass = false;
 		}
-
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
-
 		assertEquals(ServiceStatus.SUCCESS, status);
-		data = mEngineTester.data();
-		assertTrue(data != null);
+//		data = mEngineTester.data();
+//		assertTrue(data != null);
 	}
 
 	/**
@@ -260,12 +282,9 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Breaks tests.
 	public void testAddAlbumsFail() {
 		mState = ContentsState.ADDING_ALBUM_FAIL;
 		List<Album> albumlist = new ArrayList<Album>();
-
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiAddAlbumRequest(albumlist);
 		// mEng.run();
@@ -284,8 +303,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Takes to long
 	public void testDeleteAlbums() {
 		mState = ContentsState.DELETING_ALBUM;
 		List<Long> mAlbumList = new ArrayList<Long>();
@@ -294,12 +311,9 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiDeleteAlbumRequest(mAlbumList);
 
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
-		LogUtils.logI("+++++++++++++ testDeleteAlbum (SUCCESS)\n");
+		LogUtils.logI("testDeleteAlbum (SUCCESS)\n");
 	}
 
 	/**
@@ -311,21 +325,14 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Breaks tests.
 	public void testDeleteAlbumsFail() {
-
 		mState = ContentsState.DELETING_ALBUM_FAIL;
-
 		List<Long> mAlbumList = new ArrayList<Long>();
-		mAlbumList.add(new Long(null));
-
+		mAlbumList.add(new Long(0L));
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiGetAlbumRequest(mAlbumList);
-		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -339,8 +346,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Takes too long
 	public void testUpdateAlbum() {
 		boolean testPass = true;
 		mState = ContentsState.ADDING_ALBUM;
@@ -374,8 +379,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** testUpdateAlbum (SUCCESS) ****\n");
 	}
 
@@ -388,17 +391,16 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Breaks tests.
 	public void testUpdateAlbumFail() {
+		
 		mState = ContentsState.UPDATING_ALBUM_FAIL;
 		List<Album> albumlist = new ArrayList<Album>();
-
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiUpdateAlbumRequest(albumlist); // mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
-
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
@@ -412,7 +414,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 *******************************************************************
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Takes to long
 	public void testAddContentToAlbum() {
 		mState = ContentsState.ADDING_CONTENT_TO_ALBUM;
@@ -429,8 +431,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Add contents to album (SUCCESS) ****\n");
 	}
 
@@ -444,11 +444,16 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Breaks tests.
 	public void testAddContentToAlbumFail() {
 		mState = ContentsState.ADDING_CONTENT_TO_ALBUM_FAIL;
+		
+		long[] contentIdList = new long[2];
+		contentIdList[0] = 0L;
 		Bundle bundle = new Bundle();
+		bundle.putLongArray("contentids", contentIdList);
+		bundle.putLong("aid", new Long(0));
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiAddContentToAlbumRequest(bundle);
@@ -469,7 +474,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Takes to long
 	public void testDeleteContentFromAlbum() {
 		mState = ContentsState.DELETING_CONTENT_FROM_ALBUM;
@@ -485,8 +490,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Delete contents to album (SUCCESS) ****\n");
 	}
 
@@ -499,11 +502,15 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Breaks tests.
 	public void testDeleteContentFromAlbumFail() {
 		mState = ContentsState.DELETING_CONTENT_FROM_ALBUM_FAIL;
+		long[] contentIdList = new long[1];
+		contentIdList[0] = new Long(0);
 		Bundle bundle = new Bundle();
+		bundle.putLongArray("contentids", contentIdList);
+		bundle.putLong("aid", new Long(0));
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiDeleteContentFromAlbumRequest(bundle);
@@ -524,7 +531,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Takes to long
 	public void testPublishAlbum() {
 		mState = ContentsState.PUBLISHING_ALBUM;
@@ -540,8 +547,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Publish album (SUCCESS) ****\n");
 
 	}
@@ -555,11 +560,15 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Breaks tests.
 	public void testPublishAlbumFail() {
 		mState = ContentsState.PUBLISHING_ALBUM_FAIL;
+		long[] mAlbumList = new long[1];
+		mAlbumList[0] = new Long(0);
 		Bundle bundle = new Bundle();
+		bundle.putLongArray("albumids", mAlbumList);
+		bundle.putString("commid", "facebook.com");
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
 		mEng.addUiPublishAlbumRequest(bundle);
@@ -580,7 +589,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Takes to long
 	public void testAddContent() {
 		mState = ContentsState.UPLOADING_CONTENT;
@@ -607,8 +616,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Add Content (SUCCESS) ****\n");
 
 	}
@@ -622,14 +629,14 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Breaks tests.
 	public void testAddContentFail() {
 		mState = ContentsState.UPLOADING_CONTENT_FAIL;
-		Bundle bundle = new Bundle();
+		//Bundle bundle = new Bundle();
 
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
-		mEng.addUiGetAlbumRequest(bundle);
+		mEng.addUiGetAlbumRequest(null);
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertFalse(ServiceStatus.SUCCESS == status);
@@ -647,8 +654,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 *******************************************************************
 	 */
 	@MediumTest
-	@Suppress
-	// Takes to long
 	public void testGetContent() {
 		mState = ContentsState.GETTING_CONTENT;
 		List<Content> mContentList = new ArrayList<Content>();
@@ -672,8 +677,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Get Contents (SUCCESS) ****\n");
 
 	}
@@ -687,13 +690,21 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Breaks tests.
 	public void testGetContentFail() {
 		mState = ContentsState.GETTING_CONTENT_FAIL;
-		Bundle bundle = new Bundle();
-
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
+		long[] contentList = null;
+		Bundle bundle = new Bundle();
+		bundle.clear();
+		ArrayList<String> getBytes = new ArrayList<String>();
+
+		ArrayList<String> size = new ArrayList<String>();
+
+		bundle.putLongArray("contentidlist", contentList);
+		bundle.putStringArrayList("getbytes", getBytes);
+		bundle.putStringArrayList("size", size);
+
+		
 		mEng.addUiGetContentRequest(bundle);
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
@@ -712,8 +723,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Takes to long
 	public void testDeleteContent() {
 		mState = ContentsState.DELETING_CONTENT;
 		List<Long> mContentList = new ArrayList<Long>();
@@ -725,11 +734,48 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
 		LogUtils.logI("**** test Delete Contents (SUCCESS) ****\n");
 
 	}
+	
+	/**
+	 ******************************************************************* 
+	 * Method to test deleting content(image) from the server
+	 * 
+	 * @param : null
+	 * @return : null
+	 ******************************************************************* 
+	 */
+	@MediumTest
+	public void testUploadContentAndPublish() {
+		mState = ContentsState.UPLOADING_AND_PUBLISHING;
+		List<Content> mContentList = new ArrayList<Content>();
+		Content content = new Content();
+		content.mBytesmime = "image/jpg";
+		try {
+			File file = new File("/data/Sunset.jpg");
+			FileInputStream fis = new FileInputStream(file);
+			int length = fis.available();
+			Log.d("UploadImage", "Length of Byte Array: " + length);
+			byte buffer[] = new byte[length];
+			fis.read(buffer);
+			content.mBytes = buffer;
+			fis.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		mContentList.add(content);
+
+		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
+		mEng.addUiUploadContentAndPublishRequest(mContentList);
+
+		// mEng.run();
+		ServiceStatus status = mEngineTester.waitForEvent();
+		assertEquals(ServiceStatus.SUCCESS, status);
+		LogUtils.logI("**** test Delete Contents (SUCCESS) ****\n");
+
+	}
+
 
 	/**
 	 ******************************************************************* 
@@ -740,7 +786,6 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
 	// Breaks tests.
 	public void testDeleteContentFail() {
 		mState = ContentsState.DELETING_CONTENT_FAIL;
@@ -765,7 +810,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
+	
 	// Takes to long
 	public void testPublishContent() {
 		mState = ContentsState.PUBLISHING_CONTENT;
@@ -781,8 +826,8 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
 		assertEquals(ServiceStatus.SUCCESS, status);
-		Object data = mEngineTester.data();
-		assertTrue(data != null);
+//		Object data = mEngineTester.data();
+//		assertTrue(data != null);
 		LogUtils.logI("**** test Publish Contents (SUCCESS) ****\n");
 
 	}
@@ -796,13 +841,17 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 	 ******************************************************************* 
 	 */
 	@MediumTest
-	@Suppress
-	// Breaks tests.
 	public void testPublishContentFail() {
+		
 		mState = ContentsState.PUBLISHING_CONTENT_FAIL;
+		long[] mContentList = new long[1];
+		mContentList[0] = 0L;
 		Bundle bundle = new Bundle();
-
+		
+		bundle.putLongArray("contentids", mContentList);
+		bundle.putString("commid", "facebook.com");
 		NetworkAgent.setAgentState(NetworkAgent.AgentState.CONNECTED);
+		
 		mEng.addUiPublishContentRequest(bundle);
 		// mEng.run();
 		ServiceStatus status = mEngineTester.waitForEvent();
@@ -811,6 +860,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		Object data = mEngineTester.data();
 		assertNull(data);
 	}
+
 
 	@Override
 	public void reportBackToEngine(int reqId, EngineId engine) {
@@ -828,7 +878,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine FETCH Albums");
 			AlbumListResponse albumListid = new AlbumListResponse();
 			data.add(albumListid);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.GET_ALBUMS_RESPONSE
 							.ordinal()));
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
@@ -836,20 +886,17 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			break;
 
 		case GETTING_ALBUM_FAIL:
-			err.errorDescription = "Fail";
-			data.add(err);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
-							engine, DecodedResponse.ResponseType.SERVER_ERROR
-									.ordinal()));
-			mEng.onCommsInMessage();
-			break;
-
+			 ServerError err2 = new ServerError("Catastrophe");
+             err2.errorDescription = "Fail";
+             data.add(err2);
+             respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data, engine, DecodedResponse.ResponseType.SERVER_ERROR.ordinal()));
+             mEng.onCommsInMessage();
+             break;
+             
 		case ADDING_ALBUM:
-			LogUtils
-					.logD("ContentsEngineTest.reportBackToEngine Add new Album");
+			LogUtils.logD("ContentsEngineTest.reportBackToEngine Add new Album");
 			data.add(albrsp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.ADD_ALBUMS_RESPONSE
 							.ordinal()));
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
@@ -860,7 +907,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -869,7 +916,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case DELETING_ALBUM:
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine Delete Album");
 			data.add(albrsp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.ADD_MY_GROUP_RESPONSE
 							.ordinal()));
 			Log.d("TAG", "ContentsEngineTest.reportBackToEngine add to Q");
@@ -880,7 +927,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -889,7 +936,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case UPDATING_ALBUM:
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine Update Album");
 			data.add(albrsp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.UPDATE_ALBUMS_RESPONSE
 							.ordinal()));
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
@@ -900,7 +947,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -910,7 +957,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Add content to Album");
 			ContentListResponse addContentToAlbumResp = new ContentListResponse();
 			data.add(addContentToAlbumResp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine,
 					DecodedResponse.ResponseType.ADD_CONTENT_TO_ALBUM_RESPONSE
 							.ordinal()));
@@ -922,7 +969,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -932,8 +979,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Delete content from Album");
 			ContentListResponse deleteContentFromAlbumResp = new ContentListResponse();
 			data.add(deleteContentFromAlbumResp);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(
 							reqId,
 							data,
 							engine,
@@ -947,7 +993,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -957,7 +1003,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Publish Album");
 			AlbumResponse publishAlbumResp = new AlbumResponse();
 			data.add(publishAlbumResp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine,
 					DecodedResponse.ResponseType.PUBLISH_ALBUMS_RESPONSE
 							.ordinal()));
@@ -969,7 +1015,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 			err.errorDescription = "Fail";
 			data.add(err);
 			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+					.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -979,7 +1025,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Adding contents");
 			ContentListResponse addContentResp = new ContentListResponse();
 			data.add(addContentResp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.ADD_CONTENT_RESPONSE
 							.ordinal()));
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
@@ -989,8 +1035,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case UPLOADING_CONTENT_FAIL:
 			err.errorDescription = "Fail";
 			data.add(err);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -1000,7 +1045,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Getting contents");
 			ContentResponse mContentResponse = new ContentResponse();
 			data.add(mContentResponse);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine, DecodedResponse.ResponseType.GET_CONTENT_RESPONSE
 							.ordinal()));
 			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
@@ -1010,8 +1055,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case GETTING_CONTENT_FAIL:
 			err.errorDescription = "Fail";
 			data.add(err);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -1021,7 +1065,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Deleting contents");
 			ContentListResponse deleteContentResp = new ContentListResponse();
 			data.add(deleteContentResp);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine,
 					DecodedResponse.ResponseType.DELETE_CONTENT_RESPONSE
 							.ordinal()));
@@ -1032,8 +1076,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case DELETING_CONTENT_FAIL:
 			err.errorDescription = "Fail";
 			data.add(err);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
@@ -1043,7 +1086,7 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 					.logD("ContentsEngineTest.reportBackToEngine Publishing contents");
 			ContentListResponse publishedContent = new ContentListResponse();
 			data.add(publishedContent);
-			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
 					engine,
 					DecodedResponse.ResponseType.PUBLISH_CONTENT_RESPONSE
 							.ordinal()));
@@ -1054,12 +1097,22 @@ public class ContentsEngineTest extends InstrumentationTestCase implements
 		case PUBLISHING_CONTENT_FAIL:
 			err.errorDescription = "Fail";
 			data.add(err);
-			respQueue
-					.addToResponseQueue(new DecodedResponse(reqId, data,
+			respQueue.addToResponseQueue(new DecodedResponse(reqId, data,
 							engine, DecodedResponse.ResponseType.SERVER_ERROR
 									.ordinal()));
 			mEng.onCommsInMessage();
 			break;
+		case UPLOADING_AND_PUBLISHING :
+					LogUtils
+					.logD("ContentsEngineTest.reportBackToEngine Adding contents");
+			ContentListResponse addContentResp1 = new ContentListResponse();
+			data.add(addContentResp1);
+			respQueue.addToResponseQueueFromTest(new DecodedResponse(reqId, data,
+					engine, DecodedResponse.ResponseType.ADD_CONTENT_AND_PUBLISH_RESPONSE
+							.ordinal()));
+			LogUtils.logD("ContentsEngineTest.reportBackToEngine add to Q");
+			mEng.onCommsInMessage();
+	break;
 		default:
 			break;
 		}

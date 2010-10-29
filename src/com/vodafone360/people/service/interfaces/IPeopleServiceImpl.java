@@ -28,12 +28,13 @@ package com.vodafone360.people.service.interfaces;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.facebook.android.fqlmanager.FacebookEventHandler;
+import com.facebook.android.listener.RequestCompleteCallback;
 import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.MainApplication;
 import com.vodafone360.people.datatypes.Album;
@@ -41,6 +42,7 @@ import com.vodafone360.people.datatypes.Comment;
 import com.vodafone360.people.datatypes.Content;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.Identity;
+import com.vodafone360.people.datatypes.ItemBlockRequest;
 import com.vodafone360.people.datatypes.LoginDetails;
 import com.vodafone360.people.datatypes.RegistrationDetails;
 import com.vodafone360.people.datatypes.ContactSummary.OnlineStatus;
@@ -54,9 +56,6 @@ import com.vodafone360.people.service.agent.NetworkAgent;
 import com.vodafone360.people.service.agent.NetworkAgentState;
 import com.vodafone360.people.service.agent.UiAgent;
 import com.vodafone360.people.utils.LogUtils;
-import com.facebook.android.Facebook;
-import com.facebook.android.fqlmanager.FacebookEventHandler;
-import com.facebook.android.listener.RequestCompleteCallback;
 
 
 /***
@@ -749,14 +748,25 @@ public class IPeopleServiceImpl implements IPeopleService, IEngineEventCallback 
 	    **/
 	    @Override
 	    public void musicRestored() {
-	    	System.out.println("IPeopleServiceImpl.musicRestored()");
-	    	
 	    EngineManager.getInstance().getMusicEngine().addUiDownloadableTrackReq();   
-	    //EngineManager.getInstance().getMusicEngine().mobserver.onSyncStart();
 	    }
 
 		@Override
 		public void getIdentitiesText(String networkName) {
 			EngineManager.getInstance().getIdentityEngine().addUiGetIdentitiesTextReq(networkName);
+		}
+
+		@Override
+		public void getRecommendedMusicTracks() {
+			EngineManager.getInstance().getWidgetEngine().addUiRecommendedTrackReq();
+		}
+		@Override
+		public void getTop20MusicTracks() {
+		    EngineManager.getInstance().getWidgetEngine().addUiTopTrackReq();
+		}
+
+		@Override
+		public void getItemBlocks(List<ItemBlockRequest> blockrequestlist) {
+			 EngineManager.getInstance().getShopEngine().addUiGetItemBlocksReq(blockrequestlist);
 		}
 }

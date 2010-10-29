@@ -88,6 +88,8 @@ public class ContactSyncEngine extends BaseEngine implements
 	 * Mutex for thread synchronization
 	 */
 	private final Object mMutex = new Object();
+	
+	public boolean mJUnitTestMode = false ;
 
 	private final UiAgent mUiAgent = mEventCallback.getUiAgent();
 
@@ -2354,4 +2356,11 @@ public class ContactSyncEngine extends BaseEngine implements
 		return true;
 	}
 
+	  /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }
 }

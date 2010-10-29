@@ -253,5 +253,28 @@ abstract public class BaseDataType {
     /**
      * Group id list data type
      */
+    /**
+     * Recommended Music Track Result Datatype
+     */
+    public static final int TRACKS_RESULTS = 56;
+    /**
+     * Recommended Music Track Datatype
+     */
+    public static final int TRACKS = 55;
+    /**
+     * Group Id List Datatype
+     */
     public static final int GROUP_ID_LIST_DATATYPE = 54;
+    /**
+     * Item Block Request Datatype 
+     */
+    public static final int ITEM_BLOCK_REQUEST_DATATYPE = 55;
+    /**
+     *  Item Block Response Datatype 
+     */
+    public static final int ITEM_BLOCK_RESPONSE_DATATYPE = 56;
+    /**
+     * Item Block List Response datatype 
+     */
+    public static final int ITEM_BLOCK_RESPONSE_LIST_DATATYPE = 57;
 }

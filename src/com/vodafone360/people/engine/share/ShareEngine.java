@@ -66,6 +66,8 @@ public class ShareEngine extends BaseEngine {
 	 * mutex for thread synchronization
 	 */
 	private Object mMutex = new Object();
+	
+	public boolean mJUnitTestMode = false ;
 
 	/** Definitions for expected data-types returned from Server. */
 //	private static final String TYPE_SHARE_ALBUM = "ItemList";
@@ -543,5 +545,11 @@ public class ShareEngine extends BaseEngine {
 			LogUtils.logW("default should never happend");
 		}
 	}
-
+	 /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }
 }

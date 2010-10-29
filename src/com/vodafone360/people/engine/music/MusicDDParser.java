@@ -74,9 +74,9 @@ public class MusicDDParser {
 			  DocumentBuilder db = dbf.newDocumentBuilder();
 			  Document doc = db.parse(is);
 			  doc.getDocumentElement().normalize();
-			  System.out.println("Root element " + doc.getDocumentElement().getNodeName());
+//			  System.out.println("Root element " + doc.getDocumentElement().getNodeName());
 			  NodeList nodeLst = doc.getElementsByTagName("mediaObject");
-			  System.out.println("Information of all tracks"+nodeLst.getLength()+" "+nodeLst.item(0).toString());
+//			  System.out.println("Information of all tracks"+nodeLst.getLength()+" "+nodeLst.item(0).toString());
 			  
 			  for (int s = 0; s < nodeLst.getLength(); s++) {
 
@@ -87,7 +87,7 @@ public class MusicDDParser {
 			    	MusicDDObject musicDDObject = new MusicDDObject();
 
 			    	String name = element.getElementsByTagName(NAME).item(0).getChildNodes().item(0).getNodeValue();
-			    	System.out.println("Name: " + name);
+//			    	System.out.println("Name: " + name);
 			    	musicDDObject.setName(name);
 			    	
 			    	String installNotifyURL = element.getElementsByTagName(INSTALL_NOTIFY_URL).item(0).getChildNodes().item(0).getNodeValue();
@@ -129,14 +129,4 @@ public class MusicDDParser {
 		}
 		return listOfDD;
 	}
-	
-	
-	public static void main(String[] args) throws FileNotFoundException {
-		MusicDDParser parser = new MusicDDParser();
-		String ddXML = "c:\\DDXml.xml";
-		InputStream is = new FileInputStream(new File(ddXML));
-//		InputStream bis = new ByteArrayInputStream(ddXML.getBytes());
-		parser.parse(is);
-	}
-
 }

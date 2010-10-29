@@ -64,6 +64,7 @@ public class LocationEngine extends BaseEngine {
      */
     private State mState = State.NOT_INITIALISED;
     
+    public boolean mJUnitTestMode = false ;
     /**
      * mutex for thread synchronization
      */
@@ -304,4 +305,11 @@ public class LocationEngine extends BaseEngine {
 	            processUiQueue();
 	        }
 	}
+	 /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }
 }

@@ -43,7 +43,9 @@ import android.database.sqlite.SQLiteStatement;
 import com.vodafone360.people.Settings;
 import com.vodafone360.people.database.DatabaseHelper;
 import com.vodafone360.people.database.SQLKeys;
+import com.vodafone360.people.database.tables.ContactDetailsTable.Field;
 import com.vodafone360.people.database.tables.ContactsTable.ContactIdInfo;
+import com.vodafone360.people.datatypes.ActivityItem;
 import com.vodafone360.people.datatypes.Contact;
 import com.vodafone360.people.datatypes.ContactDetail;
 import com.vodafone360.people.datatypes.ContactSummary;
@@ -957,6 +959,254 @@ public abstract class ContactSummaryTable {
     
     /**
      * Fetches the number of contacts in a group
+     * LocalId, Displayname, onlinestatus, summaryid from contact summary table
+     * Phone number from Contact details table
+     * latest feed type, time stamp, description
+     * 
+     * @param groupFilterId The server group ID 
+     * @param meProfileId The current me profile Id which should be excluded
+     *            from the returned list.
+     * @param readableDb Readable SQLite database
+     * @return The number of contacts belonging to the group
+     */
+//    private static Cursor fetchContactList(Long groupFilterId, Long meProfileId,
+//            SQLiteDatabase readableDb) {
+//        if (Settings.ENABLED_DATABASE_TRACE) {
+//            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() groupFilterId["
+//                    + groupFilterId + "] meProfileId[" + meProfileId + "]");
+//        }
+//        try {
+//            
+////        	System.out.println("groupFilterId >>:" + groupFilterId);
+//        	
+//            String str1 = "SELECT " 
+//            	
+//            			 //selecting local contact id, display name, online status from 
+//            			 //Contact summary table
+//            			 + TABLE_NAME + "." + Field.LOCALCONTACTID + ", "
+//            			 + Field.DISPLAYNAME + ", "
+//            			 + Field.ONLINESTATUS  + ", " 
+//            			 + Field.SUMMARYID + ", "
+//            			 
+//            			//selecting contact first phone number from contact details table
+//            			 + ContactDetailsTable.TABLE_NAME + "." + ContactDetailsTable.Field.STRINGVAL+ ", "
+//            			 
+//            			//selecting latest feed status from activites table
+//            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + ", "
+//            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TIMESTAMP + ", "
+////            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TITLE + ", "
+//           			  	 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.DESCRIPTION
+//            			 + " FROM " + ContactSummaryTable.TABLE_NAME 
+//            			 
+//            			 //Joining Contact Details Table to get the phone no
+//            			 + " LEFT OUTER JOIN "
+//            			 + ContactDetailsTable.TABLE_NAME 
+//            			 + " ON "
+//            			 + ContactSummaryTable.TABLE_NAME + "."
+//                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+//                         + ContactDetailsTable.TABLE_NAME + "."
+//                         + ContactDetailsTable.Field.LOCALCONTACTID
+//                         + " AND "
+//                         + ContactDetailsTable.TABLE_NAME + "."
+//                         + ContactDetailsTable.Field.KEY + "=4" 
+//                         + " AND "
+//                         + ContactDetailsTable.Field.DETAILLOCALID+"="
+//                         + "(SELECT MIN("+ContactDetailsTable.Field.DETAILLOCALID+") FROM "
+//                         + ContactDetailsTable.TABLE_NAME
+//                         + " WHERE "
+//                         + ContactSummaryTable.TABLE_NAME + "."
+//                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+//                         + ContactDetailsTable.TABLE_NAME + "."
+//                         + ContactDetailsTable.Field.LOCALCONTACTID
+//                         + " AND "
+//                         + ContactDetailsTable.TABLE_NAME + "."
+//                         + ContactDetailsTable.Field.KEY + "=4)"
+//                         
+//                         //Joining Activities Table to get the latest status feed
+//                         + " LEFT OUTER JOIN "
+//                         + ActivitiesTable.TABLE_NAME 
+//            			 + " ON "
+//            			 + ContactSummaryTable.TABLE_NAME + "."
+//                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+//                         + ActivitiesTable.TABLE_NAME + "."
+//                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+//                         + " AND "
+//                         + ActivitiesTable.Field.LOCAL_ACTIVITY_ID+"="
+//                         + "(SELECT MAX("+ActivitiesTable.Field.LOCAL_ACTIVITY_ID+") FROM "
+//                         + ActivitiesTable.TABLE_NAME
+//                         + " WHERE "
+//                         + ContactSummaryTable.TABLE_NAME + "."
+//                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+//                         + ActivitiesTable.TABLE_NAME + "."
+//                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+//                         + " AND "
+//                         + " ( "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_dialed'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_missed'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_received'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_received'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_sent'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_im_conversation'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_received'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_sent'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_received'" + " OR "
+//                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_sent'"
+//                         + "))"
+//                         
+//                         + (groupFilterId == null ?" WHERE ":getGroupConstraint(groupFilterId)+ " AND ") 
+//            			 
+//            			 // where condition for the contact summary table
+//            			 + ContactSummaryTable.TABLE_NAME + "."
+//                         + ContactSummaryTable.Field.LOCALCONTACTID + "<>" + meProfileId
+//                         + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
+//                         ;
+//            
+//            System.out.println("Str query string >>:" + str1);
+//            
+//            return readableDb.rawQuery(str1, null);           
+//
+//        } catch (SQLException e) {
+//            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+//                    + "SQLException - Unable to fetch filtered summary cursor", e);
+//            return null;
+//        }
+//    }
+    
+    /**
+     * Fetches the number of contacts in a group
+     * LocalId, Displayname, onlinestatus, summaryid from contact summary table
+     * Phone number from Contact details table
+     * latest feed type, time stamp, description
+     * 
+     * @param groupFilterId The server group ID 
+     * @param meProfileId The current me profile Id which should be excluded
+     *            from the returned list.
+     * @param readableDb Readable SQLite database
+     * @return The number of contacts belonging to the group
+     */
+    /*private static Cursor fetchContactList(Long groupFilterId, Long meProfileId,String constraint,
+            SQLiteDatabase readableDb) {
+        if (Settings.ENABLED_DATABASE_TRACE) {
+            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactList() groupFilterId["
+                    + groupFilterId + "] meProfileId[" + meProfileId + "]");
+        }
+        try {
+            
+//        	System.out.println("groupFilterId >>:" + groupFilterId);
+        	
+            String str1 = "SELECT " 
+            	
+            			 //selecting local contact id, display name, online status from 
+            			 //Contact summary table
+            			 + TABLE_NAME + "." + Field.LOCALCONTACTID + ", "
+            			 + Field.DISPLAYNAME + ", "
+            			 + Field.ONLINESTATUS  + ", " 
+            			 + Field.SUMMARYID + ", "
+            			 
+            			//selecting contact first phone number from contact details table
+            			 + ContactDetailsTable.TABLE_NAME + "." + ContactDetailsTable.Field.STRINGVAL+ ", "
+            			 
+            			//selecting latest feed status from activites table
+            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + ", "
+            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TIMESTAMP + ", "
+//            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TITLE + ", "
+           			  	 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.DESCRIPTION
+            			 + " FROM " + ContactSummaryTable.TABLE_NAME 
+            			 
+            			 //Joining Contact Details Table to get the phone no
+            			 + " LEFT OUTER JOIN "
+            			 + ContactDetailsTable.TABLE_NAME 
+            			 + " ON "
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.LOCALCONTACTID
+                         + " AND "
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.KEY + "=4" 
+                         + " AND "
+                         + ContactDetailsTable.Field.DETAILLOCALID+"="
+                         + "(SELECT MIN("+ContactDetailsTable.Field.DETAILLOCALID+") FROM "
+                         + ContactDetailsTable.TABLE_NAME
+                         + " WHERE "
+                         + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.LOCALCONTACTID
+                         + " AND "
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.KEY + "=4)"
+                         
+                         //Joining Activities Table to get the latest status feed
+                         + " LEFT OUTER JOIN "
+                         + ActivitiesTable.TABLE_NAME 
+            			 + " ON "
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ActivitiesTable.TABLE_NAME + "."
+                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+                         + " AND "
+                         + ActivitiesTable.Field.LOCAL_ACTIVITY_ID+"="
+                         + "(SELECT MAX("+ActivitiesTable.Field.LOCAL_ACTIVITY_ID+") FROM "
+                         + ActivitiesTable.TABLE_NAME
+                         + " WHERE "
+                         + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ActivitiesTable.TABLE_NAME + "."
+                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+                         + " AND "
+                         + " ( "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_dialed'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_missed'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_sent'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_im_conversation'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_sent'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_sent'"
+                         + "))"
+                         
+                         + (groupFilterId == null ?" WHERE ":getGroupConstraint(groupFilterId)+ " AND ") 
+            			 
+            			 // where condition for the contact summary table
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "<>" + meProfileId
+                         + getConstraint(constraint)
+                         + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
+                         ;
+            
+            System.out.println("Str query string >>:" + str1);
+            
+            return readableDb.rawQuery(str1, null);           
+
+        } catch (SQLException e) {
+            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+                    + "SQLException - Unable to fetch filtered summary cursor", e);
+            return null;
+        }
+    }*/
+    
+    /**
+     * Gets the constraint to be appended to the sql query
+     * @param constraint The constraint that needs to be passed to the sql
+     * @return the string to be appended to sql query for a constraint
+     */
+    
+    private static String getConstraint(String constraint){
+    	if(null == constraint){
+    		return " ";
+    	}
+    	String search = null;
+    	search = " AND "+ContactSummaryTable.Field.DISPLAYNAME + " LIKE " + DatabaseUtils.sqlEscapeString("%" + constraint + "%");
+    	return search;
+    	
+    }
+    
+        
+    /**
+     * Fetches the number of contacts in a group
      * 
      * @param groupFilterId The server group ID 
      * @param meProfileId The current me profile Id which should be excluded
@@ -1011,6 +1261,111 @@ public abstract class ContactSummaryTable {
             return null;
         }
     }
+    
+    //New method
+    
+    /*private static Cursor fetchContactList(CharSequence constraint,Long groupFilterId, Long meProfileId,
+            SQLiteDatabase readableDb) {
+    	
+    	System.out.println("Constraint list query.");
+    		try {
+            
+//        	System.out.println("groupFilterId >>:" + groupFilterId);
+        	
+            String str1 = "SELECT " 
+            	
+            			 //selecting local contact id, display name, online status from 
+            			 //Contact summary table
+            			 + TABLE_NAME + "." + Field.LOCALCONTACTID + ", "
+            			 + Field.DISPLAYNAME + ", "
+            			 + Field.ONLINESTATUS  + ", " 
+            			 + Field.SUMMARYID + ", "
+            			 
+            			//selecting contact first phone number from contact details table
+            			 + ContactDetailsTable.TABLE_NAME + "." + ContactDetailsTable.Field.STRINGVAL+ ", "
+            			 
+            			//selecting latest feed status from activites table
+            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + ", "
+            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TIMESTAMP + ", "
+//            			 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TITLE + ", "
+           			  	 + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.DESCRIPTION
+            			 + " FROM " + ContactSummaryTable.TABLE_NAME 
+            			 
+            			 //Joining Contact Details Table to get the phone no
+            			 + " LEFT OUTER JOIN "
+            			 + ContactDetailsTable.TABLE_NAME 
+            			 + " ON "
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.LOCALCONTACTID
+                         + " AND "
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.KEY + "=4" 
+                         + " AND "
+                         + ContactDetailsTable.Field.DETAILLOCALID+"="
+                         + "(SELECT MIN("+ContactDetailsTable.Field.DETAILLOCALID+") FROM "
+                         + ContactDetailsTable.TABLE_NAME
+                         + " WHERE "
+                         + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.LOCALCONTACTID
+                         + " AND "
+                         + ContactDetailsTable.TABLE_NAME + "."
+                         + ContactDetailsTable.Field.KEY + "=4)"
+                         
+                         //Joining Activities Table to get the latest status feed
+                         + " LEFT OUTER JOIN "
+                         + ActivitiesTable.TABLE_NAME 
+            			 + " ON "
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ActivitiesTable.TABLE_NAME + "."
+                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+                         + " AND "
+                         + ActivitiesTable.Field.LOCAL_ACTIVITY_ID+"="
+                         + "(SELECT MAX("+ActivitiesTable.Field.LOCAL_ACTIVITY_ID+") FROM "
+                         + ActivitiesTable.TABLE_NAME
+                         + " WHERE "
+                         + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "=" 
+                         + ActivitiesTable.TABLE_NAME + "."
+                         + ActivitiesTable.Field.LOCAL_CONTACT_ID
+                         + " AND "
+                         + " ( "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_dialed'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_missed'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='call_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_email_sent'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_im_conversation'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_mms_sent'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_received'" + " OR "
+                         + ActivitiesTable.TABLE_NAME + "." + ActivitiesTable.Field.TYPE + "='message_sms_sent'"
+                         + "))"
+                         
+                         + (groupFilterId == null ?" WHERE ":getGroupConstraint(groupFilterId)+ " AND ") 
+            			 
+            			 // where condition for the contact summary table
+            			 + ContactSummaryTable.TABLE_NAME + "."
+                         + ContactSummaryTable.Field.LOCALCONTACTID + "<>" + meProfileId
+                         + getConstraint(constraint.toString())
+                         + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
+                         ;
+            
+            System.out.println("Str query string >>:" + str1);
+            
+            return readableDb.rawQuery(str1, null);           
+
+        } catch (SQLException e) {
+            LogUtils.logE("ContactSummeryTable.fetchContactList() "
+                    + "SQLException - Unable to fetch filtered summary cursor", e);
+            return null;
+        }
+    	//return null;
+    }*/
     /**
      * Fetches a contact list cursor for a given filter
      * 
@@ -1587,23 +1942,24 @@ public abstract class ContactSummaryTable {
     		try {
     				if(sPresenceMap.size() > 1){
     				Cursor onlineCursor = null , offlineCursor = null, idleCursor = null;
-    				String online = getOnlineWhereClause(OnlineStatus.ONLINE)  ;
+    				String online = getOnlineWhereClause(OnlineStatus.ONLINE, meProfileId)  ;
     				if(online != null)
     					onlineCursor =   readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
     							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
-    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " + online  
-    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " + online
+    							+ " AND " + ContactSummaryTable.Field.SNS + " IN " + "("
     							+  sns + " )" + " ORDER BY " +
     							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
-    				String offline = getOnlineWhereClause(OnlineStatus.OFFLINE)  ;
+    				String offline = getOnlineWhereClause()  ;
     				if(offline != null)
     					offlineCursor =    readableDb.rawQuery("SELECT  " + ContactSummaryTable.getFullQueryList()
     							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
-    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " +  offline
-    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+    							+ ContactSummaryTable.Field.LOCALCONTACTID + " NOT IN " +  offline
+    							+ " AND " + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+    							+ " AND " + ContactSummaryTable.Field.SNS + " IN " + "("
     							+  sns + " )" + " ORDER BY " +
     							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
-    				String idle = getOnlineWhereClause(OnlineStatus.IDLE);  
+    				String idle = getOnlineWhereClause(OnlineStatus.IDLE, meProfileId);  
     				if(idle != null)
     					idleCursor =    readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
     							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
@@ -1637,7 +1993,7 @@ public abstract class ContactSummaryTable {
     	 * online contacts.
     	 * @return The list of contacts in the proper format for the IN list
     	 */
-    	private synchronized static String getOnlineWhereClause(OnlineStatus status) {
+    	private synchronized static String getOnlineWhereClause(OnlineStatus status, Long meProfileID) {
 
     		Set<Entry<Long, Integer>> set = sPresenceMap.entrySet();
     		Iterator<Entry<Long, Integer>> i = set.iterator();
@@ -1646,14 +2002,20 @@ public abstract class ContactSummaryTable {
 
     		while (i.hasNext()) {
     			Entry<Long, Integer> me = (Entry<Long, Integer>) i.next();
-    			Integer value = me.getValue();
-    			if (value != null && (value == status.ordinal())) {
-    				if (isFirst == false) {
-    					inClause = inClause.concat(",");
-    				} else {
-    					isFirst = false;
+    			Long id = me.getKey();
+    			if(id == meProfileID) {
+    				continue;
+    			} else
+    			{
+    				Integer value = me.getValue();
+    				if (value != null && (value == status.ordinal())) {
+    					if (isFirst == false) {
+    						inClause = inClause.concat(",");
+    					} else {
+    						isFirst = false;
+    					}
+    					inClause = inClause.concat(String.valueOf(me.getKey()));
     				}
-    				inClause = inClause.concat(String.valueOf(me.getKey()));
     			}
     		}
     		if (isFirst == true) {

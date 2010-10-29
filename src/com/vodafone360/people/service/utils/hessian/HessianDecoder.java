@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
@@ -53,16 +52,16 @@ import com.vodafone360.people.datatypes.ContentListResponse;
 import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.Conversation;
 import com.vodafone360.people.datatypes.ExternalResponseObject;
-import com.vodafone360.people.datatypes.Group;
-import com.vodafone360.people.datatypes.GroupItem;
 import com.vodafone360.people.datatypes.IdentitiesTextResponse;
 import com.vodafone360.people.datatypes.Identity;
+import com.vodafone360.people.datatypes.ItemBlockResponseList;
 import com.vodafone360.people.datatypes.ItemList;
 import com.vodafone360.people.datatypes.ListOfLong;
 import com.vodafone360.people.datatypes.LocationNudgeResult;
 import com.vodafone360.people.datatypes.LongGeocodeAddress;
 import com.vodafone360.people.datatypes.MusicDDForTrack;
 import com.vodafone360.people.datatypes.MusicDownloadableTrack;
+import com.vodafone360.people.datatypes.MusicTracksResponse;
 import com.vodafone360.people.datatypes.PresenceList;
 import com.vodafone360.people.datatypes.PrivacySetting;
 import com.vodafone360.people.datatypes.PrivacySettingList;
@@ -745,16 +744,41 @@ public class HessianDecoder {
     			clist.add(ddForTrack);
     			responseType = DecodedResponse.ResponseType.DD_FOR_TRACK.ordinal();
     			break;
+    		
+    		case RECOMMENDED_TRACK:
+    			MusicTracksResponse recommendedTracks = new MusicTracksResponse();
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()Hash: " + hash);
+    			recommendedTracks = MusicTracksResponse.createFromHashtable(hash);
+    			clist.add(recommendedTracks);
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()Response: " + recommendedTracks.recommendedTracksList.toString());
+    			responseType = DecodedResponse.ResponseType.RECOMMENDED_TRACK.ordinal();
+    			break;
     			
+    		case TOP_ANONYMOUS_TRACK:
+    			MusicTracksResponse top20Tracks = new MusicTracksResponse();
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()Hash: " + hash);
+    			top20Tracks = MusicTracksResponse.createFromHashtable(hash);
+    			clist.add(top20Tracks);
+    			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()Response: " + top20Tracks.recommendedTracksList.toString());
+    			responseType = DecodedResponse.ResponseType.TOP_ANONYMOUS_TRACKS.ordinal();
+    			break;
+    		
     		case GET_IDENTITIES_TEXT:
     			IdentitiesTextResponse textResponse = new IdentitiesTextResponse();
     			LogUtils.logD("HessianDecoder.decodeResponseByRequestType()" + hash);
-    			textResponse = textResponse.createFromHashtable(hash);
+    			textResponse = IdentitiesTextResponse.createFromHashtable(hash);
     			clist.add(textResponse);
     			LogUtils.logD("HessianDecoder.decodeResponseByRequestType() GetIdentityText" + textResponse.createHashtable().toString());
     			responseType = DecodedResponse.ResponseType.GET_IDENTITIES_TEXT.ordinal();
     			break;
     			
+    		case GET_ITEM_BLOCK:
+    			ItemBlockResponseList blockResponse = new ItemBlockResponseList();
+    			blockResponse.createFromHashTable(hash);
+    			clist.add(blockResponse);
+    			//LogUtils.logD("HessianDecoder.decodeResponseByRequestType() GetIdentityText" + blockResponse.createHashtable().toString());
+    			responseType = DecodedResponse.ResponseType.GET_ITEM_BLOCK.ordinal();
+    			break;
 
     		default:
                 LogUtils.logE("HessianDecoder.decodeResponseByRequestType() Unhandled type["

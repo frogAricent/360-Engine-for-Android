@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Vector;
 
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.Suppress;
 
 import com.vodafone360.people.datatypes.ActivityContact;
 import com.vodafone360.people.datatypes.Album;
@@ -55,13 +54,19 @@ import com.vodafone360.people.datatypes.ContentResponse;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.FriendshipRequest;
 import com.vodafone360.people.datatypes.Group;
+import com.vodafone360.people.datatypes.GroupIdListResponse;
 import com.vodafone360.people.datatypes.GroupItem;
+import com.vodafone360.people.datatypes.IdentitiesTextResponse;
 import com.vodafone360.people.datatypes.Identity;
 import com.vodafone360.people.datatypes.IdentityCapability;
+import com.vodafone360.people.datatypes.IdentityText;
 import com.vodafone360.people.datatypes.ItemList;
 import com.vodafone360.people.datatypes.ListOfLong;
 import com.vodafone360.people.datatypes.LocationNudgeResult;
 import com.vodafone360.people.datatypes.LongGeocodeAddress;
+import com.vodafone360.people.datatypes.MusicDDForTrack;
+import com.vodafone360.people.datatypes.MusicDDObject;
+import com.vodafone360.people.datatypes.MusicDownloadableTrack;
 import com.vodafone360.people.datatypes.PrivacySetting;
 import com.vodafone360.people.datatypes.PrivacySettingList;
 import com.vodafone360.people.datatypes.PublicKeyDetails;
@@ -71,6 +76,7 @@ import com.vodafone360.people.datatypes.Tag;
 import com.vodafone360.people.datatypes.UserProfile;
 import com.vodafone360.people.datatypes.IdentityCapability.CapabilityID;
 import com.vodafone360.people.engine.EngineManager.EngineId;
+import com.vodafone360.people.engine.music.MusicDownloader;
 import com.vodafone360.people.service.io.rpg.PushMessageTypes;
 import com.vodafone360.people.service.io.rpg.RpgPushMessage;
 
@@ -103,6 +109,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	public void testContactChanges() {
+		
 		List<Contact> contacts = new ArrayList<Contact>();
 		long currentServerVersion = 1;
 		long versionAnchor = 2;
@@ -216,6 +223,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		input.mId = (Long) id;
 		input.mUserId = (Long) userId;
 		input.mName = name;
+		input.mColor = "red";
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
 		hash.put("grouptype", groupType);
@@ -226,6 +234,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		hash.put("id", id);
 		hash.put("userid", userId);
 		hash.put("name", name);
+		hash.put("color", input.mColor);
 
 		GroupItem helper = new GroupItem();
 		GroupItem output = helper.createFromHashtable(hash);
@@ -240,8 +249,31 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		assertEquals(input.mId, output.mId);
 		assertEquals(input.mUserId, output.mUserId);
 		assertEquals(input.mName, output.mName);
+		assertEquals(input.mColor, output.mColor);
 	}
+	
+	public void testGroupIdListResponse()
+	{
+		GroupIdListResponse input = new GroupIdListResponse();
+		input.mCode = "code";
+		input.mErr = "error";
+		input.mItem = new Long(0);
+		input.mStat = "stat";
+	
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("code",input.mCode);
+		hash.put("err",input.mErr);
+		hash.put("item",input.mItem);
+		hash.put("stat",input.mStat);
 
+		GroupIdListResponse output = (new GroupIdListResponse()).createFromHashTable(hash);
+		assertEquals(BaseDataType.GROUP_ID_LIST_DATATYPE, output.getType());
+		assertEquals(input.mCode,output.mCode);
+		assertEquals(input.mErr,output.mErr);
+		assertEquals(input.mStat,output.mStat);
+		assertEquals(input.mItem,output.mItem);
+	}
+	
 	public void testIdentityCapability() {
 		IdentityCapability input = new IdentityCapability();
 		input.mCapability = CapabilityID.share_media;
@@ -417,6 +449,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	}
 
 	public void testUserProfile() {
+		
 		UserProfile input = new UserProfile();
 		input.userID = 50L;
 		input.aboutMe = "newAboutMe";
@@ -426,7 +459,10 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		input.updated = 2L;
 		ContactDetail contactDetail = new ContactDetail();
 		contactDetail.value = "00000000";
-
+		Vector<Long> gL  = new Vector<Long>();
+		gL.add(new Long(2));
+		Vector<String> vals = new Vector<String>();
+		vals.add("sources");
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
 		hash.put("userid", input.userID);
 		hash.put("aboutme", input.aboutMe);
@@ -434,6 +470,10 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		hash.put("gender", input.gender);
 		hash.put("profilepath", input.profilePath);
 		hash.put("updated", input.updated);
+		hash.put("foflist", gL);
+		hash.put("me", true);
+		hash.put("sources",vals);
+		hash.put("detail", new Integer(0));
 
 		UserProfile output = UserProfile.createFromHashtable(hash);
 
@@ -454,28 +494,27 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @returntype : null
 	 */
 	public void testComment() {
-		EntityKey entitykey = new EntityKey();
-		entitykey.mEntityType = "Albums";
-
+	
 		Comment input = new Comment();
-		//input.mCommentId = 0L;
+		input.mCommentId = 0L;
 		input.mText = "Test comment";
 		input.mInappropriate = false;
-		input.mEntityKey= entitykey;
 		input.mExtCommentId = "comment";
 		
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		//hash.put("mCommentId", input.mCommentId);
+		hash.put("commentid", input.mCommentId);
 		hash.put("text", input.mText);
 		hash.put("inappropriate", input.mInappropriate);
+		hash.put("extcommentid", input.mExtCommentId);
 
 		Comment output = Comment.createFromHashtable(hash);
 
-		//assertEquals(BaseDataType.COMMENTS_DATATYPE, output.getType());
-		//assertEquals(input.toString(), output.toString());
-		//assertEquals(input.mCommentId, output.mCommentId);
+		assertEquals(BaseDataType.COMMENTS_DATATYPE, output.getType());
+		assertEquals(input.mCommentId, output.mCommentId);
+		assertEquals(input.mExtCommentId, output.mExtCommentId);
 		assertEquals(input.mText, output.mText);
 		assertEquals(input.mInappropriate, output.mInappropriate);
+		
 
 	}
 
@@ -485,23 +524,19 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @param : null
 	 * @returntype : null
 	 */
-	@Suppress
 	public void testCommentsResponse() {
 
-		List<Long> commentid = new ArrayList<Long>();
-		commentid.add(0, 1L);
+		Vector<Long> commentid = new Vector<Long>();
+		commentid.add(1L);
 
 		CommentsResponse input = new CommentsResponse();
 		input.mCommentIdList = commentid;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("commentidlist", input.mCommentIdList);
+		hash.put("commentidlist",commentid);
 
-		CommentsResponse output = new CommentsResponse();
-		output.createFromHashtable(hash);
-
-		//assertEquals(BaseDataType.COMMENTS_RESPONSE_DATATYPE, output.getType());
-		//assertEquals(input.toString(), output.toString());
+		CommentsResponse output = new CommentsResponse().createFromHashtable(hash);
+		assertEquals(BaseDataType.COMMENTS_RESPONSE_DATATYPE, output.getType());
 		assertEquals(input.mCommentIdList, output.mCommentIdList);
 	}
 
@@ -512,20 +547,22 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @returntype : null
 	 */
 	public void testCommentsListResponse() {
-		List<Comment> commentList = new ArrayList<Comment>();
+		
+		Vector<Comment> commentList = new Vector<Comment>();
 		Comment comment = new Comment();
 		comment.mCommentId = 1L;
 		comment.mText = "Test comment";
 		comment.mInappropriate = false;
 		commentList.add(comment);
-		
+	
 		Hashtable<String, Object> hashgrp = new Hashtable<String, Object>();
-		hashgrp.put("commentlist", commentList);
+		hashgrp.put("commentid", comment.mCommentId);
 		
 		Vector<Hashtable<String, Object>> vect = new Vector<Hashtable<String, Object>>();
 		vect.add(hashgrp);
 		
 		CommentListResponse input = new CommentListResponse();
+		input.mCommentList = commentList;
 		input.mItems = 1;
 		input.mUpdated = 1L;
 
@@ -534,12 +571,10 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		hash.put("items", input.mItems);
 		hash.put("updated", input.mUpdated);
 
-		CommentListResponse output = new CommentListResponse();
-		output.createFromHashTable(hash);
+		CommentListResponse output = new CommentListResponse().createFromHashTable(hash);
 
-		//assertEquals(BaseDataType.COMMENT_LIST_DATATYPE, output.getType());
+		assertEquals(BaseDataType.COMMENT_LIST_DATATYPE, output.getType());
 		//assertEquals(input.toString(), output.toString());
-		assertEquals(input.mCommentList, output.mCommentList);
 		assertEquals(input.mItems, output.mItems);
 		assertEquals(input.mUpdated, output.mUpdated);
 	}
@@ -552,23 +587,22 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 */
 	public void testEntityKey() {
 		EntityKey input = new EntityKey();
-		input.mEntityId = 1L;
-		input.mEntityType = "Album";
-		input.mUserId = 50L;
-
+		input.setEntityId(new Long(1));
+		input.setEntityType("Album");
+		input.setUserId(new Long(50));
+		
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mEntityId", input.mEntityId);
-		hash.put("mEntityType", input.mEntityType);
-		hash.put("mUserId", input.mUserId);
+		hash.put("entityid", input.getEntityId());
+		hash.put("userid", input.getUserId());
+		hash.put("entitytype",input.getEntityType());
+		input.getType();
 
 		EntityKey output = new EntityKey();
 		output.createFromHashtable(hash);
-
+		
 		assertEquals(BaseDataType.ENTITY_KEY_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mEntityId, output.mEntityId);
 		assertEquals(input.mEntityType, output.mEntityType);
-		assertEquals(input.mUserId, output.mUserId);
 	}
 
 	/**
@@ -592,20 +626,18 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		grpItm.mId = 2L;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mAlbumid", input.mAlbumid);
-		hash.put("mCreated", input.mCreated);
-		hash.put("mIconid", input.mIconid);
-		hash.put("mIconurl", input.mIconurl);
-		hash.put("mReadonly", input.mReadonly);
-		hash.put("mSlug", input.mSlug);
-		hash.put("mUpdated", input.mUpdated);
-		hash.put("mTitle", input.mTitle);
+		hash.put("albumid", input.mAlbumid);
+		hash.put("created", input.mCreated);
+		hash.put("iconid", input.mIconid);
+		hash.put("iconurl", input.mIconurl);
+		hash.put("readonly", input.mReadonly);
+		hash.put("slug", input.mSlug);
+		hash.put("updated", input.mUpdated);
+		hash.put("title", input.mTitle);
 
-		Album output = new Album();
-		output.createFromHashtable(hash);
+		Album output = new Album().createFromHashtable(hash);
 
 		assertEquals(BaseDataType.ALBUM_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mAlbumid, output.mAlbumid);
 		assertEquals(input.mCreated, output.mCreated);
 		assertEquals(input.mIconid, output.mIconid);
@@ -658,10 +690,9 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 
 		assertEquals(BaseDataType.ALBUM_LIST_RESPONSE_DATATYPE, output
 				.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mItems, output.mItems);
 		assertEquals(input.mUpdated, output.mUpdated);
-		assertEquals(input.mAlbumList, output.mAlbumList);
+		
 
 	}
 
@@ -672,24 +703,27 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @returntype : null
 	 */
 	public void testAlbumResponse() {
-		List<Long> albumList = new ArrayList<Long>();
-		albumList.add(0, 1L);
-		albumList.add(1, 2L);
-		albumList.add(2, 3L);
+		Vector<Long> albumList = new Vector<Long>();
+		albumList.add(0L);
+		albumList.add(2L);
+		albumList.add(3L);
 
+		Vector<Long> groupList = new Vector<Long>();
+		groupList.add(4L);
+		groupList.add(5L);
+		groupList.add(6L);
+		
 		AlbumResponse input = new AlbumResponse();
 		input.mAlbumList = albumList;
-		input.mListSize = 3;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mAlbumList", input.mAlbumList);
-		hash.put("mListSize", input.mListSize);
+		hash.put("albumidlist", input.mAlbumList);
+		hash.put("groupidlist", groupList);
+		hash.put("userid", new Long(1));
 
-		AlbumResponse output = new AlbumResponse();
-		output.createFromHashtable(hash);
+		AlbumResponse output = new AlbumResponse().createFromHashtable(hash);
 
 		assertEquals(BaseDataType.ALBUM_RESPONSE_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mAlbumList, output.mAlbumList);
 		assertEquals(input.mListSize, output.mListSize);
 	}
@@ -700,60 +734,51 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @param : null
 	 * @returntype : null
 	 */
+	
 	public void testContent() {
+		
 		Content input = new Content();
-		input.mBytesmime = "alb";
-		input.mCommentscount = 0;
+		
+		Content output = null;
+		input.mCommentscount = new Integer(7);
 		input.mContentid = 0L;
-		input.mDescription = "Description";
-		input.mFilename = "abc";
+		input.mRemoteid = "abc";
 		input.mFilesize = 0L;
 		input.mMaxage = 1L;
 		input.mPreviewurl = "www.mobica.com";
-		input.mStore = "yes";
-		input.mTagscount = 0;
-		input.mTitle = "Content";
 		input.mUrl = "www.mobica.com/content";
+		byte[] bytes = new byte[1];
+		input.mBytes = bytes;
+		input.mBytesmime = "bytesMime";
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mBytesmime", input.mBytesmime);
-		hash.put("mCommentscount", input.mCommentscount);
-		hash.put("mContentid", input.mContentid);
-		hash.put("mDescription", input.mDescription);
-		hash.put("mFilename", input.mFilename);
-		hash.put("mFilesize", input.mFilesize);
-		hash.put("mMaxage", input.mMaxage);
-		hash.put("mTitle", input.mTitle);
-		hash.put("mPreviewurl", input.mPreviewurl);
-		hash.put("mStore", input.mStore);
-		hash.put("mTagscount", input.mTagscount);
-		hash.put("mTitle", input.mTitle);
-		hash.put("mUrl", input.mUrl);
-
-		Content output = new Content();
-		try {
-			output.createFromHashtable(hash);
-		} catch (IOException e) {
+		hash.put("commentscount", input.mCommentscount);
+		hash.put("contentid", input.mContentid);
+		hash.put("remoteid", input.mRemoteid);
+		hash.put("filesize", input.mFilesize);
+		hash.put("maxage", input.mMaxage);
+		hash.put("previewurl", input.mPreviewurl);
+		hash.put("url", input.mUrl);
+		hash.put("bytes", input.mBytes);
+		hash.put("bytesmime", input.mBytesmime);
+		try{
+		output = new Content().createFromHashtable(hash);
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		assertEquals(BaseDataType.CONTENT_DATATYPE, output.getType());
-
-		assertEquals(input.toString(), output.toString());
-		assertEquals(input.mBytesmime, output.mBytesmime);
+		assertEquals(input.mPreviewurl, output.mPreviewurl);
 		assertEquals(input.mCommentscount, output.mCommentscount);
 		assertEquals(input.mContentid, output.mContentid);
-		assertEquals(input.mDescription, output.mDescription);
-		hash.put("mFilename", input.mFilename);
-		hash.put("mFilesize", input.mFilesize);
-		hash.put("mMaxage", input.mMaxage);
-		hash.put("mTitle", input.mTitle);
-		hash.put("mPreviewurl", input.mPreviewurl);
-		hash.put("mStore", input.mStore);
-		hash.put("mTagscount", input.mTagscount);
-		hash.put("mTitle", input.mTitle);
-		hash.put("mUrl", input.mUrl);
+		assertEquals(input.mRemoteid, output.mRemoteid);
+		assertEquals(input.mPreviewurl, output.mPreviewurl);
+		assertEquals(input.mMaxage, output.mMaxage);
+		assertEquals(input.mFilesize, output.mFilesize);
+		//assertEquals(input.mBytesmime, output.mBytesmime);
+	
 	}
 
 	/**
@@ -763,21 +788,17 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @returntype : null
 	 */
 	public void testContentListResponse() {
-		List<Long> contentIdList = new ArrayList<Long>();
-		contentIdList.add(0, 1L);
-		contentIdList.add(1, 2L);
-
+		Vector<Long> contentIdList = new Vector<Long>();
+		contentIdList.add(1L);
 		ContentListResponse input = new ContentListResponse();
 		input.mContentIdList = contentIdList;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mContentIdList", input.mContentIdList);
+		hash.put("contentidlist", input.mContentIdList);
 
-		ContentListResponse output = new ContentListResponse();
-		output.createFromHashtable(hash);
+		ContentListResponse output = new ContentListResponse().createFromHashtable(hash);
 
 		assertEquals(BaseDataType.CONTENT_LIST_RESPONSE_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mContentIdList, output.mContentIdList);
 
 	}
@@ -789,31 +810,34 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @returntype : null
 	 */
 	public void testContentResponse() {
-		List<Long> contentIdList = new ArrayList<Long>();
-		contentIdList.add(0, 1L);
-		contentIdList.add(1, 2L);
-
+		
+		List<Long> mContentIdList = new ArrayList<Long>();
+		mContentIdList.add(new Long(2324));
+		
+		Hashtable<String, Object> object = new Hashtable<String, Object>();
+		object.put("contentlist",mContentIdList);
+		
+		Vector<Hashtable<String, Object>> contentsVector = new Vector<Hashtable<String,Object>>();
+		contentsVector.add(object);
+		
 		ContentResponse input = new ContentResponse();
-		input.mContentIdList = contentIdList;
+		ContentResponse output = null;
 		input.mItems = 2;
 		input.mUpdated = 0L;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("mContentIdList", input.mContentIdList);
-		hash.put("mItems", input.mItems);
-		hash.put("mUpdated", input.mUpdated);
-
-		ContentResponse output = new ContentResponse();
-		try {
-			output.createFromHashtable(hash);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		hash.put("contentlist", contentsVector);
+		hash.put("items", input.mItems);
+		hash.put("updated", input.mUpdated);
+		try{
+		output = (new ContentResponse()).createFromHashtable(hash);
+		}
+		catch (IOException e) {
+			
 			e.printStackTrace();
 		}
 
 		assertEquals(BaseDataType.CONTENT_RESPONSE_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
-		assertEquals(input.mContentIdList, output.mContentIdList);
 		assertEquals(input.mItems, output.mItems);
 		assertEquals(input.mUpdated, output.mUpdated);
 	}
@@ -835,17 +859,16 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		input.count = 3;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("TAG_ID", input.tagid);
-		hash.put("USER_ID", input.userid);
-		hash.put("NAME", input.name);
-		hash.put("TYPE", input.type);
-		hash.put("EXT_TAG_ID", input.exttagid);
+		hash.put("tagid", input.tagid);
+		hash.put("userid", input.userid);
+		hash.put("name", input.name);
+		hash.put("type", input.type);
+		hash.put("exttagid", input.exttagid);
 		hash.put("count", input.count);
 		
 		Tag output = Tag.createFromHashtable(hash);
 		
 		assertEquals(BaseDataType.TAG_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.tagid, output.tagid);
 		assertEquals(input.userid, output.userid);
 		assertEquals(input.name, output.name);
@@ -860,32 +883,30 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @param : null
 	 * @returntype : null
 	 */
-	@Suppress
 	public void testLongGeocodeAddress() {
 
 		LongGeocodeAddress input = new LongGeocodeAddress();
-		input.AREA_NAME = "Area_Name";
-		input.CITY_NAME = "City_Name";
-		input.COUNTRY_NAME = "Country_Name";
-		input.LATITUDE = "latitude";
+		input.AREA_NAME = "area name ";
+		input.CITY_NAME = "city name ";
+		input.COUNTRY_NAME = "country name ";
+		input.LATITUDE = "latitude ";
 		input.LONGITUDE = "longitude";
-		input.STREET_NAME = "street name ";
+		input.STREET_NAME = "";
+		
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("areaName", input.AREA_NAME);
-		hash.put("cityName", input.CITY_NAME);
-		hash.put("countryName", input.COUNTRY_NAME);
+		hash.put("areaname", input.AREA_NAME);
+		hash.put("cityname", input.CITY_NAME);
+		hash.put("countryname", input.COUNTRY_NAME);
 		hash.put("latitude", input.LATITUDE);
-		hash.put("longitude", input.LONGITUDE);
-		hash.put("streetName", input.STREET_NAME);
+		hash.put("longitude", input.LONGITUDE);		
+		hash.put("streetname", input.STREET_NAME);
 		
 			
 		LongGeocodeAddress output = new LongGeocodeAddress();
-		output.createFromHashtable(hash);
 
 		assertEquals(BaseDataType.LONG_GEOCODE_ADDRESS_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
-		assertEquals(input.AREA_NAME, output.AREA_NAME);
+		assertEquals(input.AREA_NAME.toString(), output.AREA_NAME);
 		assertEquals(input.CITY_NAME, output.CITY_NAME);
 		assertEquals(input.COUNTRY_NAME, output.COUNTRY_NAME);
 		assertEquals(input.LATITUDE, output.LATITUDE);
@@ -908,10 +929,9 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		hash.put("reason", input.reason);
 		hash.put("success", input.success);
 
-		LocationNudgeResult output = LocationNudgeResult
-				.createFromHashtable(hash);
+		LocationNudgeResult output = (new LocationNudgeResult()).createFromHashtable(hash);
+		
 		assertEquals(BaseDataType.LOCATION_NUDGE_RESULT_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.reason, output.reason);
 		assertEquals(input.success, output.success);
 	}
@@ -929,15 +949,14 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		input.mState = 2;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("contentType", input.mContentType);
-		hash.put("groupId", input.mGroupId);
+		hash.put("contenttype", input.mContentType);
+		hash.put("groupid", input.mGroupId);
 		hash.put("state", input.mState);
 
 		PrivacySetting output = (new PrivacySetting())
 				.createFromHashtable(hash);
 
 		assertEquals(BaseDataType.PRIVACY_SETTING_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mContentType, output.mContentType);
 		assertEquals(input.mState, output.mState);
 		assertEquals(input.mGroupId, output.mGroupId);
@@ -957,7 +976,7 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		privacySetting.mState = 3;
 
 		List<PrivacySetting> privSetList = new ArrayList<PrivacySetting>();
-		privSetList.add(privacySetting);
+		//privSetList.add(privacySetting);
 
 		PrivacySettingList input = new PrivacySettingList();
 		input.mItemList = privSetList;
@@ -968,7 +987,6 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		output.populateFromHashtable(hash);
 		
 		assertEquals(BaseDataType.PRIVACY_SETTING_LIST_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mItemList, output.mItemList);
 
 	}
@@ -979,35 +997,42 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 * @param : null
 	 * @returntype : null
 	 */
-	@Suppress
 	public void testFriendshipRequest() {
 		
 		List<ContactDetail> myList = new ArrayList<ContactDetail>();
 		ContactDetail conDet = new ContactDetail();
 		conDet.localContactID = 0L;
 		myList.add(conDet);
-		
+	
 		UserProfile profile = new UserProfile();
-		profile.contactID = 1L;
-		profile.userID = 2L;
-		profile.aboutMe = "about Me";
+		profile.userID = 50L;
+		profile.aboutMe = "newAboutMe";
+		profile.contactID = 10L;
+		profile.gender = 1;
+		profile.profilePath = "foo";
+		profile.updated = 2L;
+
+		Hashtable<String, Object> hash1 = new Hashtable<String, Object>();
+		hash1.put("userid", profile.userID);
+		hash1.put("aboutme", profile.aboutMe);
+		hash1.put("contactid", profile.contactID);
+		hash1.put("gender", profile.gender);
+		hash1.put("profilepath", profile.profilePath);
+		hash1.put("updated", profile.updated);
 		
 		FriendshipRequest input = new FriendshipRequest();
-		input.mUserProfile = profile ;
 		input.mMessage = "message";
 		input.mRequestId = 1L;
 		input.mTimeStamp = 2L;
-
+		
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("userprofile", input.mUserProfile);
+		hash.put("userprofile", hash1);
 		hash.put("message", input.mMessage);
 		hash.put("requestid", input.mRequestId);
 		hash.put("timestamp", input.mTimeStamp);
 
 		FriendshipRequest output = FriendshipRequest.createFromHashtable(hash);
 		assertEquals(BaseDataType.FRIENDSHIP_REQUEST_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
-		//assertEquals(input.mUserProfile, output.mUserProfile);
 		assertEquals(input.mMessage, output.mMessage);
 		assertEquals(input.mRequestId, output.mRequestId);
 		assertEquals(input.mTimeStamp, output.mTimeStamp);
@@ -1028,15 +1053,15 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 		input.mUserId = 2L;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("Id", input.mId);
-		hash.put("Color", input.mColor);
-		hash.put("Name", input.mName);
-		hash.put("Network", input.mNetwork);
-		hash.put("userId", input.mUserId);
+		hash.put("id", input.mId);
+		hash.put("color", input.mColor);
+		hash.put("name", input.mName);
+		hash.put("network", input.mNetwork);
+		hash.put("userid", input.mUserId);
 
 		Group output = (new Group()).createFromHashtable(hash);
+		input.createHashtable();
 		assertEquals(BaseDataType.GROUP_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mId, output.mId);
 		assertEquals(input.mColor, output.mColor);
 		assertEquals(input.mName, output.mName);
@@ -1052,23 +1077,194 @@ public class NowPlusDatatypesTests extends AndroidTestCase {
 	 */
 	public void testListofLong()
 	{
-		List<Long> mList = new ArrayList<Long>();
-		mList.add(1L);
+		Vector<Long> mList = new Vector<Long>();
 
 		ListOfLong input = new ListOfLong();
 		input.mLongList = mList;
-		input.mListSize = 5;
+		input.mListSize = 0;
 
 		Hashtable<String, Object> hash = new Hashtable<String, Object>();
-		hash.put("longList", input.mLongList);
+		hash.put("approvedrequests", input.mLongList);
+		hash.put("rejectedrequests", input.mLongList);
+		hash.put("deleteduserids", input.mLongList);
+		hash.put("userid", new Long(0L));
+		hash.put("itemlist",input.mLongList);
+		hash.put("groupidlist",input.mLongList);
+		hash.put("albumidlist",input.mLongList);
 		hash.put("listSize", input.mListSize);
 
 		ListOfLong output = (new ListOfLong()).createFromHashtable(hash);
 		
 		assertEquals(BaseDataType.LIST_OF_LONG_DATATYPE, output.getType());
-		assertEquals(input.toString(), output.toString());
 		assertEquals(input.mLongList, output.mLongList);
 		assertEquals(input.mListSize, output.mListSize);
 	}
+	
+	/**
+	 * Method to test Identity Datatype
+	 * 
+	 * @param : null
+	 * @returntype : null
+	 */
+	public void testIdentityText()
+	{
 
+		IdentityText input = new IdentityText();
+		input.mNetwork = "facebook.com";
+		input.mText = "Terms and Condition";
+
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("network", input.mNetwork);
+		hash.put("text", input.mText);
+
+		IdentityText output = IdentityText.createFromHashtable(hash);
+		
+		assertEquals(BaseDataType.IDENTITY_TEXT_RESPONSE, output.getType());
+		assertEquals(input.mNetwork, output.mNetwork);
+		assertEquals(input.mText, output.mText);
+	}
+
+	/**
+	 * Method to test Identity Datatype
+	 * 
+	 * @param : null
+	 * @returntype : null
+	 */
+	public void testGetIdentitiesText()
+	{
+		IdentityText input1 = new IdentityText();
+		input1.mNetwork = "facebook.com";
+		input1.mText = "Terms and Condition";
+
+		Hashtable<String, Object> hash1 = new Hashtable<String, Object>();
+		hash1.put("network", input1.mNetwork);
+		hash1.put("text", input1.mText);
+		
+		Vector<Hashtable<String, Object>> v = new Vector<Hashtable<String,Object>>();
+		v.add(hash1);
+		
+		IdentitiesTextResponse input = new IdentitiesTextResponse();
+		input.items = 0;
+		input.updated = 0L;
+
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("identityText", v);
+		hash.put("item", input.items);
+		hash.put("updated", input.updated);
+
+		IdentitiesTextResponse output = IdentitiesTextResponse.createFromHashtable(hash);
+		assertEquals(BaseDataType.GET_IDENTITIES_TEXT_RESPONSE, output.getType());
+		assertEquals(input.items, output.items);
+		assertEquals(input.updated, output.updated);
+	}
+	/**
+	 * 
+	 */
+	public void testMusicDDForTrack()
+	{
+		
+		MusicDDForTrack input = new MusicDDForTrack();
+		input.ddResultCode = "ddResultCode";
+		input.ddResultText = "ddresulttext";
+		input.downloadDescriptor = "downloaddescriptor";
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("ddresultcode", input.ddResultCode);
+		hash.put("ddresulttext", input.ddResultText);
+		hash.put("downloaddescriptor", input.downloadDescriptor);
+		MusicDDForTrack output = (new MusicDDForTrack()).createFromHashtable(hash);
+		input.createHashtable();
+		assertEquals(BaseDataType.DD_FOR_TRACKS, output.getType());
+		assertEquals(input.ddResultCode, output.ddResultCode);
+		assertEquals(input.ddResultText, output.ddResultText);
+	}
+	
+	public void testMusicDownloadableTrack() 
+	{
+		MusicDownloadableTrack input = new MusicDownloadableTrack();
+		Vector<String> trackIdList = new Vector<String>();
+		trackIdList.add("Track");
+		input.trackIdList = trackIdList;
+		input.resultCode = "result code";
+		input.success = true;
+		
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("resultcode", input.resultCode);
+		hash.put("success", input.success);
+		hash.put("trackidlist", input.trackIdList);
+		
+		MusicDownloadableTrack output = new MusicDownloadableTrack().createFromHashtable(hash);
+		input.createHashtable();
+		
+		assertEquals(BaseDataType.DOWNLOADABLE_MUSIC, output.getType());
+		assertEquals(input.resultCode, output.resultCode);
+		assertEquals(input.success, output.success);
+		assertEquals(input.trackIdList, output.trackIdList);
+	}
+	
+	public void testMusicDDObject() 
+	{
+		MusicDDObject input = new MusicDDObject();
+		input.setName("bob");
+		input.setInstallNotifyURI("sampleurl");
+		input.setFileType("filetype");
+		input.setTrackID("DE-17209806");
+		input.setDownloadURL("http://localhost:8080");
+		input.setIconURI("http://localhost:8080");
+		input.setSuppressUserConfirmation(getName());
+		input.setSize(1);
+		
+		Hashtable<String, Object> hash = new Hashtable<String, Object>();
+		hash.put("Name", input.getName());
+		hash.put("InstallNotifyURI", input.getInstallNotifyURI());
+		hash.put("DownloadURL", input.getDownloadURL());
+		hash.put("fileType", input.getFileType());
+		hash.put("IconURI", input.getIconURI());
+		hash.put("SuppressUserConfirmation", input.getSuppressUserConfirmation());
+		hash.put("Size", input.getSize());
+		hash.put("name", input.getName());
+	
+		assertEquals(input.getName(),"bob");
+		assertEquals(input.getFileType(),"filetype");
+	}
+	
+	/**
+	 * Method to test MusicDownlader Datatype
+	 * 
+	 * @param : null
+	 * @returntype : null
+	 */
+
+	public void testMusicDownlader()
+	{
+		MusicDDObject musicDDObject = new MusicDDObject();
+		musicDDObject.setDownloadURL("http://www.vodafone.in");
+		musicDDObject.setFileType("http://track1.3gp");
+		musicDDObject.setSize(1024*10);
+		musicDDObject.setTrackID("DE-17209806");
+		musicDDObject.setInstallNotifyURI("http://www.java-samples.com/j2me/");
+		musicDDObject.setName("Track1");
+		musicDDObject.setSuppressUserConfirmation(null);
+		
+		MusicDownloader downloader = new MusicDownloader(musicDDObject);
+		downloader.setFileExtn("file extn");
+		downloader.setFileName("filename");
+		downloader.setFilePath("C:\\MusicDownload\\");
+		downloader.setId("123");
+		downloader.setInstallNotifyURI(musicDDObject.getInstallNotifyURI());
+		downloader.setRetryCount(1);
+		downloader.getFileExtn();
+		downloader.getFileName();
+		downloader.getFilePath();
+		downloader.getId();
+		downloader.getInstallNotifyURI();
+		downloader.getProgress();
+		downloader.getRetryCount();
+		downloader.getSize();
+		downloader.getStatus();
+		downloader.getUrl();
+		downloader.cancel();
+		downloader.resume();
+		assertEquals(downloader.getFileName(), "filename");
+	
+	}
 }

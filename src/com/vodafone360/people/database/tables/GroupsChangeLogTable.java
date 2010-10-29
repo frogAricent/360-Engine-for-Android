@@ -490,33 +490,40 @@ public class GroupsChangeLogTable {
 	public static ServiceStatus fetchGroupContacts(GroupItem group, ArrayList<Long> contactIds,
 			SQLiteDatabase readableDb) {
 		DatabaseHelper.trace(false, "GroupsTableNew.fetchGroupContacts()");
+		ServiceStatus status = ServiceStatus.SUCCESS;
 		Cursor c = null;
+		contactIds.clear();
 		try {
 			String query = "SELECT " + Field.CONTACTLIST + " FROM "
 			+ TABLE_NAME + " WHERE " + Field.NAME + "='"+group.mName+"'";
 			c = readableDb.rawQuery(query, null);
-			c.moveToFirst();
-			String contList = c.getString(c.getColumnIndex(Field.CONTACTLIST.toString()));
-			if (contList != null) {
-				String[] contListString = new String[50];
-				contListString = contList.split(";");
-				for (int i = 0; i < contListString.length; i++) {
-					contactIds.add(Long.valueOf(contListString[i]));
+			if (c.getCount() != 0) {
+				c.moveToFirst();
+				String contList = c.getString(c
+						.getColumnIndex(Field.CONTACTLIST.toString()));
+				if (contList != null) {
+					String[] contListString = new String[50];
+					contListString = contList.split(";");
+					for (int i = 0; i < contListString.length; i++) {
+						contactIds.add(Long.valueOf(contListString[i]));
+					}
+					LogUtils.logD("Contact List size:" + contactIds.size());
+				} else {
+					LogUtils.logD("No contacts to be added");
 				}
-				LogUtils.logD("Contact List size:" + contactIds.size());
-			}else{
-				LogUtils.logD("No contacts to be added");
-				return ServiceStatus.ERROR_DATABASE_CORRUPT;
 			}
 
 		} catch (SQLiteException e) {
 			LogUtils.logE("GroupsTableNew.fetchUploadGroupList() Exception - Unable to get contact list for group "+group.mName, e);
-			return ServiceStatus.ERROR_DATABASE_CORRUPT;
+			status = ServiceStatus.ERROR_DATABASE_CORRUPT;
 		} finally {
-			CloseUtils.close(c);
-			c = null;
+			if (c != null) {
+				CloseUtils.close(c);
+				c = null;
+			}
 		}
-		return ServiceStatus.SUCCESS;
+		
+		return status;
 	}
 	
 	

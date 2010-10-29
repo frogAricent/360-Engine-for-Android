@@ -1,4 +1,3 @@
-
 /*
  * CDDL HEADER START
  *
@@ -28,23 +27,20 @@ package com.vodafone360.people.engine.music;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-import android.content.Context;
-import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Environment;
 
 import com.vodafone360.people.MainApplication;
 import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.MusicDDForTrack;
 import com.vodafone360.people.datatypes.MusicDDObject;
 import com.vodafone360.people.datatypes.MusicDownloadableTrack;
+import com.vodafone360.people.datatypes.MusicTracksResponse;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.EngineManager.EngineId;
 import com.vodafone360.people.service.ServiceStatus;
@@ -58,36 +54,40 @@ import com.vodafone360.people.utils.LogUtils;
  * Music engine for restoring purchased music of the user
  * 
  */
-public class MusicEngine extends BaseEngine implements Observer{
+public class MusicEngine extends BaseEngine implements Observer {
 
 	public static final String DOWNLOADABLE_TRACK = "downloadble_music_track";
 	public static final String DD_FOR_TRACK = "dd_for_track";
 	public static final String DOWNLOAD_TRACK = "download_track";
 
+	public boolean mJUnitTestMode = false;
+
 	private MusicDownloadableTrack musicDownloadableTrack = new MusicDownloadableTrack();
-	private MusicDDForTrack musicDDForTrack= new MusicDDForTrack();
-	
-	public static final String STATUSES[] = {"Downloading", "Paused", "Complete", "Cancelled", "Error"};
+	private MusicDDForTrack musicDDForTrack = new MusicDDForTrack();
+	private MusicTracksResponse recommendedTracks = new MusicTracksResponse();
+
+	public static final String STATUSES[] = { "Downloading", "Paused",
+			"Complete", "Cancelled", "Error" };
 	public static final int DOWNLOADING = 0;
-    public static final int PAUSED = 1;
-    public static final int COMPLETE = 2;
-    public static final int CANCELLED = 3;
-    public static final int ERROR = 4;
-    
-    private int retryCount = 2;
-    
-    public int getRetryCount() {
+	public static final int PAUSED = 1;
+	public static final int COMPLETE = 2;
+	public static final int CANCELLED = 3;
+	public static final int ERROR = 4;
+
+	private int retryCount = 2;
+
+	public int getRetryCount() {
 		return retryCount;
 	}
 
 	public void setRetryCount(int retryCount) {
 		this.retryCount = retryCount;
 	}
-	
-	public static interface IGetTrackIDs{
+
+	public static interface IGetTrackIDs {
 		void onGettingTrackIDs(IGetTrackIDs iGetTrackIds);
 	}
-	
+
 	/** engine's current state **/
 
 	private State mState = State.IDLE;
@@ -128,7 +128,7 @@ public class MusicEngine extends BaseEngine implements Observer{
 
 	@Override
 	public void onCreate() {
-		LogUtils.logD("MusicEnginebak.OnCreate()");
+		LogUtils.logD("MusicEngine.OnCreate()");
 		mState = State.IDLE;
 	}
 
@@ -146,7 +146,7 @@ public class MusicEngine extends BaseEngine implements Observer{
 
 	@Override
 	protected void onTimeoutEvent() {
-		LogUtils.logD("MusicEnginebak.onTimeoutEvent() in State: " + mState);
+		LogUtils.logD("MusicEngine.onTimeoutEvent() in State: " + mState);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class MusicEngine extends BaseEngine implements Observer{
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void processUiRequest(ServiceUiRequest requestId, Object data) {
-		LogUtils.logD("MusicEnginebak.processUiRequest() - reqID = " + requestId);
+		LogUtils.logD("MusicEngine.processUiRequest() - reqID = " + requestId);
 		switch (requestId) {
 		case DOWNLOADABLE_TRACKS:
 			startDownloadableTracks();
@@ -188,35 +188,33 @@ public class MusicEngine extends BaseEngine implements Observer{
 		default:
 			break;
 		}
-		LogUtils.logV("MusciEngine.newState(): " + oldState + " -> "
-				+ mState);
+		LogUtils.logV("MusciEngine.newState(): " + oldState + " -> " + mState);
 	}
 
 	/**
-	 * Add request to downloadable Track. The request is added to the UI request and
-	 * processed when the engine is ready.
+	 * Add request to downloadable Track. The request is added to the UI request
+	 * and processed when the engine is ready.
 	 * 
 	 * @param
 	 * @return void
 	 */
 	public void addUiDownloadableTrackReq() {
-		LogUtils.logD("MusicEnginebak.addUiDownloadableTrackReq()");
-		addUiRequestToQueue(ServiceUiRequest.DOWNLOADABLE_TRACKS,null);
+		LogUtils.logD("MusicEngine.addUiDownloadableTrackReq()");
+		addUiRequestToQueue(ServiceUiRequest.DOWNLOADABLE_TRACKS, null);
 	}
-	
+
 	/**
-	 * Add request to get DD for Track. The request is added to the UI request and
-	 * processed when the engine is ready.
+	 * Add request to get DD for Track. The request is added to the UI request
+	 * and processed when the engine is ready.
 	 * 
 	 * @param
 	 * @return void
 	 */
 	public void addDDForTrackReq(Object trackIds) {
 		LogUtils.logD("MusicEnginebak.addUiDDForTrackReq()");
-		addUiRequestToQueue(ServiceUiRequest.DD_FOR_TRACK,trackIds);
+		addUiRequestToQueue(ServiceUiRequest.DD_FOR_TRACK, trackIds);
 	}
 
-	
 	/**
 	 * Issue request to Start Music Restore. (Request is not issued if there is
 	 * currently no connectivity).
@@ -237,7 +235,7 @@ public class MusicEngine extends BaseEngine implements Observer{
 			return;
 		}
 	}
-	
+
 	/**
 	 * Issue request to DD For Track. (Request is not issued if there is
 	 * currently no connectivity).
@@ -252,7 +250,7 @@ public class MusicEngine extends BaseEngine implements Observer{
 		}
 
 		newState(State.DD_FOR_TRACK);
-		if (!setReqId(Music.getDDForTracks(this,trackIds))) {
+		if (!setReqId(Music.getDDForTracks(this, trackIds))) {
 			completeUiRequest(ServiceStatus.ERROR_COMMS, null);
 			error();
 			return;
@@ -267,35 +265,31 @@ public class MusicEngine extends BaseEngine implements Observer{
 	 * @return void
 	 */
 	private void handleGetDownloadableTracks(List<BaseDataType> data) {
-		
+
 		LogUtils.logD("MusicEnginebak.handleGetCommentResponse()");
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.DOWNLOADABLE_MUSIC, data);
-		
-		
+
 		if (errorStatus == ServiceStatus.SUCCESS) {
 			for (BaseDataType item : data) {
 				if (BaseDataType.DOWNLOADABLE_MUSIC == item.getType()) {
 					musicDownloadableTrack = (MusicDownloadableTrack) item;
 					LogUtils.logD("Music Track Ids: "
 							+ musicDownloadableTrack.trackIdList.toString());
-					
+
 				} else {
-					LogUtils
-							.logE("MusicEnginebak handleGetDownloadableTracks Unexpected response: "
-									+ item.getType());
+					LogUtils.logE("MusicEngine handleGetDownloadableTracks Unexpected response: "
+							+ item.getType());
 					error();
 					return;
 				}
 			}
 		} else {
-			LogUtils
-					.logE("MusicEnginebak handleGetDownloadableTracks error status: "
-							+ errorStatus.name());
+			LogUtils.logE("MusicEngine handleGetDownloadableTracks error status: "
+					+ errorStatus.name());
 			error();
 		}
-		
-//		this.addDDForTrackReq(musicDownloadableTrack.trackIdList);
+
 		startDDForTrack(musicDownloadableTrack.trackIdList);
 	}
 
@@ -307,57 +301,56 @@ public class MusicEngine extends BaseEngine implements Observer{
 	 * @return void
 	 */
 	private void handleGetDDForTracks(List<BaseDataType> data) {
-		
-		LogUtils.logD("MusicEnginebak.handleGetDDForTracks()");
+
+		LogUtils.logD("MusicEngine.handleGetDDForTracks()");
 		ServiceStatus errorStatus = getResponseStatus(
 				BaseDataType.DD_FOR_TRACKS, data);
-		
+
 		if (errorStatus == ServiceStatus.SUCCESS) {
-			
+
 			for (BaseDataType item : data) {
 				if (BaseDataType.DD_FOR_TRACKS == item.getType()) {
 					musicDDForTrack = (MusicDDForTrack) item;
 					LogUtils.logD("Music id: "
 							+ musicDDForTrack.downloadDescriptor.toString());
 				} else {
-					LogUtils
-							.logE("MusicEnginebak handleGetDDForTracks Unexpected response: "
-									+ item.getType());
+					LogUtils.logE("MusicEngine handleGetDDForTracks Unexpected response: "
+							+ item.getType());
 					error();
 					return;
 				}
 			}
 		} else {
-			LogUtils
-					.logE("MusicEnginebak handleGetDDForTracks error status: "
-							+ errorStatus.name());
+			LogUtils.logE("MusicEngine handleGetDDForTracks error status: "
+					+ errorStatus.name());
 			error();
 			return;
 		}
 
-		String downloadDescriptor = musicDDForTrack.downloadDescriptor.toString();
-		if(!(downloadDescriptor == null || "".equalsIgnoreCase(downloadDescriptor))){
-			MusicDDParser ddParser = new MusicDDParser();		
-			InputStream is = new ByteArrayInputStream(downloadDescriptor.getBytes());
+		String downloadDescriptor = musicDDForTrack.downloadDescriptor
+				.toString();
+		if (!(downloadDescriptor == null || ""
+				.equalsIgnoreCase(downloadDescriptor))) {
+			MusicDDParser ddParser = new MusicDDParser();
+			InputStream is = new ByteArrayInputStream(
+					downloadDescriptor.getBytes());
 			List<MusicDDObject> listOfDownloadableObject = ddParser.parse(is);
-			
-			mobserver.onGetdownloadableTrackList(listOfDownloadableObject,STATUSES[COMPLETE]);
-			
-//			downloadTrack(listOfDownloadableObject.get(0));
-		}else{
+			mobserver.onGetdownloadableTrackList(listOfDownloadableObject,
+					STATUSES[COMPLETE]);
+
+		} else {
 			List<MusicDDObject> listOfDD = new ArrayList<MusicDDObject>();
-			mobserver.onGetdownloadableTrackList(listOfDD,STATUSES[COMPLETE]);
+			mobserver.onGetdownloadableTrackList(listOfDD, STATUSES[COMPLETE]);
 		}
 	}
 
-	
 	/**
 	 * Run function called via EngineManager. Should have a UI, Comms response
 	 * or timeout event to handle.
 	 */
 	@Override
 	public void run() {
-		LogUtils.logD("MusicEnginebak run");
+		LogUtils.logD("MusicEngine run");
 		processTimeout();
 		if (isCommsResponseOutstanding() && processCommsInQueue()) {
 			return;
@@ -390,80 +383,71 @@ public class MusicEngine extends BaseEngine implements Observer{
 		}
 	}
 
-	
-	
-	private void downloadAllTrack(List<MusicDDObject> listOfDownloadableObject){
-		
-		
-		for (MusicDDObject musicDDObject : listOfDownloadableObject) {
-			try {
-
-				MusicDownloader downloader = new MusicDownloader(musicDDObject);
-				downloader.addObserver(this);
-				downloader.downloadFile();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-	}
 	/**
 	 * there can be only one observer for the music restore
 	 */
 	public IMusicSyncObserver mobserver;
-    public void addListener(IMusicSyncObserver observer){
-          mobserver = observer;
-     }
-    
-    public static interface IMusicSyncObserver {
-          
-          void onProgressEvent(float percent);
-          
-          void onDownloadTrack(String trackid, String status);
-          
-          void onGetdownloadableTrackList(List<MusicDDObject> MusicDataOject, String status);
-          
-     }
-	
-    List<MusicDDObject> musiclist=null;
-	public void setdownloadableTrackList(List<MusicDDObject> list) {  
-        
+
+	public void addListener(IMusicSyncObserver observer) {
+		mobserver = observer;
+	}
+
+	public static interface IMusicSyncObserver {
+
+		void onProgressEvent(float percent);
+
+		void onDownloadTrack(String trackid, String status);
+
+		void onGetdownloadableTrackList(List<MusicDDObject> MusicDataOject,
+				String status);
+
+	}
+
+	List<MusicDDObject> musiclist = null;
+
+	public void setdownloadableTrackList(List<MusicDDObject> list) {
+
 		musiclist = list;
-    }
-    public List<MusicDDObject> getdownloadableTrackList() {  
-        
-        return musiclist;
-    }
-    
-    @Override
+	}
+
+	public List<MusicDDObject> getdownloadableTrackList() {
+
+		return musiclist;
+	}
+
+	@Override
 	public void update(Observable obj, Object data) {
-		MusicDownloader downloader = (MusicDownloader)obj;
-		if(downloader.getStatus() == MusicDownloader.DOWNLOADING){
+		MusicDownloader downloader = (MusicDownloader) obj;
+		if (downloader.getStatus() == MusicDownloader.DOWNLOADING) {
 			mobserver.onProgressEvent(downloader.getProgress());
-		}
-		else if(downloader.getStatus() == MusicDownloader.COMPLETE){
-			mobserver.onDownloadTrack(downloader.getId(), MusicDownloader.STATUSES[MusicDownloader.COMPLETE]);
+		} else if (downloader.getStatus() == MusicDownloader.COMPLETE) {
+			mobserver.onDownloadTrack(downloader.getId(),
+					MusicDownloader.STATUSES[MusicDownloader.COMPLETE]);
 			broadcastMediaScannerConnection(downloader);
-			
-		}else if(downloader.getStatus() == MusicDownloader.ERROR){
-			mobserver.onDownloadTrack(downloader.getId(), MusicDownloader.STATUSES[MusicDownloader.ERROR]);			
-		}
-		else if(downloader.getStatus() == MusicDownloader.CANCELLED){
-			mobserver.onDownloadTrack(downloader.getId(), MusicDownloader.STATUSES[MusicDownloader.CANCELLED]);			
-		}
-		else if(downloader.getStatus() == MusicDownloader.PAUSED){
-			mobserver.onDownloadTrack(downloader.getId(), MusicDownloader.STATUSES[MusicDownloader.PAUSED]);			
+
+		} else if (downloader.getStatus() == MusicDownloader.ERROR) {
+			mobserver.onDownloadTrack(downloader.getId(),
+					MusicDownloader.STATUSES[MusicDownloader.ERROR]);
+		} else if (downloader.getStatus() == MusicDownloader.CANCELLED) {
+			mobserver.onDownloadTrack(downloader.getId(),
+					MusicDownloader.STATUSES[MusicDownloader.CANCELLED]);
+		} else if (downloader.getStatus() == MusicDownloader.PAUSED) {
+			mobserver.onDownloadTrack(downloader.getId(),
+					MusicDownloader.STATUSES[MusicDownloader.PAUSED]);
 		}
 	}
-    
+
 	private void broadcastMediaScannerConnection(MusicDownloader downloader) {
 		// Tell the media scanner about the new file so that it is
 		// immediately available to the user.
-		
-//		filePath+"/"+fileName+"."+fileExtn;
-		final String path = (downloader.getFilePath()+"/"+downloader.getFileName()+"."+downloader.getFileExtn()).toString();
-		
-		MediaScannerConnection.scanFile(MainApplication.getContext(), new String[]{path}, null,
+
+		// filePath+"/"+fileName+"."+fileExtn;
+		final String path = (downloader.getFilePath() + "/"
+				+ downloader.getFileName() + "." + downloader.getFileExtn())
+				.toString();
+
+		MediaScannerConnection.scanFile(MainApplication.getContext(),
+				new String[] { path }, null,
 				new MediaScannerConnection.OnScanCompletedListener() {
 					@Override
 					public void onScanCompleted(String path, Uri uri) {
@@ -474,28 +458,35 @@ public class MusicEngine extends BaseEngine implements Observer{
 					}
 				});
 	}
-    
 
-	public void downloadTrack(MusicDDObject musicDDObject){
-    	try {
-    		
+	public void downloadTrack(MusicDDObject musicDDObject) {
+		try {
+
 			MusicDownloader downloader = new MusicDownloader(musicDDObject);
 			downloader.addObserver(this);
 			downloader.downloadFile();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    }
-	
+	}
+
 	private void error() {
-    	if(getRetryCount()<0){
-    		mobserver.onGetdownloadableTrackList(null,STATUSES[ERROR]);
-    	}else{
-    		retryCount = retryCount - 1;
-    		setRetryCount(retryCount);
-    		startDownloadableTracks();
-    	}
-        
-    }
+		if (getRetryCount() < 0) {
+			mobserver.onGetdownloadableTrackList(null, STATUSES[ERROR]);
+		} else {
+			retryCount = retryCount - 1;
+			setRetryCount(retryCount);
+			startDownloadableTracks();
+		}
+
+	}
+
+	/**
+	 * Sets the test mode flag. Used to bypass dependency with other modules
+	 * while unit testing
+	 */
+	public void setTestMode(boolean mode) {
+		mJUnitTestMode = mode;
+	}
 
 }

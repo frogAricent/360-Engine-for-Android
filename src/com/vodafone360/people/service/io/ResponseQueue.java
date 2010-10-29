@@ -181,8 +181,14 @@ public class ResponseQueue {
     		DOWNLOADABLE_TRACK,
     		/** The response type of Purchased Music List*/
     		DD_FOR_TRACK,
+    		/** The response type of the Recommended Track */
+    		RECOMMENDED_TRACK,
+    		/** The response type of the Recommended Track */
+    		TOP_ANONYMOUS_TRACKS,
     		/** The response type of GET_IDENTITIES_TEXT*/
-    		GET_IDENTITIES_TEXT;
+    		GET_IDENTITIES_TEXT,
+    		/** The response type of GET_ITEM_BLOCK*/
+    		GET_ITEM_BLOCK;
 ;
     		// TODO add more types here and remove them from the BaseDataType. Having them in ONE location is better than in dozens!!!
     	}

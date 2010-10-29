@@ -38,6 +38,7 @@ import com.vodafone360.people.datatypes.ContactDetail;
 import com.vodafone360.people.datatypes.Content;
 import com.vodafone360.people.datatypes.EntityKey;
 import com.vodafone360.people.datatypes.GroupItem;
+import com.vodafone360.people.datatypes.ItemBlockRequest;
 import com.vodafone360.people.datatypes.PrivacySetting;
 
 /**
@@ -215,6 +216,20 @@ public class ApiUtils {
     	Vector<Object> vector = new Vector<Object>();
         for (int i = 0; i < list.size(); i++) {
             vector.add(list.get(i));
+        }
+        return vector;
+    }
+    /**
+     * Create vector from list of ItemBlockRequest. This vector is passed to the
+     * Hessian encoder for generation of Hessian encoded message body.
+     * 
+     * @param list List of ItemBlockRequest.
+     * @return New vector.
+     */
+    public static Vector<Object> createVectorOfItemBlock(List<ItemBlockRequest> list) {
+    	Vector<Object> vector = new Vector<Object>();
+        for (int i = 0; i < list.size(); i++) {
+            vector.add(list.get(i).createHashtable());
         }
         return vector;
     }

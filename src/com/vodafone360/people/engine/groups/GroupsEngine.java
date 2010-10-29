@@ -81,6 +81,7 @@ public class GroupsEngine extends BaseEngine {
 		SETTING_GROUP_PRIVACY_SETTING
 	}
 
+    public boolean mJUnitTestMode = false ;
 	/**
 	 * To maintain the state of the Engine
 	 */
@@ -714,5 +715,13 @@ public class GroupsEngine extends BaseEngine {
 //            showError(context, mServiceStatusError);
         }
         return mGroups;
+    }
+
+    /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
     }
 }

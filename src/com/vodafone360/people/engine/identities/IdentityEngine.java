@@ -90,6 +90,7 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
 	
 	public List<IdentityText> mIdentityTextResponse = new ArrayList<IdentityText>();
 
+	public boolean mJUnitTestMode = false ;
 
     /**
      * Container class for Identity Capability Status request. Consists of a
@@ -936,6 +937,12 @@ public class IdentityEngine extends BaseEngine implements ITcpConnectionListener
         }
     }
     
-    
+    /**
+     * Sets the test mode flag.
+     * Used to bypass dependency with other modules while unit testing
+     */
+    public void setTestMode(boolean mode){
+    	mJUnitTestMode = mode;
+    }
 
 }

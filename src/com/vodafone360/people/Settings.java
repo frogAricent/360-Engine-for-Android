@@ -235,7 +235,7 @@ public final class Settings {
      */
     
     /** Maximum limit for fetching facebook feeds **/
-    protected static final String DEFAULT_FB_MAX_POSTS = "20";
+    protected static final String DEFAULT_FB_MAX_POSTS = "500";
 	/** facebook key for photo feeds **/
     protected static final String FB_PHOTO_APP_KEY_VALUE = "app_2305272732";
 	/** facebook key for link feeds **/

@@ -26,12 +26,16 @@
 
 package com.vodafone360.people.service.io.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import com.vodafone360.people.Settings;
 import com.vodafone360.people.engine.BaseEngine;
 import com.vodafone360.people.engine.login.LoginEngine;
+import com.vodafone360.people.engine.music.MusicEngine;
 import com.vodafone360.people.service.io.QueueManager;
 import com.vodafone360.people.service.io.Request;
 import com.vodafone360.people.utils.LogUtils;
@@ -43,7 +47,12 @@ public class Music {
 	
 	private final static String DOWNLOADABLE_TRACK = "music/getdownloadabletracks";
 	private final static String DD_FOR_TRACKS = "music/getddfortracks";
+	private final static String GET_RECOMMENDED_TRACKS = "music/getrecommendedtrackblock";
+	private final static String TOP_ANONYMOUS_TRACKS = "music/gettrackblock";
 	private final static String LICENSE_TYPE = "ftmd-redownload";
+	private static final String TOP = "top";
+	private static final String SEL = "sel";
+	
 
 	/**
 	 * Implementation of music/GetDownloadableTrackBlock API. Parameters are; [auth], IntegerExpired [opt]
@@ -103,4 +112,63 @@ public class Music {
 		return requestId;
 	}
 
+	/**
+	 * Implementation of music/GetRecommendedTrackBlock API. Parameters are; [auth], IntegerExpired [opt]
+	 * Map<String List<String>> filterList [Opt]
+	 * 
+	 * @param engine handle to MusicEngine
+	 * @return request id generated for this request
+	 * 
+	 */
+	public static int getRecommendedTrackBlock(BaseEngine engine) {
+		if (LoginEngine.getSession() == null) {
+			LogUtils.logE("Music.GetDownloadableTrackBlock() Invalid session, return -1");
+			return -1;
+		}
+		if (engine == null) {
+			throw new NullPointerException("Auth.getPublicKey() engine cannot be NULL");
+		}
+		Request request = new Request(GET_RECOMMENDED_TRACKS,
+				Request.Type.RECOMMENDED_TRACK, engine.engineId(), false,
+				Settings.API_REQUESTS_TIMEOUT_AUTH);
+		
+		QueueManager queue = QueueManager.getInstance();
+		int requestId = queue.addRequest(request);
+		queue.fireQueueStateChanged();
+		
+		return requestId;
+	}
+	
+	/**
+	 * Implementation of music/GetTrackBlocks API. Parameters are; [auth], IntegerExpired [opt]
+	 * Map<String List<String>> filterList [Opt]
+	 * 
+	 * @param engine handle to WidgetEngine
+	 * @return request id generated for this request
+	 * 
+	 */
+	public static int getTrackBlock(BaseEngine engine) {
+		if (LoginEngine.getSession() == null) {
+			LogUtils.logE("Music.GetDownloadableTrackBlock() Invalid session, return -1");
+			return -1;
+		}
+		if (engine == null) {
+			throw new NullPointerException("Auth.getPublicKey() engine cannot be NULL");
+		}
+		
+		Map<String, List<String>> filterlist = new HashMap<String, List<String>>();
+		List<String> list = new ArrayList<String>();
+		list.add(TOP);
+		filterlist.put(SEL, list);
+		
+		Request request = new Request(TOP_ANONYMOUS_TRACKS,
+				Request.Type.RECOMMENDED_TRACK, engine.engineId(), false,
+				Settings.API_REQUESTS_TIMEOUT_AUTH);
+		request.addData("filterlist", ApiUtils.createHashTable(filterlist));
+		QueueManager queue = QueueManager.getInstance();
+		int requestId = queue.addRequest(request);
+		queue.fireQueueStateChanged();
+		
+		return requestId;
+	}
 }

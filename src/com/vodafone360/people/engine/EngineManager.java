@@ -45,8 +45,10 @@ import com.vodafone360.people.engine.location.LocationEngine;
 import com.vodafone360.people.engine.login.LoginEngine;
 import com.vodafone360.people.engine.meprofile.SyncMeEngine;
 import com.vodafone360.people.engine.music.MusicEngine;
+import com.vodafone360.people.engine.music.WidgetEngine;
 import com.vodafone360.people.engine.presence.PresenceEngine;
 import com.vodafone360.people.engine.share.ShareEngine;
+import com.vodafone360.people.engine.shop.ShopEngine;
 import com.vodafone360.people.engine.upgrade.UpgradeEngine;
 import com.vodafone360.people.service.RemoteService;
 import com.vodafone360.people.service.WorkerThread;
@@ -81,6 +83,8 @@ public class EngineManager {
         LOCATION_ENGINE,
         SHARE_ENGINE,
         MUSIC_ENGINE,
+        WIDGET_ENGINE,
+        SHOP_ENGINE,
         UNDEFINED
         // add ids as we progress
 
@@ -149,7 +153,10 @@ public class EngineManager {
      * @see GroupsEngine
      */
     private GroupSyncEngine mGroupsEngine;
-
+    /**
+     * @see GroupsEngine
+     */
+    private GroupsEngine mGroupsEngine1;
     /**
      * @see ContentEngine
      */
@@ -161,9 +168,17 @@ public class EngineManager {
     private CommentsEngine mCommentsEngine;
     
     /**
-     * @see MusicEnginebak
+     * @see MusicEngine
      */
     private MusicEngine mMusicEngine;
+    /**
+     * @see ShopEngine
+     */
+    private ShopEngine mShopEngine;
+    /**
+     * @see WidgetEngine
+     */
+    private WidgetEngine mWidgetEngine;
     
     /**
      * @see LocationEngine
@@ -280,6 +295,8 @@ public class EngineManager {
         createContentEngine();
         createCommentsEngine();
         createMusicEngine();
+        createWidgetEngine();
+        createShopEngine();
     }
 
     /**
@@ -302,6 +319,9 @@ public class EngineManager {
         mContentEngine = null;
         mCommentsEngine = null;
         mLocationEngine = null;
+        mMusicEngine = null;
+        mWidgetEngine = null;
+        mShopEngine = null;
     }
 
     /**
@@ -420,6 +440,7 @@ public class EngineManager {
         return mContactSyncEngine;
     }
 
+
     private synchronized void createContactSyncEngine() {
         final MainApplication app = (MainApplication)mService.getApplication();
         mContactSyncEngine = new ContactSyncEngine(mUiEventCallback, mService, app.getDatabase(),
@@ -504,6 +525,19 @@ public class EngineManager {
     }
     
     /**
+     * Fetch Widget engine, starting it if necessary.
+     * 
+     * @return WidgetEngine object
+     */
+    public synchronized WidgetEngine getWidgetEngine() {
+        if (mWidgetEngine != null) {
+            return mWidgetEngine;
+        }
+        createWidgetEngine();
+        return mWidgetEngine;
+    }
+    
+    /**
      * Create instance of CommentsEngine.
      */
     private synchronized void createCommentsEngine() {
@@ -517,6 +551,14 @@ public class EngineManager {
     private synchronized void createMusicEngine() {
         mMusicEngine = new MusicEngine(mUiEventCallback);
         addEngine(mMusicEngine);
+    }
+    
+    /**
+     * Create instance of WidgetEngine.
+     */
+    private synchronized void createWidgetEngine() {
+        mWidgetEngine = new WidgetEngine(mUiEventCallback);
+        addEngine(mWidgetEngine);
     }
     
     /**
@@ -562,6 +604,25 @@ public class EngineManager {
         return mShareEngine;
     } 
     
+    /**
+     * Create instance of ShopEngine.
+     */
+    private synchronized void createShopEngine() {
+        mShopEngine = new ShopEngine(mUiEventCallback);
+        addEngine(mShopEngine);
+    }
+    /**
+     * Fetch Shop engine, starting it if necessary.
+     * 
+     * @return ShopEngine object
+     */
+    public synchronized ShopEngine getShopEngine() {
+        if (mShopEngine != null) {
+            return mShopEngine;
+        }
+        createShopEngine();
+        return mShopEngine;
+    }
     /**
      * Respond to incoming message received from Comms layer. If this message
      * has a valid engine id it is routed to that engine, otherwise The
@@ -716,5 +777,100 @@ public class EngineManager {
             Thread.yield();
         }
         LogUtils.logV("EngineManager.resetAllEngines() - end");
+    }
+    
+    /**
+     * (Used only by JUnit)
+     * Create instance of EngineManager.
+     * 
+     * @param service {@link RemoteService} reference
+     * @param uiCallback Provides useful engine callback functionality.
+     */
+    public static EngineManager createEngineManagerForTest(RemoteService service, IEngineEventCallback uiCallback) {
+        sEngineManager = new EngineManager(service, uiCallback);
+        return sEngineManager;
+    }
+    /**
+     * (Used only by JUnit)
+     * Add a new engine to the EngineManager.
+     * 
+     * @param newEngine Engine to be added.
+     */
+    public void addEngineForTest(BaseEngine newEngine){
+    	
+    	final String newName = newEngine.getClass().getSimpleName();
+        String[] deactivatedEngines = SettingsManager
+                .getStringArrayProperty(Settings.DEACTIVATE_ENGINE_LIST_KEY);
+        for (String engineName : deactivatedEngines) {
+            if (engineName.equals(newName)) {
+                LogUtils.logW("DEACTIVATE ENGINE:  " + engineName);
+                newEngine.deactivateEngine();
+            }
+        }
+        if (!newEngine.isDeactivated()) {
+            newEngine.onCreate();
+            mEngineList.put(newEngine.mEngineId.ordinal(), newEngine);
+            
+            switch(newEngine.engineId()){
+            
+            case ACTIVITIES_ENGINE:{
+            	mActivitiesEngine = (ActivitiesEngine) newEngine;
+            	break;
+            }
+            case LOGIN_ENGINE:{
+            	mLoginEngine = (LoginEngine) newEngine;
+            	break;
+            }
+            case CONTACT_SYNC_ENGINE:{
+            	mContactSyncEngine = (ContactSyncEngine) newEngine;
+            	break;
+            }
+            case IDENTITIES_ENGINE:{
+            	mIdentityEngine = (IdentityEngine) newEngine;
+            	break;
+            }
+            case PRESENCE_ENGINE:{
+            	mPresenceEngine  = (PresenceEngine) newEngine;
+            	break;
+            }
+            case SYNCME_ENGINE:{
+            	mSyncMeEngine = (SyncMeEngine) newEngine;
+            	break;
+            }
+            case CONTENT_ENGINE:{
+            	mContentEngine = (ContentEngine) newEngine;
+            	break;
+            }
+            case GROUPS_ENGINE:{
+            	mGroupsEngine1 = (GroupsEngine)newEngine;
+            	break;
+            }	
+            case COMMENTS_ENGINE:{
+            	mCommentsEngine = (CommentsEngine)newEngine;
+            	break;
+            }
+            case LOCATION_ENGINE:{
+            	mLocationEngine = (LocationEngine) newEngine;
+            	break;
+            }
+            case SHARE_ENGINE:{
+            	mShareEngine = (ShareEngine)newEngine;
+            	break;
+            }
+            case MUSIC_ENGINE:{
+            	mMusicEngine = (MusicEngine)newEngine;
+            	break;
+            }
+            case WIDGET_ENGINE:{
+            	mWidgetEngine = (WidgetEngine)newEngine;
+            	break;
+            }
+            default:
+            	break;
+            }
+               
+            	
+        }
+    
     }
 }

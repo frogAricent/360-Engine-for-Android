@@ -57,7 +57,7 @@ public class Contents {
 
 	private final static String FUNCTION_ADD_CONTENT = "content/addcontents";
 
-	private final static String FUNCTION_ADD_CONTENT_AND_PUBLISH = "content/addcontentsandpublish";
+	private final static String FUNCTION_ADD_CONTENT_AND_PUBLISH = "content/addcontentandpublish";
 
 	private final static String FUNCTION_PUBLISH_CONTENT = "content/publishfiles";
 
