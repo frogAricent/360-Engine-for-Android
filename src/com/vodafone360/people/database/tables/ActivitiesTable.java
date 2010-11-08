@@ -242,6 +242,7 @@ public abstract class ActivitiesTable {
         
         public boolean mIsUnread = false;
 
+
         /**
          * Returns a string describing the timeline summary item.
          *
@@ -428,6 +429,8 @@ public abstract class ActivitiesTable {
                     activityItem.hasChildren);
         activityItem.visibilityFlags =
             SqlUtils.setInt(cursor, Field.VISIBILITY.toString(), null);
+        activityItem.incoming =
+            SqlUtils.setInt(cursor, Field.INCOMING.toString(), null);
         // TODO: Field MORE_INFO is not used, consider deleting.
 
         /** Populate ActivityContact. **/
@@ -1966,7 +1969,7 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
      *
      * @return SQL string
      */
-    private static String getFeedQueryList() {
+    public static String getFeedQueryList() {
         DatabaseHelper.trace(false, "DatabaseHelper.getFeedQueryList()");
         return Field.LOCAL_ACTIVITY_ID 
             + ", " + Field.TIMESTAMP 
@@ -2074,6 +2077,8 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
             return null;
         }
     }
+    
+    
 
     
 }

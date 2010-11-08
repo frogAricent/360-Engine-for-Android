@@ -467,6 +467,8 @@ public class ActivityItem extends BaseDataType {
     public List<Visibility> visibility = null;
 
     public Integer visibilityFlags = 0;
+    
+    public Integer incoming = null;
 
     /**
      * Defines the contact information of the counter-parties in the activity.

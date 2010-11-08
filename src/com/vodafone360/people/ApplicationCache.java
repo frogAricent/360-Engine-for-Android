@@ -33,15 +33,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.vodafone360.people.R;
 import com.vodafone360.people.database.tables.ActivitiesTable.TimelineSummaryItem;
 import com.vodafone360.people.datatypes.Contact;
 import com.vodafone360.people.datatypes.ContactSummary;
+import com.vodafone360.people.datatypes.MusicTracksResponse;
 import com.vodafone360.people.engine.contactsync.SyncStatus;
 import com.vodafone360.people.service.ServiceStatus;
-import com.vodafone360.people.utils.ThirdPartyAccount;
-import com.vodafone360.people.utils.LoginPreferences;
 import com.vodafone360.people.utils.LogUtils;
+import com.vodafone360.people.utils.LoginPreferences;
+import com.vodafone360.people.utils.ThirdPartyAccount;
 
 /**
  * Caches information about the current state of the application. Stores most
@@ -182,6 +182,10 @@ public class ApplicationCache {
 
     private long mCurrentContactFilter;
     
+    public int mMusicWidgetBatch = 0;
+    
+    private static MusicTracksResponse mMusicTrackResponse;
+
     /** Cached whether ThirdPartyAccountsActivity is opened. */
     private boolean mIsAddAccountActivityOpened;
 
@@ -690,4 +694,40 @@ public class ApplicationCache {
     	LogUtils.logD("User id returned");
     	return mUserId;
     }
+    
+    
+    /**
+     * Setter for Music batch number
+     * @param batch
+     */
+    public void setMusicWidgetBatch(int batch){
+    	mMusicWidgetBatch = batch;
+    }
+    
+    /**
+     * Getter for Music batch number
+     * @return mMusicWidgetBatch
+     */
+   public int getMusicWidgetBatch(){
+    	return mMusicWidgetBatch;
+    }
+    
+   /**
+    * Setter for Music track
+    * @param musicTracksResponse
+    */
+   public final void setMusicTrack(final MusicTracksResponse musicTracksResponse){
+   	System.out.println("ApplicationCache.setMusicTrack()");
+   	mMusicTrackResponse = musicTracksResponse;
+   }
+   
+   /**
+    * Getter for Music track
+    * @return mMusicTrackResponse
+    */
+   public final MusicTracksResponse getMusicTracks() {
+   	System.out.println("ApplicationCache.getMusicTracks()");
+       return mMusicTrackResponse;
+   }
+   
 }

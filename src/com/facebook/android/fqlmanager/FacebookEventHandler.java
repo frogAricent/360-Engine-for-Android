@@ -25,6 +25,7 @@
 package com.facebook.android.fqlmanager;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -201,7 +202,9 @@ public class FacebookEventHandler {
 			try {
 				Bundle parameter = new Bundle();
 				parameter.putString(POST_ID, post_id);
-				parameter.putString(COMMENT, comment);
+				String encodedComment = null;
+				encodedComment = URLEncoder.encode(comment, "UTF-8");
+				parameter.putString(COMMENT, encodedComment);
 				mFQLConnection.request(ADD_COMMENT, parameter,
 						new AddCommentListener(callBack));
 				} catch (Exception e) {

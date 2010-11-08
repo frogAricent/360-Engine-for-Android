@@ -26,10 +26,12 @@ package com.vodafone360.people.engine.music;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Observable;
 
 import org.apache.http.HttpConnection;
@@ -382,29 +384,25 @@ public class MusicDownloader extends Observable {
 	public void installNotify() {
 
 		// Create a new HttpClient and Post Header  
-	    HttpClient httpclient = new DefaultHttpClient();  
-	    HttpPost httppost = new HttpPost(getInstallNotifyURI());  
-	  
-	    System.out.println("MusicDownloader.installNotify()"+getInstallNotifyURI());
+	    
+	    
 	    try {  
 	        // Add your data  
-            httppost.addHeader("User-Agent", "PeopleRPGClient/1.0");
-            httppost.addHeader("Cache-Control", "no-cache");
-            httppost.addHeader("Content-Type", Settings.HTTP_HEADER_CONTENT_TYPE);
             
-//            StringEntity stringEntity = new
-//	        StringEntity("<installNotifyURI>"+getInstallNotifyURI()+"</installNotifyURI>","UTF-8");
-//	        stringEntity.setContentType("application/xml");
-//	        
-//	        httppost.setEntity(stringEntity);
-	        
-	        // Execute HTTP Post Request  
-	        HttpResponse response = httpclient.execute(httppost);  
-	        
-	        System.out.println("MusicDownloader.installNotify()"+response);
-	        System.out.println("MusicDownloader.installNotify()"+response.toString());
-	        System.out.println("MusicDownloader.installNotify()"+response.getStatusLine());
-	        System.out.println("MusicDownloader.installNotify()"+response.getEntity());
+            URL url = new URL(getInstallNotifyURI());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "text/plain");
+            conn.setDoOutput(true);
+            String encodedData = URLEncoder.encode("900 Success");
+            OutputStream os = conn.getOutputStream();
+            os.write(encodedData.getBytes());
+
+            int responseCode = conn.getResponseCode();
+          
+            System.out.println("MusicDownloader.installNotify()"+getInstallNotifyURI());
+            System.out.println("MusicDownloader.responseCode"+responseCode);
+            
 	    } catch (ClientProtocolException e) {  
 	        // TODO Auto-generated catch block  
 	    } catch (IOException e) {  

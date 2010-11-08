@@ -1941,17 +1941,19 @@ public abstract class ContactSummaryTable {
     		}
     		try {
     				if(sPresenceMap.size() > 1){
-    				Cursor onlineCursor = null , offlineCursor = null, idleCursor = null;
-    				String online = getOnlineWhereClause(OnlineStatus.ONLINE, meProfileId)  ;
+    				Cursor onlineCursor = null , offlineCursor = null;//, idleCursor = null;
+    				String online = getOnlineWhereClause();
+//    				    getOnlineWhereClause(OnlineStatus.ONLINE, meProfileId)  ;
     				if(online != null)
     					onlineCursor =   readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
     							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
     							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " + online
+    							+ " AND " + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
     							+ " AND " + ContactSummaryTable.Field.SNS + " IN " + "("
     							+  sns + " )" + " ORDER BY " +
     							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
     				String offline = getOnlineWhereClause()  ;
-    				if(offline != null)
+    				if(offline != null){
     					offlineCursor =    readableDb.rawQuery("SELECT  " + ContactSummaryTable.getFullQueryList()
     							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
     							+ ContactSummaryTable.Field.LOCALCONTACTID + " NOT IN " +  offline
@@ -1959,16 +1961,17 @@ public abstract class ContactSummaryTable {
     							+ " AND " + ContactSummaryTable.Field.SNS + " IN " + "("
     							+  sns + " )" + " ORDER BY " +
     							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
-    				String idle = getOnlineWhereClause(OnlineStatus.IDLE, meProfileId);  
-    				if(idle != null)
-    					idleCursor =    readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
-    							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
-    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " +  idle
-    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
-    							+  sns + " )" + " ORDER BY " +
-    							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
-
-    				Cursor cursor[] = {onlineCursor,idleCursor,offlineCursor};
+    				}
+//    				String idle = getOnlineWhereClause(OnlineStatus.IDLE, meProfileId);  
+//    				if(idle != null)
+//    					idleCursor =    readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+//    							+ " FROM " + ContactSummaryTable.TABLE_NAME + " WHERE " 
+//    							+ ContactSummaryTable.Field.LOCALCONTACTID + " IN " +  idle
+//    							+" AND " + ContactSummaryTable.Field.SNS + " IN " + "("
+//    							+  sns + " )" + " ORDER BY " +
+//    							"LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ") ", null);
+    				
+    				Cursor cursor[] = {onlineCursor /*,idleCursor*/ ,offlineCursor};
     				MergeCursor mergeCursor = new MergeCursor(cursor);
     				return mergeCursor;
     			} else
@@ -2030,6 +2033,190 @@ public abstract class ContactSummaryTable {
     	{
     		return sPresenceMap.size();
     	}
+    	
+    	/**
+    	 * This method returns the cursor of recent contacts 
+    	 * @param groupFilterId the group id to be filtered (For extention in case required. At present not used)
+    	 * @param meProfileId the user's profile id
+    	 * @param readableDb Readable database
+    	 * @return A cursor of recent contacts or null
+    	 */
+    	
+    	public static Cursor fetchRecentContactList(Long groupFilterId, Long meProfileId,SQLiteDatabase readableDb) {
+    		LogUtils.logD("ContactSummeryTable.fetchRecentContactList()");
+    		if (Settings.ENABLED_DATABASE_TRACE) {
+    			DatabaseHelper.trace(false, "ContactSummeryTable.fetchRecentContactList() " + "]");
+    		}
+    		if(meProfileId == null)
+    			meProfileId = -1L;
+    		try {
+    			
+    			if(groupFilterId != null){
+    				return readableDb.rawQuery("SELECT " +
+        					"DISTINCT a."+Field.LOCALCONTACTID +
+        					", a."+ Field.DISPLAYNAME+
+        					", a."+ Field.ONLINESTATUS+
+        					", a."+ Field.SUMMARYID+
+        					", a."+ Field.ALTDETAILTYPE+
+        					", b."+ ActivitiesTable.Field.TYPE+
+        					", b."+ ActivitiesTable.Field.TIMESTAMP+
+        					", b."+ ActivitiesTable.Field.DESCRIPTION+ " FROM " +
+        					ContactSummaryTable.TABLE_NAME +" a, "+ ActivitiesTable.TABLE_NAME + " b "+getGroupConstraint(groupFilterId)+" AND a."+Field.LOCALCONTACTID+"=b."+
+        					ActivitiesTable.Field.LOCAL_CONTACT_ID+" AND "
+                            + "a."+ ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId+" ORDER BY b."+ActivitiesTable.Field.TIMESTAMP+" DESC", null);
+    			
+    			}else{
+    				return readableDb.rawQuery("SELECT " +
+    						ContactSummaryTable.TABLE_NAME+"."+Field.LOCALCONTACTID
+    						+","+ContactSummaryTable.TABLE_NAME+"."+ Field.DISPLAYNAME
+    						+","+ContactSummaryTable.TABLE_NAME+"."+ Field.ONLINESTATUS
+    						+","+ContactSummaryTable.TABLE_NAME+"."+ Field.SUMMARYID
+    						+","+ContactSummaryTable.TABLE_NAME+"."+ Field.ALTDETAILTYPE
+    						+","+ActivitiesTable.TABLE_NAME+"."+ ActivitiesTable.Field.TYPE
+    						+","+ActivitiesTable.TABLE_NAME+"."+ ActivitiesTable.Field.TIMESTAMP
+    						+","+ActivitiesTable.TABLE_NAME+"."+ ActivitiesTable.Field.DESCRIPTION 
+    						+" FROM "+ContactSummaryTable.TABLE_NAME +","+ ActivitiesTable.TABLE_NAME 
+    						+" WHERE "+ContactSummaryTable.TABLE_NAME+"."+Field.LOCALCONTACTID+"="+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.LOCAL_CONTACT_ID
+        					+" AND ("+ getActivityTypes()
+                            +") AND "+ ContactSummaryTable.TABLE_NAME+"."+ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+                            +" GROUP BY " +ContactSummaryTable.TABLE_NAME+"."+ContactSummaryTable.Field.LOCALCONTACTID
+                            +" ORDER BY "+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TIMESTAMP+" DESC", null);
+    			}
+    		} catch (SQLException e) {
+    			LogUtils.logE("ContactSummeryTable.fetchRecentContactList() "
+    					+ "SQLException - Unable to fetch filtered summary cursor", e);
+    			return null;
+    		}
+    	}
+    	
+    	/**
+    	 * Returns a list of all the activity types to be included in the query
+    	 * @return types 
+    	 */
+    	
+    	private static String getActivityTypes(){
+    		String types = "";
+    		types = ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='call_dialed' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='call_received' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='call_missed' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='message_sms_sent' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='messsage_sms_received' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='message_email_received' OR "
+    				+ActivitiesTable.TABLE_NAME+"."+ActivitiesTable.Field.TYPE+"='message_email_sent'";
+    		return types;
+    	}
+    	
+    	/**
+    	 * This method returns a cursor to the most frequent contacts
+    	 * @param readableDb the readable database
+    	 * @return A cursor of frequent contacts or null
+    	 */
+    	
+    	public static Cursor fetchFrequentContactList(Long groupFilterId, Long meProfileId,SQLiteDatabase readableDb) {
+    		LogUtils.logD("ContactSummeryTable.fetchFrequentContactList()");
+    		if (Settings.ENABLED_DATABASE_TRACE) {
+    			DatabaseHelper.trace(false, "ContactSummeryTable.fetchFrequentContactList() " + "]");
+    		}
+    		if(meProfileId == null)
+    			meProfileId = -1L;
+    		try {
+    			if(groupFilterId != null){
+    			return readableDb.rawQuery("SELECT " +
+    					"a."+Field.LOCALCONTACTID +
+    					", a."+ Field.DISPLAYNAME+
+    					", a."+ Field.ONLINESTATUS+
+    					", a."+ Field.SUMMARYID+
+    					", a."+ Field.ALTDETAILTYPE+
+    					", b."+ ActivitiesTable.Field.TYPE+
+    					", b."+ ActivitiesTable.Field.TIMESTAMP+
+    					", b."+ ActivitiesTable.Field.DESCRIPTION+
+    					", COUNT(b."+ ActivitiesTable.Field.LOCAL_CONTACT_ID+") FROM " +
+    					ContactSummaryTable.TABLE_NAME +" a, "+ ActivitiesTable.TABLE_NAME + " b"+getGroupConstraint(groupFilterId)+" AND a."+Field.LOCALCONTACTID+"=b."+
+    					ActivitiesTable.Field.LOCAL_CONTACT_ID+" AND "
+                        + "a."+ ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId+
+    					" GROUP BY b."+ActivitiesTable.Field.LOCAL_CONTACT_ID+" ORDER BY COUNT(b."+ActivitiesTable.Field.LOCAL_CONTACT_ID+") DESC", null);
+    			}else{
+    				LogUtils.logD("Group id is null");
+    				return readableDb.rawQuery("SELECT " 
+    						+"a."+Field.LOCALCONTACTID 
+    						+", a."+ Field.DISPLAYNAME
+    						+", a."+ Field.ONLINESTATUS
+    						+", a."+ Field.SUMMARYID
+    						+", a."+ Field.ALTDETAILTYPE
+    						+", b."+ ActivitiesTable.Field.TYPE
+    						+", b."+ ActivitiesTable.Field.TIMESTAMP
+    						+", b."+ ActivitiesTable.Field.DESCRIPTION
+    						+", COUNT(b."+ ActivitiesTable.Field.LOCAL_CONTACT_ID+") FROM " 
+    						+ContactSummaryTable.TABLE_NAME +" a, "+ ActivitiesTable.TABLE_NAME + " b "
+    						+"WHERE a."+Field.LOCALCONTACTID+"=b."+ActivitiesTable.Field.LOCAL_CONTACT_ID
+    						+ " AND a."+Field.LOCALCONTACTID+"!="+meProfileId
+    						+" AND ("+getActivityTypesCondition()+") GROUP BY b."+ActivitiesTable.Field.LOCAL_CONTACT_ID+" ORDER BY COUNT(b."+ActivitiesTable.Field.LOCAL_CONTACT_ID+") DESC", null);
+
+    			}
+    		} catch (SQLException e) {
+    			LogUtils.logE("ContactSummeryTable.fetchFrequentContactList() "
+    					+ "SQLException - Unable to fetch filtered summary cursor", e);
+    			return null;
+    		}
+    	}
+    	
+    	/**
+    	 * Returns a list of all the activity types to be included in the query for frequent contacts.
+    	 * (Ideally must eb same as getActivityTypes() used in fetchRecentContactList(). May require optimization )
+    	 * @return types
+    	 */
+
+    	private static String getActivityTypesCondition(){
+    		String types = "";
+    		types = "b."+ActivitiesTable.Field.TYPE+"='call_dialed' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='call_received' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='call_missed' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='message_sms_sent' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='messsage_sms_received' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='message_email_received' OR "
+			+"b."+ActivitiesTable.Field.TYPE+"='message_email_sent'";
+    		return types;
+    	}
+    	
+    	/**
+    	 * This method returns the list of names sorted by last name(Support for groups yet to be added)
+    	 */
+    	 public static Cursor fetchContactListSortedByLastName(Long groupFilterId, CharSequence constraint,
+    	            Long meProfileId, SQLiteDatabase readableDb) {
+    		 
+    		 if (Settings.ENABLED_DATABASE_TRACE) {
+    	            DatabaseHelper.trace(false, "ContactSummeryTable.fetchContactListSortedByLastName() groupFilterId["
+    	                    + groupFilterId + "] meProfileId[" + meProfileId + "]");
+    	        }
+    	        try {
+    	            if (groupFilterId == null) {
+    	                // Fetch all contacts
+    	                return readableDb.rawQuery("SELECT " +ContactSummaryTable.TABLE_NAME+"."+Field.SUMMARYID//+ ContactSummaryTable.getFullQueryList()
+    	                		+ ", " +ContactSummaryTable.TABLE_NAME+"."+ContactSummaryTable.Field.LOCALCONTACTID
+    	                		+ ", " + ContactDetailsTable.TABLE_NAME+"."+ContactDetailsTable.Field.STRINGVAL
+    	                		+ ", " + ContactSummaryTable.TABLE_NAME+"."+ContactSummaryTable.Field.STATUSTEXT
+        	                    + ", " + ContactSummaryTable.TABLE_NAME+"."+ContactSummaryTable.Field.DISPLAYNAME
+        	                    + " FROM " + ContactSummaryTable.TABLE_NAME+", "+ContactDetailsTable.TABLE_NAME
+        	                    + " WHERE " + ContactSummaryTable.TABLE_NAME + "."+ ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+        	                    + " AND "+ContactSummaryTable.TABLE_NAME + "." + ContactSummaryTable.Field.LOCALCONTACTID + "=" + ContactDetailsTable.TABLE_NAME + "."+ContactDetailsTable.Field.LOCALCONTACTID
+        	                    + " AND "+ContactDetailsTable.TABLE_NAME + "."+ ContactDetailsTable.Field.KEY+"='0'"
+        	                    + " ORDER BY LOWER(" + ContactDetailsTable.TABLE_NAME + "."+ ContactDetailsTable.Field.STRINGVAL + ")", null);
+    	            }
+    	            return readableDb.rawQuery("SELECT " + ContactSummaryTable.getFullQueryList()
+    	                    + " FROM " + ContactSummaryTable.TABLE_NAME + getGroupConstraint(groupFilterId)
+    	                    + " AND " + ContactSummaryTable.TABLE_NAME + "."
+    	                    + ContactSummaryTable.Field.LOCALCONTACTID + "!=" + meProfileId
+    	                    + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")", null);
+
+    	        } catch (SQLException e) {
+    	            LogUtils.logE("ContactSummeryTable.fetchContactListSortedByLastName() "
+    	                    + "SQLException - Unable to fetch last name sorted summary cursor", e);
+    	            return null;
+    	        }
+    		 
+    	 }
+    	
+    	
 }
 
 

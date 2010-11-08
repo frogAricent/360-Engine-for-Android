@@ -278,6 +278,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ActivitiesTable.create(db);
             GroupsChangeLogTable.create(db);
             ConversationsTable.create(db);
+            //ContactGroupsChangeLogTable.create(db);
 
         } catch (SQLException e) {
             LogUtils.logE("DatabaseHelper.onCreate() SQLException: Unable to create DB table", e);
@@ -2859,7 +2860,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				LogUtils
 						.logD("DatabaseHelper.addGroups - Group not added to change log database");
 				return ServiceStatus.ERROR_DATABASE_CORRUPT;
-			}
+			}/*else{
+				for(Long contId:contactList){
+					ContactGroupsChangeLogTable.addContactToGroup(contId, group.mName, writableDb);
+				}
+			}*/
 		}else{
 			LogUtils.logE("DatabaseHelper.addGroup - Group could not be added. Database error");
 		}
@@ -2975,6 +2980,114 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				contIds, readableDb);
 		return contIds.size();
 	}
+	
+	/**
+	 * This method verifies if the group name the user entered is already present in the database
+	 * @param newGroupName the user entered group name
+	 * @param readableDb Readable database
+	 * @return boolean true if the group already exists else false 
+	 */
+	
+	public static boolean isGroupAlreadyPresent(String newGroupName, SQLiteDatabase readableDb) {
+		LogUtils.logD("DatabaseHelper.isGroupAlreadyPresent - Verifyinbg group["+newGroupName+"]");
+		boolean isGroupPresent = false;
+		ArrayList<GroupItem> presentGroups = new ArrayList<GroupItem>();
+		GroupsTable.fetchGroupList(presentGroups, readableDb);
+		if((presentGroups.size() != 0)){
+			for(GroupItem grp: presentGroups){
+				if(grp.mName.equalsIgnoreCase(newGroupName)){
+					isGroupPresent = true;
+					break;
+				}
+			}
+		}
+		if(!isGroupPresent){
+			Cursor cursor = GroupsChangeLogTable.fetchGroupListCursor(readableDb);
+			if (cursor!= null) {
+				while (cursor.moveToNext()) {
+					String name = cursor.getString(cursor
+							.getColumnIndex(GroupsChangeLogTable.Field.NAME
+									.toString()));
+					if (name.equalsIgnoreCase(newGroupName)) {
+						isGroupPresent = true;
+						break;
+					}
+				}
+				cursor.close();
+			}
+		}
+		if(isGroupPresent)
+			LogUtils.logD(newGroupName+" is already present.");
+		else
+			LogUtils.logD(newGroupName+" is not present.");
+		return isGroupPresent;
+		
+	}
+	
+	/**
+	 * This method returns the list of contacts belonging to the specified group name and id
+	 * @param groupName Name of the group
+	 * @param groupId	Group Id
+	 * @param readableDb Readable database
+	 * @return
+	 */
+	
+	/*public ServiceStatus fetchGroupContacts(String groupName, Long groupId, List<Long> contactIds){
+		//List<Long> contactIds = new ArrayList<Long>();
+		contactIds.clear();
+		ServiceStatus fetchGrpContactsStatus = ContactGroupsTable.fetchGroupContacts(groupId,
+				contactIds, getReadableDatabase());
+		if(fetchGrpContactsStatus!= ServiceStatus.SUCCESS){
+			LogUtils.logE("Could not fetch contact list from ContactGroupsTable for group ["+groupName+"]");
+		}else{
+			LogUtils.logD(contactIds.size() + " existing contacts for group ["+groupName+"]");
+		}
+        List<Long> mTempContactIDs = new ArrayList<Long>();
+        ServiceStatus fetchTempContacts = ContactGroupsChangeLogTable.fetchGroupContacts(groupName, mTempContactIDs, getReadableDatabase());
+        if(fetchTempContacts == ServiceStatus.SUCCESS && mTempContactIDs.size()!= 0){
+        	LogUtils.logD(mTempContactIDs.size() + " temp contacts.");
+        	for(Long tempId : mTempContactIDs){
+        		if(!contactIds.contains(tempId))
+        			contactIds.add(tempId);
+        	}
+        }
+        if(fetchGrpContactsStatus != ServiceStatus.SUCCESS && fetchTempContacts != ServiceStatus.SUCCESS)
+        	return ServiceStatus.ERROR_DATABASE_CORRUPT;
+        else
+        	return ServiceStatus.SUCCESS;
+		
+	}*/
+	
+	/**
+	 * This method returns the count of contacts belonging to the specified group name and id
+	 * @param groupName Name of the group
+	 * @param groupId	Group Id
+	 * @param readableDb Readable database
+	 * @return
+	 */
+	
+	/*public int fetchGroupContactsCount(String groupName, Long groupId){
+		List<Long> contactIds = new ArrayList<Long>();
+		contactIds.clear();
+		ServiceStatus fetchGrpContactsStatus = ContactGroupsTable.fetchGroupContacts(groupId,
+				contactIds, getReadableDatabase());
+		if(fetchGrpContactsStatus!= ServiceStatus.SUCCESS){
+			LogUtils.logE("Could not fetch contact list from ContactGroupsTable for group ["+groupName+"]");
+		}else{
+			LogUtils.logD(contactIds.size() + " existing contacts for group ["+groupName+"]");
+		}
+        List<Long> mTempContactIDs = new ArrayList<Long>();
+        ServiceStatus fetchTempContacts = ContactGroupsChangeLogTable.fetchGroupContacts(groupName, mTempContactIDs, getReadableDatabase());
+        if(fetchTempContacts == ServiceStatus.SUCCESS && mTempContactIDs.size()!= 0){
+        	LogUtils.logD(mTempContactIDs.size() + " temp contacts.");
+        	for(Long tempId : mTempContactIDs){
+        		if(!contactIds.contains(tempId))
+        			contactIds.add(tempId);
+        	}
+        }
+        return contactIds.size();
+		
+	}*/
 
 }
 

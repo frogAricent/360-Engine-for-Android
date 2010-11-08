@@ -28,6 +28,7 @@ package com.vodafone360.people.engine.music;
 
 import java.util.List;
 
+import com.vodafone360.people.ApplicationCache;
 import com.vodafone360.people.datatypes.BaseDataType;
 import com.vodafone360.people.datatypes.MusicTracksResponse;
 import com.vodafone360.people.engine.BaseEngine;
@@ -55,6 +56,8 @@ public class WidgetEngine extends BaseEngine {
 	 * mutex for thread synchronization
 	 */
 	private Object mMutex = new Object();
+
+	private ApplicationCache applicationCache = new ApplicationCache();
 
 	/**
 	 * Definitions of WidgetEngine states; IDLE - engine is inactive
@@ -259,8 +262,10 @@ public class WidgetEngine extends BaseEngine {
 			for (BaseDataType item : data) {
 				if (BaseDataType.TRACKS_RESULTS == item.getType()) {
 					tracks = (MusicTracksResponse) item;
+					applicationCache.setMusicTrack(tracks);
 					LogUtils.logD("Widget id: "+ tracks.toString());
 				} else {
+					applicationCache.setMusicTrack(null);
 					LogUtils.logE("WidgetEngine handleGetTop20Tracks Unexpected response: "
 							+ item.getType());
 					return;
@@ -272,8 +277,7 @@ public class WidgetEngine extends BaseEngine {
 							+ errorStatus.name());
 			return;
 		}
-		
-		completeUiRequest(errorStatus, tracks.recommendedTracksList);
+		completeUiRequest(errorStatus, tracks);
         newState(State.IDLE);
 	}
 	

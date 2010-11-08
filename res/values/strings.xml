@@ -543,7 +543,7 @@
 	<string name="third_party_setup">%s setup</string>
     <string name="third_party_web_accounts_title">Accounts</string>
     <string name="third_party_hint_username">username/email</string>
-	<string name="third_party_hint_password">password</string>
+	<string name="third_party_hint_password">Password</string>
 	<string name="third_party_validation_waiting_text">Checking %s account</string>
  	<string name="third_party_account_placeholder">Unnamed Account</string>
     <string name="getting_third_party_accounts">Getting accounts...</string>

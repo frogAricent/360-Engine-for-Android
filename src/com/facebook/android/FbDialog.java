@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.WebView;
@@ -45,7 +46,8 @@ public class FbDialog extends Dialog {
 
     static final int FB_BLUE = 0xFF6D84B4;
     static final float[] DIMENSIONS_LANDSCAPE = {460, 260};
-    static final float[] DIMENSIONS_PORTRAIT = {280, 420};
+//    static final float[] DIMENSIONS_PORTRAIT = {280, 420};//original
+    static final float[] DIMENSIONS_PORTRAIT = {260, 350};
     static final FrameLayout.LayoutParams FILL = 
         new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
                          ViewGroup.LayoutParams.FILL_PARENT);
@@ -85,6 +87,11 @@ public class FbDialog extends Dialog {
         addContentView(mContent, new FrameLayout.LayoutParams(
         		(int) (dimensions[0] * scale + 0.5f),
         		(int) (dimensions[1] * scale + 0.5f)));
+    }
+    
+    public void onBackPressed () {
+    	mSpinner.cancel();
+    	FbDialog.this.cancel();
     }
 
     private void setUpTitle() {
@@ -155,6 +162,7 @@ public class FbDialog extends Dialog {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             Log.d("Facebook-WebView", "Webview loading URL: " + url);
             super.onPageStarted(view, url, favicon);
+            if(view.isShown())
             mSpinner.show();
         }
 
@@ -167,6 +175,10 @@ public class FbDialog extends Dialog {
             }
             mSpinner.dismiss();
         }   
-        
+        @Override
+        public void onUnhandledKeyEvent(WebView view, KeyEvent event) {
+        	System.out
+					.println("FbDialog.FbWebViewClient.onUnhandledKeyEvent()"+event);
+        }
     }
 }

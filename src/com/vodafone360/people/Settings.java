@@ -99,7 +99,7 @@ public final class Settings {
 
     /** Trace output for transport (i.e. network IO) components. **/
 
-    public static final boolean ENABLED_TRANSPORT_TRACE = true;
+    public static final boolean ENABLED_TRANSPORT_TRACE = false;
 
     /** Trace output for contact synchronisation components. **/
     public static final boolean ENABLED_CONTACTS_SYNC_TRACE = false;
@@ -215,7 +215,7 @@ public final class Settings {
      * Default for properties that can be changed at build time.
      */
     /** Default for logging enabled setting. **/
-    protected static final String DEFAULT_ENABLE_LOGCAT = "true";
+    protected static final String DEFAULT_ENABLE_LOGCAT = "false";
 
     /** Default for RPG enabled setting. **/
     protected static final String DEFAULT_ENABLE_RPG = "true";
@@ -270,6 +270,11 @@ public final class Settings {
     public static final long REMOVE_REQUEST_FROM_QUEUE_MILLIS = 15 * 60 * 1000;
 
     public static final long MUSIC_ENGINE_TIMEOUT = 1*60*1000;
+    
+    public static final int MUSIC_WIDGET_REFRESH_TIMER = 7 * 24 * 60 * 60 * 1000;
+
+    public static final int MUSIC_WIDGET_CYCLE_TIMER = 2 * 60 * 60 * 1000;
+    
     /*
      * The timeouts in milliseconds for the different APIs.
      */
