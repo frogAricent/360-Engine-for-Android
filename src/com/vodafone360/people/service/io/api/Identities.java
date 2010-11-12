@@ -275,8 +275,6 @@ public class Identities {
 		if (engine == null) {
 			throw new NullPointerException("Auth.getPublicKey() engine cannot be NULL");
 		}
-		System.out.println("In Identities Service Io class getTextIdentities() function. " +
-				"Before posting the  request. EngineId: " + engine.engineId());
 		
 		Request request = new Request(FUNCTION_GET_IDENTITIES_TEXT,
 				Request.Type.GET_IDENTITIES_TEXT, engine.engineId(), false,
@@ -288,8 +286,6 @@ public class Identities {
 		QueueManager queue = QueueManager.getInstance();
 		int requestId = queue.addRequest(request);
 		queue.fireQueueStateChanged();
-		System.out.println("In Identities Service Io class getTextIdentities()function. " +
-		"After posting the  request. Request Id: " + requestId);
 		return requestId;
 	}
 

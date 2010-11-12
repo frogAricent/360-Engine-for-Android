@@ -776,7 +776,9 @@ public abstract class ContactsTable {
             }
             writableDb.setTransactionSuccessful();
         } finally {
-            writableDb.endTransaction();
+        	if(writableDb.inTransaction()) {
+        		writableDb.endTransaction();
+        	}
             if(statement1 != null) {
                 statement1.close();
                 statement1 = null;

@@ -25,7 +25,9 @@
 
 package com.vodafone360.people.database.tables;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -47,6 +49,7 @@ import com.vodafone360.people.database.SQLKeys;
 import com.vodafone360.people.database.utils.SqlUtils;
 import com.vodafone360.people.datatypes.ActivityContact;
 import com.vodafone360.people.datatypes.ActivityItem;
+import com.vodafone360.people.datatypes.ActivityItem.Type;
 import com.vodafone360.people.engine.meprofile.SyncMeDbUtils;
 import com.vodafone360.people.engine.presence.NetworkPresence.SocialNetwork;
 import com.vodafone360.people.service.ServiceStatus;
@@ -1852,9 +1855,21 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
              * Delete any Activities older than CLEANUP_MAX_AGE_DAYS days.
              */
             if (CLEANUP_MAX_AGE_DAYS != -1) {
+            	/*
+            	 * Code to delete the Photos saved in SD card Starts
+            	 */
+            	String query = "SELECT " + Field.URI + " FROM " +  TABLE_NAME + " WHERE "
+            		+" type=\"" +Type.ACTIVITY_PHOTO_FEED.getTypeCode() +"\" " + " And " + Field.TIMESTAMP + " < " + 
+            		((System.currentTimeMillis() / NUMBER_OF_MS_IN_A_SECOND) - CLEANUP_MAX_AGE_DAYS * NUMBER_OF_MS_IN_A_DAY);
+            	
+            	Cursor mCursor = writableDb.rawQuery(query, null);
+            	ArrayList<String> pathList = parsePhotosURIToCleanup(mCursor);
+            	deletePhotosFromSDCard(pathList);
+        		mCursor.close();            	
+            	
+            	
                 if (writableDb.delete(TABLE_NAME, Field.TIMESTAMP + " < "
-                        + ((System.currentTimeMillis()
-                                / NUMBER_OF_MS_IN_A_SECOND)
+                        + ((System.currentTimeMillis() / NUMBER_OF_MS_IN_A_SECOND)                      
                                 - CLEANUP_MAX_AGE_DAYS * NUMBER_OF_MS_IN_A_DAY),
                                 null) < 0) {
                     LogUtils.logE("ActivitiesTable.cleanupActivityTable() "
@@ -1866,6 +1881,20 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
              * CLEANUP_MAX_QUANTITY in quantity.
              */
             if (CLEANUP_MAX_QUANTITY != -1) {
+            	/*
+            	 * Code to delete the Photos saved in SD card Starts
+            	 */
+            	String query = "SELECT " + Field.URI + " FROM " +  TABLE_NAME + " WHERE "
+            			+ Field.LOCAL_ACTIVITY_ID + " IN (SELECT " + Field.LOCAL_ACTIVITY_ID + " FROM "
+            			+ TABLE_NAME + " ORDER BY " + Field.TIMESTAMP
+                        + " DESC LIMIT -1 OFFSET " + CLEANUP_MAX_QUANTITY
+                        + ") AND type=\"" +Type.ACTIVITY_PHOTO_FEED.getTypeCode() +"\" " ;
+            	
+            	Cursor mCursor = writableDb.rawQuery(query, null);
+            	ArrayList<String> pathList = parsePhotosURIToCleanup(mCursor);
+            	deletePhotosFromSDCard(pathList);
+        		mCursor.close();
+        		
                 writableDb.execSQL("DELETE FROM " + TABLE_NAME + " WHERE "
                         + Field.LOCAL_ACTIVITY_ID + " IN (SELECT "
                         + Field.LOCAL_ACTIVITY_ID + " FROM " + TABLE_NAME
@@ -2076,9 +2105,39 @@ public static int deleteActivityByActivityId(String activityId,SQLiteDatabase wr
                     + "Unable to fetch timeline event list", e);
             return null;
         }
+        
     }
-    
-    
+   
+/**
+ * It parses the cursor to fill the arraylist of sdcard path for photo.
+ * 
+ * @param cursor
+ * @return ArrayList of SDcard paths of photos
+ */  
+	public static ArrayList<String> parsePhotosURIToCleanup(Cursor mCursor)
+	{
+		mCursor.moveToFirst();
+		ArrayList<String> photosPathList = new ArrayList<String>();
+		for (int iterator = 0; iterator < mCursor.getCount(); iterator++)
+		{
+			photosPathList.add(SqlUtils.setString(mCursor, Field.URI.toString()));
+			mCursor.move(1);
+		}
+		return photosPathList;
+	}
 
-    
+/**
+ * It deletes the photos from the SD card at the specified path 
+ * @param Arraylist of SDCardpath of photos 
+ * @return void
+ */	
+	public static void deletePhotosFromSDCard(ArrayList<String> photosPathList) {
+    	
+    	Iterator<String> itr = photosPathList.iterator();
+    	while (itr.hasNext()) {
+    		String photoPath = itr.next();
+    		File file = new File(photoPath);
+    		file.delete();
+    	}
+    }   
 }

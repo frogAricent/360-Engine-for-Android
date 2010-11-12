@@ -794,7 +794,6 @@ public class ContentEngine extends BaseEngine {
 	 * @return void
 	 */
 	private void startUploadContent(List<Content> contentList) {
-		System.out.println("ContentEngine.startUploadContent()");
 		if (!checkConnectivity()) {
 			return;
 		}
@@ -813,7 +812,6 @@ public class ContentEngine extends BaseEngine {
 	 * @return void
 	 */
 	private void startUploadContentAndPublish(List<Content> contentList) {
-		System.out.println("ContentEngine.startUploadContentAndPublish()");
 		if (!checkConnectivity()) {
 			return;
 		}
@@ -865,7 +863,6 @@ public class ContentEngine extends BaseEngine {
 		ArrayList<Long> contentIdList = new ArrayList<Long>();
 		long contentIdArray[] = ((Bundle) data).getLongArray("contentidlist");
 		if (contentIdArray != null) {
-			System.out.println("Content id array not null");
 			for (int i = 0; i < contentIdArray.length; i++) {
 				contentIdList.add(contentIdArray[i]);
 			}

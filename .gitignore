@@ -1,0 +1,7 @@
+config.properties
+tests/bin/*
+bin
+gen
+.classpath
+.project
+

@@ -341,8 +341,6 @@ public class MusicDownloader extends Observable {
                 complete();
             }
         } catch (Exception e) {
-        	System.out.println("MusicDownloader.downloadFile()Exception"+e);
-        	System.out.println("MusicDownloader.downloadFile()Exception"+e.getStackTrace());
         	e.printStackTrace();
             error();
         } finally {
@@ -400,9 +398,6 @@ public class MusicDownloader extends Observable {
 
             int responseCode = conn.getResponseCode();
           
-            System.out.println("MusicDownloader.installNotify()"+getInstallNotifyURI());
-            System.out.println("MusicDownloader.responseCode"+responseCode);
-            
 	    } catch (ClientProtocolException e) {  
 	        // TODO Auto-generated catch block  
 	    } catch (IOException e) {  

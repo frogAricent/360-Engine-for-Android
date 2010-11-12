@@ -177,8 +177,8 @@ public class FbDialog extends Dialog {
         }   
         @Override
         public void onUnhandledKeyEvent(WebView view, KeyEvent event) {
-        	System.out
-					.println("FbDialog.FbWebViewClient.onUnhandledKeyEvent()"+event);
+//        	System.out
+//					.println("FbDialog.FbWebViewClient.onUnhandledKeyEvent()"+event);
         }
     }
 }

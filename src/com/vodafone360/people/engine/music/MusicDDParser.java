@@ -74,9 +74,7 @@ public class MusicDDParser {
 			  DocumentBuilder db = dbf.newDocumentBuilder();
 			  Document doc = db.parse(is);
 			  doc.getDocumentElement().normalize();
-//			  System.out.println("Root element " + doc.getDocumentElement().getNodeName());
 			  NodeList nodeLst = doc.getElementsByTagName("mediaObject");
-//			  System.out.println("Information of all tracks"+nodeLst.getLength()+" "+nodeLst.item(0).toString());
 			  
 			  for (int s = 0; s < nodeLst.getLength(); s++) {
 
@@ -87,35 +85,27 @@ public class MusicDDParser {
 			    	MusicDDObject musicDDObject = new MusicDDObject();
 
 			    	String name = element.getElementsByTagName(NAME).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("Name: " + name);
 			    	musicDDObject.setName(name);
 			    	
 			    	String installNotifyURL = element.getElementsByTagName(INSTALL_NOTIFY_URL).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("installNotifyURL: " + installNotifyURL);
 			    	musicDDObject.setInstallNotifyURI(installNotifyURL);
 			    	
 			    	String suppressUserConfirmation = element.getElementsByTagName(SUPPRESS_USER_CONF).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("suppressUserConfirmation: " + suppressUserConfirmation);
 			    	musicDDObject.setSuppressUserConfirmation(suppressUserConfirmation);
 			    	
 			    	String iconURI = element.getElementsByTagName(ICON_URI).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("iconURI: " + iconURI);
 			    	musicDDObject.setIconURI(iconURI);
 			    	
 			    	String size = element.getElementsByTagName(SIZE).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("size: " + size);
 			    	musicDDObject.setSize(Long.parseLong(size));
 			    	
 			    	String type = element.getElementsByTagName(TYPE).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("type: " + type);
 			    	musicDDObject.setFileType(type);
 			    	
 			    	String objectID = element.getElementsByTagName(OBJECT_ID).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("objectID: " + objectID);
 			    	musicDDObject.setTrackID(objectID);
 			    	
 			    	String server = element.getElementsByTagName(SERVER).item(0).getChildNodes().item(0).getNodeValue();
-//			    	System.out.println("server: " + server);
 			    	musicDDObject.setDownloadURL(server);
 			    	
 			    	listOfDD.add(musicDDObject);
@@ -123,7 +113,6 @@ public class MusicDDParser {
 			    }
 			    
 			  }
-//			  System.out.println("Size of list" + listOfDD.size() + " List: " + listOfDD.toString() );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

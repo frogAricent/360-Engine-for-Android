@@ -48,6 +48,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.vodafone360.people.MainApplication;
 import com.vodafone360.people.Settings;
@@ -1331,7 +1332,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @see #fireSettingChangedEvent(PersistSettings)
      */
     public void fireDatabaseChangedEvent(DatabaseHelper.DatabaseChangeType type, boolean isExternal) {
-        DbEventType event = new DbEventType();
+    	DbEventType event = new DbEventType();
         event.ordinal = type.ordinal();
         event.isExternal = isExternal;
         
@@ -2032,7 +2033,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
                 mDb.setTransactionSuccessful();
             } finally {
-                mDb.endTransaction();
+            	if ( mDb.inTransaction()) {
+            		mDb.endTransaction();
+            	}
             }
         }
 
@@ -2560,7 +2563,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } finally {
 
             if (wdb != null) {
-                wdb.endTransaction();
+            	if (wdb.inTransaction()) {
+            		wdb.endTransaction();
+            	}
             }
         }
 
@@ -2775,12 +2780,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @return true in case everything went fine, false otherwise
      */
     public final boolean modifyPictureLoadedFlag(final Long localContactId, final Boolean value) {
-        ServiceStatus serviceStatus = ContactSummaryTable.modifyPictureLoadedFlag(localContactId,
+        
+    	ServiceStatus serviceStatus = ContactSummaryTable.modifyPictureLoadedFlag(localContactId,
                 value, getWritableDatabase());
         if (ServiceStatus.SUCCESS != serviceStatus) {
             return false;
         }
-        fireDatabaseChangedEvent(DatabaseChangeType.CONTACTS, true);
+//        fireDatabaseChangedEvent(DatabaseChangeType.CONTACTS, true);
         return true;
     }
     
@@ -2887,7 +2893,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	 */
 	public ServiceStatus editGroup(GroupItem group, List<Long> contactList ,SQLiteDatabase writableDb) {
 		LogUtils.logD("Editing group:"+group.toString());
-		ServiceStatus mStatus = GroupsChangeLogTable.editGroup(group, contactList, writableDb);
+		List<GroupItem> groupList = new ArrayList<GroupItem>();
+		groupList.add(group);
+		ServiceStatus mStatus = GroupsTable.updateGroupNames(groupList, writableDb);
+		if(mStatus != ServiceStatus.SUCCESS){
+			LogUtils.logE("DatabsaseHelper.editGroup - COuld not add group to Groups Table");
+			Toast.makeText(mContext, "Could not edit group "+group.mName, Toast.LENGTH_SHORT);
+			return ServiceStatus.ERROR_DATABASE_CORRUPT;
+		}
+		mStatus = GroupsChangeLogTable.editGroup(group, contactList, writableDb);
 		if(mStatus != ServiceStatus.SUCCESS){
 			return ServiceStatus.ERROR_DATABASE_CORRUPT;
 		}
@@ -3072,14 +3086,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		ServiceStatus fetchGrpContactsStatus = ContactGroupsTable.fetchGroupContacts(groupId,
 				contactIds, getReadableDatabase());
 		if(fetchGrpContactsStatus!= ServiceStatus.SUCCESS){
-			LogUtils.logE("Could not fetch contact list from ContactGroupsTable for group ["+groupName+"]");
+			LogUtils.logE("Could not fetch existing contact list from ContactGroupsTable for group ["+groupName+"]");
 		}else{
-			LogUtils.logD(contactIds.size() + " existing contacts for group ["+groupName+"]");
+			LogUtils.logD(contactIds.size() + " existing contacts for group ["+groupName+", Id:"+groupId+"]");
 		}
         List<Long> mTempContactIDs = new ArrayList<Long>();
         ServiceStatus fetchTempContacts = ContactGroupsChangeLogTable.fetchGroupContacts(groupName, mTempContactIDs, getReadableDatabase());
         if(fetchTempContacts == ServiceStatus.SUCCESS && mTempContactIDs.size()!= 0){
-        	LogUtils.logD(mTempContactIDs.size() + " temp contacts.");
+        	LogUtils.logD(mTempContactIDs.size() + " temp contactsfor group ["+groupName+"]");
         	for(Long tempId : mTempContactIDs){
         		if(!contactIds.contains(tempId))
         			contactIds.add(tempId);

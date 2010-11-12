@@ -977,7 +977,6 @@ public abstract class ContactSummaryTable {
 //        }
 //        try {
 //            
-////        	System.out.println("groupFilterId >>:" + groupFilterId);
 //        	
 //            String str1 = "SELECT " 
 //            	
@@ -1061,7 +1060,6 @@ public abstract class ContactSummaryTable {
 //                         + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
 //                         ;
 //            
-//            System.out.println("Str query string >>:" + str1);
 //            
 //            return readableDb.rawQuery(str1, null);           
 //
@@ -1092,8 +1090,6 @@ public abstract class ContactSummaryTable {
         }
         try {
             
-//        	System.out.println("groupFilterId >>:" + groupFilterId);
-        	
             String str1 = "SELECT " 
             	
             			 //selecting local contact id, display name, online status from 
@@ -1176,8 +1172,6 @@ public abstract class ContactSummaryTable {
                          + getConstraint(constraint)
                          + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
                          ;
-            
-            System.out.println("Str query string >>:" + str1);
             
             return readableDb.rawQuery(str1, null);           
 
@@ -1267,11 +1261,8 @@ public abstract class ContactSummaryTable {
     /*private static Cursor fetchContactList(CharSequence constraint,Long groupFilterId, Long meProfileId,
             SQLiteDatabase readableDb) {
     	
-    	System.out.println("Constraint list query.");
     		try {
             
-//        	System.out.println("groupFilterId >>:" + groupFilterId);
-        	
             String str1 = "SELECT " 
             	
             			 //selecting local contact id, display name, online status from 
@@ -1354,8 +1345,6 @@ public abstract class ContactSummaryTable {
                          + getConstraint(constraint.toString())
                          + " ORDER BY LOWER(" + ContactSummaryTable.Field.DISPLAYNAME + ")"
                          ;
-            
-            System.out.println("Str query string >>:" + str1);
             
             return readableDb.rawQuery(str1, null);           
 

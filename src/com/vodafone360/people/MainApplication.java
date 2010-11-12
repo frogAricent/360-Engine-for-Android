@@ -67,7 +67,6 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("MainApplication.onCreate()");
 //        handler.post(runnable);
         
         initout();
@@ -93,7 +92,6 @@ public class MainApplication extends Application {
 		}
 	};
     public void initout(){
-    	System.out.println("MainApplication.initout()");
     	SettingsManager.loadProperties(MainApplication.this);
         mDatabaseHelper = new DatabaseHelper(MainApplication.this);
         mDatabaseHelper.start();

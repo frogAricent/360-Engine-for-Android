@@ -648,6 +648,7 @@
 	  <string name="post">Wall Post!</string> 
 	  <string name="delete">Delete Post</string> 
 	
-
+ <string name="ChatListAct">com.tesla.chat.ui.ChatListActivity</string> 
+  <string name="TimeListAct">com.tesla.chat.ui.TimelineHistoryActivity</string> 
 	
 </resources>

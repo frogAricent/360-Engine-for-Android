@@ -202,7 +202,7 @@ public class GroupSyncEngine extends BaseEngine{
 	@Override
 	protected void processCommsResponse(DecodedResponse resp) {
 		LogUtils.logD("Response = " + resp);
-		LogUtils.logD("GroupSyncEngine.processCommsResponse - Response Datatype:"+resp.mDataTypes.get(0).getType());
+		     // LogUtils.logD("GroupSyncEngine.processCommsResponse - Response Datatype:"+resp.mDataTypes.get(0).getType());
 		switch(mState){
 		case ADDING_USER_GROUP:
 			LogUtils.logD("ADDING_USER_GROUP");

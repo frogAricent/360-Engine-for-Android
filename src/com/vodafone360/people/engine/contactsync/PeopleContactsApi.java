@@ -514,7 +514,9 @@ public class PeopleContactsApi {
         } finally {
             
             if (writableDb != null) {
-                writableDb.endTransaction();
+            	if (writableDb.inTransaction()) {
+            		writableDb.endTransaction();
+            	}
                 writableDb = null;
             }
         }

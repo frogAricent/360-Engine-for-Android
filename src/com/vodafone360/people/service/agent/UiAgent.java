@@ -27,14 +27,21 @@ package com.vodafone360.people.service.agent;
 
 import java.security.InvalidParameterException;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 
 import com.vodafone360.people.ApplicationCache;
-import com.vodafone360.people.Intents;
 import com.vodafone360.people.MainApplication;
+import com.vodafone360.people.R;
+import com.vodafone360.people.Settings;
+import com.vodafone360.people.database.tables.ActivitiesTable;
+import com.vodafone360.people.database.tables.ActivitiesTable.TimelineSummaryItem;
 import com.vodafone360.people.engine.upgrade.UpgradeStatus;
 import com.vodafone360.people.engine.upgrade.VersionCheck;
 import com.vodafone360.people.service.ServiceUiRequest;
@@ -52,6 +59,16 @@ public class UiAgent {
     /** UI Notification identifier. **/
     public static final int UI_AGENT_NOTIFICATION_ID = 1;
 
+    public static final int TIMELINE_MESSAGES = 2;
+
+    public static final int TIMELINE_CHAT = 3;
+
+    public static final String TIMELINE_TYPE = "TimelineType";
+    
+    
+    /** NotificationManager object. **/
+    private NotificationManager mNotificationManager;
+    
     /** Pointer to MainApplication. **/
     private MainApplication mMainApplication;
 
@@ -66,7 +83,6 @@ public class UiAgent {
      * currently on screen.
      */
     private Bundle mUiBundleQueue = null;
-
     /**
      * Handler object from a subscribed UI Activity.  Note: This object is
      * nullified by a separate thread and is thereby declared volatile.
@@ -99,6 +115,8 @@ public class UiAgent {
      */
     public UiAgent(final MainApplication mainApplication,
             final Context context) {
+    	 mNotificationManager = (NotificationManager)mainApplication
+         .getSystemService(Context.NOTIFICATION_SERVICE);
         mMainApplication = mainApplication;
         mContext = context;
         mHandler = null;
@@ -307,7 +325,7 @@ public class UiAgent {
      * for. False if we are for instance just deleting a notification.
      */
     public final void updateChat(final long contactId, final boolean isNewChatMessage) {
-        if (mHandler != null && mShouldHandleChat && mLocalContactId == contactId) {
+         if (mHandler != null && mShouldHandleChat && mLocalContactId == contactId) {
             LogUtils.logV("UiAgent.updateChat() Send message to UI (i.e. "
                     + "update the screen)");
             mHandler.sendMessage(mHandler.obtainMessage(
@@ -345,7 +363,152 @@ public class UiAgent {
      * 
      */
     private void updateChatNotification(final boolean isNewChatMessage) {
-        mContext.sendBroadcast(new Intent(Intents.NEW_CHAT_RECEIVED).putExtra(
-                ApplicationCache.sIsNewMessage, isNewChatMessage));
+       // mContext.sendBroadcast(new Intent(Intents.NEW_CHAT_RECEIVED).putExtra(
+       //         ApplicationCache.sIsNewMessage, isNewChatMessage));
+     	hideNotification();
+        SQLiteDatabase readableDb = mMainApplication.getDatabase().getReadableDatabase();
+        int pendingUsers = ActivitiesTable.getNumberOfUnreadChatUsers(readableDb);
+        int pendingMessages = ActivitiesTable.getNumberOfUnreadChatMessages(readableDb);
+        TimelineSummaryItem message = ActivitiesTable.getNewestUnreadChatMessage(readableDb);
+        if (pendingUsers == 1) {
+             showNotificationOfOneUser(readableDb, pendingMessages, message,isNewChatMessage);
+        } else if (pendingUsers > 1) {
+             showNotificationForMultipleUsers(readableDb, pendingMessages, message,isNewChatMessage);
+        } else {
+            // Do nothing.
+        }
+    }
+    private Intent createTimelineComposerIntent(Context context, Long localContactId,
+            String contactName, String contactAddress, String contactNetwork){
+     	 LogUtils.logV("TimelineUtils.createTimelineComposerIntent() localContactId["
+                 + localContactId + "] contactName[" + contactName + "] contactAddress["
+                 + contactAddress + "] contactNetwork[" + contactNetwork + "]");
+
+         Intent intent = new Intent(mContext.getString(R.string.TimeListAct));
+         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+         Bundle data = new Bundle();
+         if (localContactId != null) {
+             data.putLong(ApplicationCache.CONTACT_ID, localContactId);
+         }
+         data.putString(ApplicationCache.CONTACT_NAME, contactName);
+         if (contactAddress != null) {
+             data.putString(ApplicationCache.CONTACT_NUMBER, contactAddress);
+         }
+         if (contactNetwork != null) {
+             data.putString(ApplicationCache.CONTACT_NETWORK, contactNetwork);
+             data.putInt( TIMELINE_TYPE,  TIMELINE_CHAT);
+         } else {
+             data.putInt( TIMELINE_TYPE,  TIMELINE_MESSAGES);
+         }
+         intent.putExtras(data);
+         return intent;
+    }
+    /***
+     * Show a waiting Chat Notification for one contact only. E.g. [You have a
+     * Chat message waiting from Sumit]
+     * 
+     * @param readableDb Readable Database with ActivitiesTable.
+     * @param pendingMessages Number of pending messages for this user.
+     * @param message Newest unread Chat message.
+     * @param isNewChatMessage 
+     */
+    private void showNotificationOfOneUser(SQLiteDatabase readableDb, int pendingMessages,
+            TimelineSummaryItem message, boolean isNewChatMessage) {
+        if (message != null) {
+            LogUtils.logV("UiAgent.showNotificationOfOneUser() pendingMessages[" + pendingMessages
+                    + "] message[" + message.toString() + "]");
+
+            Intent intent;
+            if (message.mContactName == null) {    
+                intent = createTimelineComposerIntent(mMainApplication
+                        .getApplicationContext(), message.mLocalContactId, null, null, null);
+
+                // Set name in UI to "Unknown".
+                message.mContactName = mMainApplication.getBaseContext().getString(
+                        R.string.RecentCallsListActivity_unknown);
+             } else {
+                intent = createTimelineComposerIntent(mMainApplication
+                        .getApplicationContext(), message.mLocalContactId, message.mContactName,
+                        message.mContactAddress, message.mContactNetwork);
+             }
+
+            if (pendingMessages > 1) {
+                showNotification(message.mContactName, mMainApplication.getString(
+                        R.string.UiAgent_Notification_unread_messages, pendingMessages),
+                        message.mContactName + ": " + message.mDescription, intent,isNewChatMessage);
+            } else {
+                showNotification(message.mContactName, message.mDescription, message.mContactName
+                        + ": " + message.mDescription, intent,isNewChatMessage);
+            }
+
+        } else {
+            throw new NullPointerException(
+                    "UiAgent.showNotificatoinOfOneUser() message should not be NULL");
+        }
+    }
+
+    /***
+     * Show a waiting Chat Notification for multiple users. E.g. [You have 6x
+     * pending Chat messages]
+     * @param isNewChatMessage 
+     */
+    private void showNotificationForMultipleUsers(SQLiteDatabase readableDb, int pendingMessages,
+            TimelineSummaryItem message, boolean isNewChatMessage) {
+         /*
+         * Create a new  Intent, that forces the Timeline list view.
+         */
+        Intent intent = new Intent(mContext.getString(R.string.ChatListAct));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (pendingMessages > 1) {
+            showNotification(
+                    mMainApplication.getString(R.string.UiAgent_Notification_new_messages),
+                    mMainApplication.getString(R.string.UiAgent_Notification_unread_messages,
+                            pendingMessages), message.mContactName + ": " + message.mDescription,
+                    intent,isNewChatMessage);
+        } else {
+           showNotification(message.mContactName, message.mDescription, message.mContactName
+                    + ": " + message.mDescription, intent,isNewChatMessage);
+        }
+    }
+
+    /**
+     * Displays the UiAgent Notification
+     * @param isNewChatMessage 
+     */
+    private void showNotification(String contentTitle, String contentText, String tickerText,
+            Intent intent, boolean isNewChatMessage) {
+        LogUtils.logV("UiAgent.showNotification(): Title[" + contentTitle + "] Text[" + contentText
+                + "] Ticker[" + tickerText + "]");
+        Notification notification = new Notification(R.drawable.a180_4_notification_icon_chat, tickerText,
+                System.currentTimeMillis());
+        notification.setLatestEventInfo(mMainApplication.getApplicationContext(), contentTitle,
+                contentText, PendingIntent.getActivity(mMainApplication.getApplicationContext(), 0,
+                        intent, PendingIntent.FLAG_CANCEL_CURRENT));
+        notification.flags = Notification.FLAG_AUTO_CANCEL;
+
+        if (isNewChatMessage) {
+            /*
+             * TODO: Do a custom audio and vibrate alert. notification.sound =
+             * "file:///sdcard/audiofile.mp3"; notification.vibrate = new long[]
+             * { 200, 300 };
+             */
+            // Let the notification LED flash so user knows, a notification came
+            // even if the phone is silence
+            notification.ledARGB = Settings.NOTIFICATION_LED_COLOR;
+            notification.ledOnMS = Settings.NOTIFICATION_LED_ON_TIME;
+            notification.ledOffMS = Settings.NOTIFICATION_LED_OFF_TIME;
+            notification.defaults = Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
+            notification.flags |= Notification.FLAG_SHOW_LIGHTS;
+
+            isNewChatMessage = false;
+        }
+        mNotificationManager.notify(UI_AGENT_NOTIFICATION_ID, notification);
+    }
+    /**
+     * Removes the UiAgent Notification
+     */
+    private void hideNotification() {
+        LogUtils.logV("UiAgent.hideNotification()");
+        mNotificationManager.cancel(UI_AGENT_NOTIFICATION_ID);
     }
 }

@@ -717,7 +717,6 @@ public class ApplicationCache {
     * @param musicTracksResponse
     */
    public final void setMusicTrack(final MusicTracksResponse musicTracksResponse){
-   	System.out.println("ApplicationCache.setMusicTrack()");
    	mMusicTrackResponse = musicTracksResponse;
    }
    
@@ -726,7 +725,6 @@ public class ApplicationCache {
     * @return mMusicTrackResponse
     */
    public final MusicTracksResponse getMusicTracks() {
-   	System.out.println("ApplicationCache.getMusicTracks()");
        return mMusicTrackResponse;
    }
    
